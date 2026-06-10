@@ -283,7 +283,7 @@ try {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
   app.use(express.json());
   app.use(cors());
 
@@ -621,7 +621,7 @@ async function startServer() {
       db.prepare("INSERT INTO magic_links (token, email, expires_at) VALUES (?, ?, ?)").run(token, email, expiresAt);
 
       // Determine dynamic base path for localhost or developer proxy
-      const host = req.get("host") || "localhost:3000";
+      const host = req.get("host") || `localhost:${PORT}`;
       const protocol = req.headers["x-forwarded-proto"] || req.protocol || "http";
       const baseUrl = `${protocol}://${host}`;
       
