@@ -1,0 +1,8 @@
+{
+  "name": "InvestPro",
+  "description": "A high-performance investment platform with investor management, secure document repository, and administrative controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "appId": "com.investpro.app",
+  "appName": "InvestPro",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
