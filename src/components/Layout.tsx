@@ -157,7 +157,7 @@ export const Layout = () => {
           <div className="h-px bg-white/5 w-full mb-4 mx-3" />
           
           <a 
-            href="/api/postman-collection" 
+            href="/postman_collection.json" 
             download="postman_collection.json"
             className="flex items-center w-full h-12 rounded-xl text-slate-400 hover:bg-blue-600/10 hover:text-blue-400 transition-all font-medium group mb-2"
           >

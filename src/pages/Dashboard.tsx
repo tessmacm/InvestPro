@@ -92,9 +92,14 @@ export const Dashboard = () => {
         }
       });
       const data = await response.json();
-      setStats(data);
+      setStats({
+        users: data.users !== undefined ? data.users : (data.userCount ?? 0),
+        investors: data.investors !== undefined ? data.investors : (data.investorCount ?? 0),
+        investment: data.investment !== undefined ? data.investment : (data.totalInvestment ?? 0),
+        documents: data.documents !== undefined ? data.documents : (data.documentCount ?? 0)
+      });
     } catch (error) {
-      console.error("Failed to fetch stats");
+      console.error("Failed to fetch stats", error);
     }
   };
 
