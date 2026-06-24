@@ -250,8 +250,9 @@ export function initializeMockApi() {
 
       const method = (init?.method || "GET").toUpperCase();
 
-      if (url.pathname.startsWith("/api")) {
-        const path = url.pathname.substring(4);
+      const normalizedPathname = url.pathname.replace(/^\/+/, "/");
+      if (normalizedPathname.startsWith("/api")) {
+        const path = normalizedPathname.substring(4);
         let targetPath = path;
         let shouldTranslate = true;
 
