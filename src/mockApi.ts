@@ -232,9 +232,165 @@ function saveDB(db: MockDB) {
 
 // Global hook to register and toggle mock API runtime
 export function initializeMockApi() {
-  const isMockMode = !import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL.trim() === "";
+  const isMockMode = !import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL.trim() === "" || import.meta.env.VITE_API_URL.trim() === "/";
   if (!isMockMode) {
-    console.log("[Data Source] External API active via VITE_API_URL:", import.meta.env.VITE_API_URL);
+    const apiTargetUrl = import.meta.env.VITE_API_URL.trim().replace(/\/$/, "");
+    console.log("[Data Source] External API active via VITE_API_URL (Client-Side Direct):", apiTargetUrl);
+
+    const originalFetch = window.fetch;
+    window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+      const urlStr = typeof input === "string" ? input : (input as any).url || "";
+      
+      let url: URL;
+      try {
+        url = new URL(urlStr, window.location.origin);
+      } catch {
+        return originalFetch(input, init);
+      }
+
+      const method = (init?.method || "GET").toUpperCase();
+
+      if (url.pathname.startsWith("/api")) {
+        const path = url.pathname.substring(4);
+        let targetPath = path;
+        let shouldTranslate = true;
+
+        // Clone/create headers and inject Bearer token
+        const headers = new Headers(init?.headers);
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (token && !headers.has("Authorization")) {
+          headers.set("Authorization", `Bearer ${token}`);
+        }
+
+        let newBody = init?.body;
+
+        // Parse body if it is a JSON string
+        let bodyObj: any = null;
+        if (init?.body && typeof init.body === "string") {
+          try {
+            bodyObj = JSON.parse(init.body);
+          } catch (e) {
+            // Not JSON
+          }
+        }
+
+        if (path === "/login") {
+          targetPath = "/Auth/login";
+        } else if (path === "/register") {
+          targetPath = "/Auth/register";
+        } else if (path === "/register-verify") {
+          targetPath = "/Auth/register-verify";
+        } else if (path === "/forgot-password") {
+          targetPath = "/Auth/forgot-password";
+        } else if (path === "/reset-password") {
+          targetPath = "/Auth/reset-password";
+        } else if (path === "/magic-login") {
+          targetPath = "/Auth/magic-login";
+        } else if (path === "/verify-token") {
+          targetPath = "/Auth/verify-token";
+        } else if (path === "/users" || path.startsWith("/users/")) {
+          if (method === "PUT" && path.split("/").length === 3) {
+            targetPath = `/admin/users/${path.split("/")[2]}/role`;
+            if (bodyObj) {
+              const mappedUpdate = {
+                Name: bodyObj.name || "",
+                Email: bodyObj.email || "",
+                Role: (bodyObj.role ? bodyObj.role.charAt(0).toUpperCase() + bodyObj.role.slice(1) : "Admin"),
+                Status: bodyObj.status === "active"
+              };
+              newBody = JSON.stringify(mappedUpdate);
+              headers.set("Content-Type", "application/json");
+            }
+          } else if (method === "POST" && path === "/users") {
+            targetPath = "/admin/users";
+            if (bodyObj) {
+              const nameParts = (bodyObj.name || "").trim().split(/\s+/);
+              const firstName = nameParts[0] || "";
+              const lastName = nameParts.slice(1).join(" ") || "";
+              const mappedCreate = {
+                Email: bodyObj.email || "",
+                Password: bodyObj.password || "password",
+                FirstName: firstName,
+                LastName: lastName
+              };
+              newBody = JSON.stringify(mappedCreate);
+              headers.set("Content-Type", "application/json");
+            }
+          } else if (method === "PATCH" && path.split("/").length === 4 && path.split("/")[3] === "status") {
+            targetPath = `/admin/users/${path.split("/")[2]}/status`;
+            if (bodyObj) {
+              const mappedStatus = {
+                Status: bodyObj.status === "active"
+              };
+              newBody = JSON.stringify(mappedStatus);
+              headers.set("Content-Type", "application/json");
+            }
+          } else if (method === "PATCH" && path.split("/").length === 4 && path.split("/")[3] === "role") {
+            targetPath = `/admin/users/${path.split("/")[2]}/role`;
+            if (bodyObj) {
+              const mappedRole = {
+                Role: (bodyObj.role ? bodyObj.role.charAt(0).toUpperCase() + bodyObj.role.slice(1) : "Admin")
+              };
+              newBody = JSON.stringify(mappedRole);
+              headers.set("Content-Type", "application/json");
+            }
+          } else {
+            targetPath = path.replace(/^\/users/, "/admin/users");
+          }
+        } else if (path === "/investors" || path.startsWith("/investors/")) {
+          if (method === "POST" && path === "/investors") {
+            targetPath = "/admin/investors/create";
+          } else if (method === "PUT" && path.split("/").length === 3) {
+            targetPath = `/admin/investors/update/${path.split("/")[2]}`;
+          } else {
+            targetPath = path.replace(/^\/investors/, "/admin/investors");
+          }
+        } else if (path === "/documents" || path.startsWith("/documents/")) {
+          targetPath = path.replace(/^\/documents/, "/admin/documents");
+        } else {
+          shouldTranslate = false;
+        }
+
+        if (shouldTranslate) {
+          const finalUrl = `${apiTargetUrl}/api${targetPath}${url.search}`;
+          const newInit: RequestInit = {
+            ...init,
+            headers,
+            body: newBody
+          };
+          console.log(`[Client-side Routing] ${method} ${url.pathname} -> ${finalUrl}`);
+          
+          try {
+            const response = await originalFetch(finalUrl, newInit);
+            
+            // Map the response data for GET /api/users
+            if (response.ok && path === "/users" && method === "GET") {
+              const rawData = await response.json();
+              const mappedData = (rawData || []).map((u: any) => ({
+                id: u.Id || u.id,
+                email: u.Email || u.email,
+                name: `${u.FirstName || u.firstName || ""} ${u.LastName || u.lastName || ""}`.trim() || u.Email || u.email,
+                role: "admin", // Backend returns admin users
+                status: (u.IsActive !== undefined ? u.IsActive : u.isActive) ? "active" : "inactive"
+              }));
+              
+              const blob = new Blob([JSON.stringify(mappedData)], { type: "application/json" });
+              return new Response(blob, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers
+              });
+            }
+
+            return response;
+          } catch (err) {
+            console.error("[Client-side Routing Error]", err);
+            throw err;
+          }
+        }
+      }
+      return originalFetch(input, init);
+    };
     return;
   }
 

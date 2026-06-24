@@ -10,7 +10,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const PORT = 3000;
+const PORT = 3005;
 
 // Replicate the mock data in-memory for the Express dev server fallback
 const db = {
@@ -152,15 +152,70 @@ async function startServer() {
 
   // Dynamic Data Source Direct URL Proxy Handler
   app.use("/api", async (req, res, next) => {
-    const apiTargetUrl = process.env.VITE_API_URL || "";
+    let apiTargetUrl = process.env.BACKEND_API_URL || process.env.VITE_API_URL || "";
+    if (apiTargetUrl === "/") {
+      apiTargetUrl = "";
+    }
     if (!apiTargetUrl) {
       // No external API URL defined, proceed with the in-memory mock handler endpoints below
       return next();
     }
 
+    let targetPath = req.path;
+    let shouldProxy = false;
+
+    // Route translation mapping:
+    if (req.path === "/login") {
+      targetPath = "/Auth/login";
+      shouldProxy = true;
+    } else if (req.path === "/register") {
+      targetPath = "/Auth/register";
+      shouldProxy = true;
+    } else if (req.path === "/register-verify") {
+      targetPath = "/Auth/register-verify";
+      shouldProxy = true;
+    } else if (req.path === "/forgot-password") {
+      targetPath = "/Auth/forgot-password";
+      shouldProxy = true;
+    } else if (req.path === "/reset-password") {
+      targetPath = "/Auth/reset-password";
+      shouldProxy = true;
+    } else if (req.path === "/magic-login") {
+      targetPath = "/Auth/magic-login";
+      shouldProxy = true;
+    } else if (req.path === "/verify-token") {
+      targetPath = "/Auth/verify-token";
+      shouldProxy = true;
+    } else if (req.path === "/users" || req.path.startsWith("/users/")) {
+      shouldProxy = true;
+      if (req.method === "PUT" && req.path.split("/").length === 3) {
+        targetPath = `/admin/users/${req.path.split("/")[2]}/role`;
+      } else {
+        targetPath = req.path.replace(/^\/users/, "/admin/users");
+      }
+    } else if (req.path === "/investors" || req.path.startsWith("/investors/")) {
+      shouldProxy = true;
+      if (req.method === "POST" && req.path === "/investors") {
+        targetPath = "/admin/investors/create";
+      } else if (req.method === "PUT" && req.path.split("/").length === 3) {
+        targetPath = `/admin/investors/update/${req.path.split("/")[2]}`;
+      } else {
+        targetPath = req.path.replace(/^\/investors/, "/admin/investors");
+      }
+    } else if (req.path === "/documents" || req.path.startsWith("/documents/")) {
+      shouldProxy = true;
+      targetPath = req.path.replace(/^\/documents/, "/admin/documents");
+    }
+
+    if (!shouldProxy) {
+      // Fallback to local mock data for stats, projects, etc.
+      console.log(`[Proxy Bypass] Falling back to Mock DB for endpoint: ${req.method} /api${req.path}`);
+      return next();
+    }
+
     // Proxy requests to the external API
     try {
-      const targetUrl = `${apiTargetUrl.replace(/\/$/, "")}/api${req.path}${req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : ""}`;
+      const targetUrl = `${apiTargetUrl.replace(/\/$/, "")}/api${targetPath}${req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : ""}`;
       console.log(`[Proxy] Routing ${req.method} /api${req.path} to External API: ${targetUrl}`);
       
       const headers: Record<string, string> = {};
@@ -174,7 +229,8 @@ async function startServer() {
         "trailer",
         "transfer-encoding",
         "upgrade",
-        "content-length"
+        "content-length",
+        "expect"
       ];
       for (const [key, value] of Object.entries(req.headers)) {
         const lowerKey = key.toLowerCase();
@@ -197,8 +253,11 @@ async function startServer() {
       const response = await fetch(targetUrl, options);
       const responseData = await response.text();
 
+      const skipResponseHeaders = ["connection", "content-length", "transfer-encoding", "content-encoding", "keep-alive"];
       response.headers.forEach((val, key) => {
-        res.setHeader(key, val);
+        if (!skipResponseHeaders.includes(key.toLowerCase())) {
+          res.setHeader(key, val);
+        }
       });
 
       res.status(response.status).send(responseData);

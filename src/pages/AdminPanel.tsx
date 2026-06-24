@@ -87,8 +87,9 @@ export const AdminPanel = () => {
       if (response.ok) {
         setUsers(users.map(u => String(u.id) === String(userId) ? { ...u, role: newRole } : u));
       } else {
-        const data = await response.json();
-        alert(data.message || "Failed to update role");
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : {};
+        alert(data.message || data.Message || "Failed to update role");
       }
     } catch (error) {
       console.error("Failed to update role", error);
@@ -113,8 +114,9 @@ export const AdminPanel = () => {
       if (response.ok) {
         setUsers(users.map(u => String(u.id) === String(userId) ? { ...u, status: newStatus } : u));
       } else {
-        const data = await response.json();
-        alert(data.message || "Failed to update status");
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : {};
+        alert(data.message || data.Message || "Failed to update status");
       }
     } catch (error) {
       console.error("Failed to update status", error);
@@ -138,8 +140,9 @@ export const AdminPanel = () => {
         setUsers(users.filter(u => String(u.id) !== String(userId)));
         setDeleteConfirmId(null);
       } else {
-        const data = await response.json();
-        alert(data.message || "Failed to delete user");
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : {};
+        alert(data.message || data.Message || "Failed to delete user");
       }
     } catch (error) {
       console.error("Failed to delete user", error);
@@ -171,11 +174,19 @@ export const AdminPanel = () => {
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || "API error occurred");
+        const text = await response.text();
+        const errData = text ? JSON.parse(text) : {};
+        throw new Error(errData.message || errData.Message || "API error occurred");
       }
 
-      await response.json();
+      // Safe body read if present
+      const text = await response.text();
+      if (text) {
+        try {
+          JSON.parse(text);
+        } catch (_) {}
+      }
+      
       alert(isEdit ? "User updated successfully!" : "User created successfully!");
       setIsModalOpen(false);
       fetchUsers(); // Refresh complete list
