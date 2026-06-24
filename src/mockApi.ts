@@ -348,6 +348,67 @@ export function initializeMockApi() {
           }
         } else if (path === "/documents" || path.startsWith("/documents/")) {
           targetPath = path.replace(/^\/documents/, "/admin/documents");
+        } else if (path === "/stats") {
+          const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+          const authHeaders = new Headers(init?.headers);
+          if (token && !authHeaders.has("Authorization")) {
+            authHeaders.set("Authorization", `Bearer ${token}`);
+          }
+          try {
+            const [usersRes, investorsRes, docsRes] = await Promise.all([
+              originalFetch(`${apiTargetUrl}/api/admin/users`, { headers: authHeaders }),
+              originalFetch(`${apiTargetUrl}/api/admin/investors`, { headers: authHeaders }),
+              originalFetch(`${apiTargetUrl}/api/admin/documents`, { headers: authHeaders })
+            ]);
+            let userCount = 0;
+            let investorCount = 0;
+            let totalInvestment = 0;
+            let documentCount = 0;
+            let projectCount = 5;
+
+            if (usersRes.ok) {
+              const users = await usersRes.json();
+              userCount = Array.isArray(users) ? users.length : 0;
+            }
+            if (investorsRes.ok) {
+              const investors = await investorsRes.json();
+              if (Array.isArray(investors)) {
+                investorCount = investors.length;
+                totalInvestment = investors.reduce((sum: number, inv: any) => sum + (Number(inv.Amount || inv.amount || inv.InvestmentAmount || inv.investmentAmount) || 0), 0);
+              }
+            }
+            if (docsRes.ok) {
+              const docs = await docsRes.json();
+              documentCount = Array.isArray(docs) ? docs.length : 0;
+            }
+
+            const statsData = {
+              userCount,
+              investorCount,
+              totalInvestment,
+              documentCount,
+              projectCount
+            };
+            const blob = new Blob([JSON.stringify(statsData)], { type: "application/json" });
+            return new Response(blob, {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            });
+          } catch (err) {
+            console.error("Failed to fetch stats from external API", err);
+            const dummyStats = {
+              userCount: 2,
+              investorCount: 3,
+              totalInvestment: 1850000,
+              documentCount: 1,
+              projectCount: 5
+            };
+            const blob = new Blob([JSON.stringify(dummyStats)], { type: "application/json" });
+            return new Response(blob, {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
         } else {
           shouldTranslate = false;
         }
