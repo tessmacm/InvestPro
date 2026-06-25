@@ -171,6 +171,10 @@ export const AdminPanel = () => {
         ? `${API_BASE_URL}/api/users/${selectedUser.id}` 
         : `${API_BASE_URL}/api/users`;
       const method = isEdit ? "PUT" : "POST";
+      const bodyData = {
+        ...formData,
+        password: isEdit ? undefined : (formData.password || "Password123!")
+      };
 
       const response = await fetch(url, {
         method,
@@ -179,13 +183,19 @@ export const AdminPanel = () => {
           "x-user-role": currentUser?.role || "",
           "x-user-id": currentUser?.id || ""
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(bodyData)
       });
 
       if (!response.ok) {
         const text = await response.text();
         const errData = text ? JSON.parse(text) : {};
-        throw new Error(errData.message || errData.Message || "API error occurred");
+        let errMsg = errData.message || errData.Message || "API error occurred";
+        if (errData.errors && Array.isArray(errData.errors)) {
+          errMsg += "\n" + errData.errors.join("\n");
+        } else if (errData.Errors && Array.isArray(errData.Errors)) {
+          errMsg += "\n" + errData.Errors.join("\n");
+        }
+        throw new Error(errMsg);
       }
 
       // Safe body read if present
