@@ -644,7 +644,7 @@ export const AdminPanel = () => {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="block w-full px-4 py-3 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm text-slate-900"
                     placeholder="e.g. names@investpro.com"
-                    disabled={selectedUser ? (selectedUser.email === "admin@investpro.com" || selectedUser.name === "System Admin") : false}
+                    disabled={!!selectedUser}
                   />
                 </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import { 
@@ -46,6 +46,28 @@ export const Documents = () => {
     type: "PDF"
   });
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const titleWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      const ext = file.name.substring(file.name.lastIndexOf('.') + 1).toUpperCase();
+      
+      let typeOption = "PDF";
+      if (ext === "DOC" || ext === "DOCX") typeOption = "DOCX";
+      else if (ext === "XLS" || ext === "XLSX" || ext === "CSV") typeOption = "XLSX";
+      else if (ext === "JPG" || ext === "JPEG" || ext === "PNG") typeOption = "JPG";
+
+      setFormData({
+        title: titleWithoutExt,
+        type: typeOption
+      });
+    }
+  };
+
   const fetchDocuments = async () => {
     setLoading(true);
     try {
@@ -73,6 +95,13 @@ export const Documents = () => {
     if (!formData.title) return;
 
     try {
+      const fileSize = selectedFile 
+        ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB` 
+        : "0.2 MB";
+      const fileUrl = selectedFile 
+        ? `/uploads/${selectedFile.name}` 
+        : "#";
+
       const response = await fetch(`${API_BASE_URL}/api/admin/documents`, {
         method: "POST",
         headers: {
@@ -83,14 +112,15 @@ export const Documents = () => {
         body: JSON.stringify({
           title: formData.title,
           type: formData.type,
-          size: "0.2 MB",
-          url: "#",
+          size: fileSize,
+          url: fileUrl,
           uploaded_by: user?.id || "System Admin"
         })
       });
       if (response.ok) {
         setIsModalOpen(false);
         setFormData({ title: "", type: "PDF" });
+        setSelectedFile(null);
         fetchDocuments();
       }
     } catch (error) {
@@ -351,13 +381,32 @@ export const Documents = () => {
               <option value="JPG">Image (JPG)</option>
             </select>
           </div>
+           <input 
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png"
+          />
 
-          <div className="p-10 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50 text-center group hover:border-blue-300 transition-all cursor-pointer">
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="p-10 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50 text-center group hover:border-blue-300 transition-all cursor-pointer"
+          >
             <div className="bg-white w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
               <Plus className="w-6 h-6 text-blue-600" />
             </div>
-            <p className="text-sm font-bold text-slate-900">Select File</p>
-            <p className="text-xs text-slate-400 mt-1">Drop your file here or click to browse</p>
+            {selectedFile ? (
+              <div>
+                <p className="text-sm font-bold text-blue-600 truncate max-w-[250px] mx-auto">{selectedFile.name}</p>
+                <p className="text-xs text-slate-400 mt-1">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm font-bold text-slate-900">Select File</p>
+                <p className="text-xs text-slate-400 mt-1">Drop your file here or click to browse</p>
+              </div>
+            )}
           </div>
 
           <div className="pt-4 flex gap-3">
