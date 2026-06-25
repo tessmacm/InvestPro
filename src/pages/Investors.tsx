@@ -29,6 +29,7 @@ import { Investor } from "../types";
 import { cn } from "../lib/utils";
 import { API_BASE_URL } from "../config/api";
 import { BaseModal } from "../components/BaseModal";
+import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -376,6 +377,12 @@ export const Investors = () => {
     return matchesSearch;
   });
 
+  // Derived stats
+  const totalInvestorsCount = investors.length;
+  const activeInvestorsCount = investors.filter(i => i.status === "active").length;
+  const individualInvestorsCount = investors.filter(i => i.type === "Individual").length;
+  const businessInvestorsCount = investors.filter(i => i.type === "Business").length;
+
   // Calculate pages
   const totalEntries = filteredAndSearchedArray.length;
   const totalPages = Math.ceil(totalEntries / entriesPerPage) || 1;
@@ -383,11 +390,6 @@ export const Investors = () => {
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage
   );
-
-  // Dynamic breadcrumb text depending on search
-  const currentBreadcrumb = searchTerm.trim().length > 0 
-    ? "Investors > Search Investors" 
-    : "Investors > All Investors";
 
   return (
     <div className="relative min-h-screen">
@@ -433,12 +435,10 @@ export const Investors = () => {
             exit={{ opacity: 0, x: -15 }}
             className="space-y-6"
           >
-            {/* Top Bar Header Area */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <motion.div variants={itemVariants}>
-                <div className="text-xs font-bold text-slate-400 tracking-wider uppercase">{currentBreadcrumb}</div>
                 <h1 className="text-3xl font-display font-extrabold text-slate-900 mt-1">Investors</h1>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 mt-1 font-medium">
                   Manage your verified legal entities and individual investment accounts.
                 </p>
               </motion.div>
@@ -447,288 +447,368 @@ export const Investors = () => {
                   variants={itemVariants}
                   onClick={handleOpenAdd}
                   id="btn-add-investor"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 cursor-pointer active:scale-[0.98] transition-all"
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-[0.98] transition-transform flex-shrink-0 self-start md:self-auto"
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4" />
                   Add Investor
                 </motion.button>
               )}
             </div>
 
-            {/* Main Interactive Grid Card */}
-            <motion.div 
-              variants={itemVariants} 
-              className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
-            >
-              
-              {/* Filter controls panel */}
-              <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="relative w-full md:max-w-md">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    placeholder="Search by name, email, mobile, company..."
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-transparent focus:border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 rounded-xl transition-all text-sm"
-                  />
+             {/* Main Interactive Grid Card */}
+            {loading ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
                 </div>
+                <TableSkeleton />
+              </div>
+            ) : (
+              <div className="space-y-6">
                 
-                <div className="flex gap-2 w-full md:w-auto items-center justify-end">
-                  <button
-                    onClick={() => setIsFilterModalOpen(true)}
-                    id="btn-filter"
-                    className="flex justify-center items-center gap-2 h-11 px-4 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-colors active:scale-95 cursor-pointer bg-white"
-                  >
-                    <SlidersHorizontal className="w-4 h-4 text-slate-500" />
-                    Filter
-                    {appliedFilterType !== "All" && (
-                      <span className="w-2 h-2 rounded-full bg-blue-600 block" />
-                    )}
-                  </button>
+                {/* Statistics Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Total Investors */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                          <Users className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Total Investors</span>
+                      </div>
+                      <div className="flex items-baseline gap-2 pt-2">
+                        <span className="text-3xl font-extrabold text-slate-900">{totalInvestorsCount}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Active Investors */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Active Investors</span>
+                      </div>
+                      <div className="flex items-baseline gap-2 pt-2">
+                        <span className="text-3xl font-extrabold text-slate-900">{activeInvestorsCount}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Individual Investors */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
+                          <User className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Individual</span>
+                      </div>
+                      <div className="flex items-baseline gap-2 pt-2">
+                        <span className="text-3xl font-extrabold text-slate-900">{individualInvestorsCount}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Business Investors */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                          <Building2 className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Business</span>
+                      </div>
+                      <div className="flex items-baseline gap-2 pt-2">
+                        <span className="text-3xl font-extrabold text-slate-900">{businessInvestorsCount}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter controls panel */}
+                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="relative w-full md:max-w-md">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      placeholder="Search by name, email, mobile, company..."
+                      className="w-full pl-11 pr-4 py-3 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-transparent focus:border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 rounded-xl transition-all text-sm font-semibold"
+                    />
+                  </div>
                   
-                  {/* Entries count select sizing */}
-                  <select
-                    value={entriesPerPage}
-                    onChange={(e) => {
-                      setEntriesPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="h-11 px-3 border border-slate-200 rounded-xl text-xs text-slate-600 bg-white hover:bg-slate-50 outline-none"
-                  >
-                    <option value={5}>Show 5 per page</option>
-                    <option value={10}>Show 10 per page</option>
-                    <option value={20}>Show 20 per page</option>
-                  </select>
+                  <div className="flex gap-2 w-full md:w-auto items-center justify-end">
+                    <button
+                      onClick={() => setIsFilterModalOpen(true)}
+                      id="btn-filter"
+                      className="flex justify-center items-center gap-2 h-11 px-4 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-colors active:scale-95 cursor-pointer bg-white"
+                    >
+                      <SlidersHorizontal className="w-4 h-4 text-slate-500" />
+                      Filter
+                      {appliedFilterType !== "All" && (
+                        <span className="w-2 h-2 rounded-full bg-blue-600 block" />
+                      )}
+                    </button>
+                    
+                    {/* Entries count select sizing */}
+                    <select
+                      value={entriesPerPage}
+                      onChange={(e) => {
+                        setEntriesPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="h-11 px-3 border border-slate-200 rounded-xl text-xs text-slate-600 bg-white hover:bg-slate-50 outline-none font-bold"
+                    >
+                      <option value={5}>Show 5 per page</option>
+                      <option value={10}>Show 10 per page</option>
+                      <option value={20}>Show 20 per page</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              {/* Responsive custom-built table */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
-                  <thead>
-                    <tr className="bg-slate-50/50 border-b border-slate-100">
-                      {/* Master selector row */}
-                      <th className="w-16 px-6 py-4 text-center">
-                        <button 
-                          onClick={toggleSelectAll} 
-                          className="w-5 h-5 rounded border border-slate-300 flex items-center justify-center bg-white hover:border-blue-500 transition-all mx-auto"
-                        >
-                          {checkedInvestors.size > 0 && checkedInvestors.size === currentRows.length && (
-                            <Check className="w-3.5 h-3.5 text-blue-600 stroke-[3]" />
-                          )}
-                          {checkedInvestors.size > 0 && checkedInvestors.size < currentRows.length && (
-                            <div className="w-2.5 h-[2px] bg-slate-400" />
-                          )}
-                        </button>
-                      </th>
-                      <th className="w-24 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">ID</th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Name</th>
-                      <th className="w-32 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type</th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</th>
-                      <th className="w-44 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Mobile Number</th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Company</th>
-                      <th className="w-32 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                      <th className="w-28 px-6 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {loading ? (
-                      <tr>
-                        <td colSpan={9} className="py-24 text-center">
-                          <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
-                          <p className="text-sm text-slate-500 font-medium mt-4">Loading investor directory...</p>
-                        </td>
-                      </tr>
-                    ) : currentRows.length === 0 ? (
-                      <tr>
-                        <td colSpan={9} className="py-24 text-center">
-                          <div className="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <Users className="w-8 h-8 text-slate-300" />
-                          </div>
-                          <h3 className="text-slate-900 font-bold text-lg">No investors found</h3>
-                          <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
-                            Try adjusting your filters, query parameters, or add a fresh investor directly.
-                          </p>
-                        </td>
-                      </tr>
-                    ) : (
-                      currentRows.map((row) => {
-                        const isChecked = checkedInvestors.has(String(row.id));
-                        const displayId = `INV-${String(row.id).padStart(3, "0")}`;
-                        
-                        return (
-                          <tr 
-                            key={row.id} 
-                            className={cn(
-                              "group transition-colors align-middle",
-                              isChecked ? "bg-blue-50/20" : "hover:bg-slate-50/50"
-                            )}
+                {/* Results Table Panel */}
+                <motion.div 
+                  variants={itemVariants} 
+                  className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-2"
+                >
+                  
+                  {/* Responsive custom-built table */}
+                  <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
+                    <thead>
+                      <tr className="bg-slate-50/50 border-b border-slate-100">
+                        {/* Master selector row */}
+                        <th className="w-16 px-6 py-4 text-center">
+                          <button 
+                            onClick={toggleSelectAll} 
+                            className="w-5 h-5 rounded border border-slate-300 flex items-center justify-center bg-white hover:border-blue-500 transition-all mx-auto"
                           >
-                            {/* Checkbox */}
-                            <td className="px-6 py-4.5 text-center">
-                              <button 
-                                onClick={() => toggleSelectRow(String(row.id))} 
-                                className={cn(
-                                  "w-5 h-5 rounded border flex items-center justify-center bg-white hover:border-blue-500 transition-all mx-auto",
-                                  isChecked ? "border-blue-500 bg-blue-50" : "border-slate-300"
-                                )}
-                              >
-                                {isChecked && <Check className="w-3.5 h-3.5 text-blue-600 stroke-[3]" />}
-                              </button>
-                            </td>
-
-                            {/* ID */}
-                            <td className="px-4 py-4.5">
-                              <span className="font-mono text-xs font-bold text-slate-500">{displayId}</span>
-                            </td>
-
-                            {/* Name */}
-                            <td className="px-6 py-4.5">
-                              <div className="flex items-center gap-3">
-                                <div className={cn(
-                                  "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm",
-                                  row.type === "Business" 
-                                    ? "bg-indigo-50 text-indigo-600" 
-                                    : "bg-blue-50 text-blue-600"
-                                )}>
-                                  {row.name.charAt(0)}
-                                </div>
-                                <span className="text-sm font-semibold text-slate-900 truncate max-w-[150px]">{row.name}</span>
-                              </div>
-                            </td>
-
-                            {/* Type */}
-                            <td className="px-4 py-4.5">
-                              <span className={cn(
-                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium",
-                                row.type === "Business" 
-                                  ? "bg-indigo-50 text-indigo-700" 
-                                  : "bg-blue-50 text-blue-700"
-                              )}>
-                                {row.type === "Business" ? <Building2 className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                                {row.type || "Individual"}
-                              </span>
-                            </td>
-
-                            {/* Email */}
-                            <td className="px-6 py-4.5">
-                              <span className="text-sm text-slate-600 truncate max-w-[200px] block">{row.email || "—"}</span>
-                            </td>
-
-                            {/* Mobile */}
-                            <td className="px-4 py-4.5">
-                              <span className="text-sm text-slate-600 font-medium whitespace-nowrap">{row.mobile || "—"}</span>
-                            </td>
-
-                            {/* Company */}
-                            <td className="px-6 py-4.5">
-                              <span className="text-sm font-semibold text-slate-600 truncate max-w-[150px] block">
-                                {row.organization && row.organization !== "—" ? row.organization : "—"}
-                              </span>
-                            </td>
-
-                            {/* Status */}
-                            <td className="px-4 py-4.5">
-                              <span className={cn(
-                                "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold tracking-wider",
-                                row.status === "active" 
-                                  ? "bg-emerald-50 text-emerald-700 font-semibold" 
-                                  : "bg-rose-50 text-rose-700 font-semibold"
-                              )}>
-                                <span className={cn("w-1.5 h-1.5 rounded-full inline-block", row.status === "active" ? "bg-emerald-500" : "bg-rose-500")} />
-                                {row.status === "active" ? "Active" : "Inactive"}
-                              </span>
-                            </td>
-
-                            {/* Action block */}
-                            <td className="px-6 py-4.5 text-right">
-                              <div className="flex items-center justify-end gap-1.5 relative">
-                                <button
-                                  onClick={() => handleOpenViewDetails(row)}
-                                  title="View details"
-                                  className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+                            {checkedInvestors.size > 0 && checkedInvestors.size === currentRows.length && (
+                              <Check className="w-3.5 h-3.5 text-blue-600 stroke-[3]" />
+                            )}
+                            {checkedInvestors.size > 0 && checkedInvestors.size < currentRows.length && (
+                              <div className="w-2.5 h-[2px] bg-slate-400" />
+                            )}
+                          </button>
+                        </th>
+                        <th className="w-24 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">ID</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Name</th>
+                        <th className="w-32 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</th>
+                        <th className="w-44 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Mobile Number</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Company</th>
+                        <th className="w-32 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="w-28 px-6 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {currentRows.length === 0 ? (
+                        <tr>
+                          <td colSpan={9} className="py-24 text-center">
+                            <div className="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                              <Users className="w-8 h-8 text-slate-300" />
+                            </div>
+                            <h3 className="text-slate-900 font-bold text-lg">No investors found</h3>
+                            <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
+                              Try adjusting your filters, query parameters, or add a fresh investor directly.
+                            </p>
+                          </td>
+                        </tr>
+                      ) : (
+                        currentRows.map((row) => {
+                          const isChecked = checkedInvestors.has(String(row.id));
+                          const displayId = `INV-${String(row.id).padStart(3, "0")}`;
+                          
+                          return (
+                            <tr 
+                              key={row.id} 
+                              className={cn(
+                                "group transition-colors align-middle",
+                                isChecked ? "bg-blue-50/20" : "hover:bg-slate-50/50"
+                              )}
+                            >
+                              {/* Checkbox */}
+                              <td className="px-6 py-4.5 text-center">
+                                <button 
+                                  onClick={() => toggleSelectRow(String(row.id))} 
+                                  className={cn(
+                                    "w-5 h-5 rounded border flex items-center justify-center bg-white hover:border-blue-500 transition-all mx-auto",
+                                    isChecked ? "border-blue-500 bg-blue-50" : "border-slate-300"
+                                  )}
                                 >
-                                  <Eye className="w-4.5 h-4.5" />
+                                  {isChecked && <Check className="w-3 h-3 text-blue-600 stroke-[3]" />}
                                 </button>
-                                 {!isClient && (
-                                  <>
-                                    <button
-                                      onClick={() => handleOpenEdit(row)}
-                                      title="Edit investor"
-                                      className="p-1.5 hover:bg-blue-50 text-slate-500 hover:text-blue-600 rounded-lg transition-colors cursor-pointer"
-                                    >
-                                      <Edit className="w-4.5 h-4.5" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleOpenDelete(row)}
-                                      title="Delete investor"
-                                      className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
-                                    >
-                                      <Trash2 className="w-4.5 h-4.5" />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                              </td>
 
-              {/* Table pagination footer */}
-              <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm font-medium text-slate-500">
-                <div>
-                  Showing {totalEntries === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1} to{" "}
-                  {Math.min(currentPage * entriesPerPage, totalEntries)} of {totalEntries} entries
+                              {/* Formatted ID */}
+                              <td className="px-4 py-4.5 font-mono text-xs text-slate-400 font-bold">
+                                {displayId}
+                              </td>
+
+                              {/* Name with initials bubble */}
+                              <td className="px-6 py-4.5">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-extrabold text-xs flex items-center justify-center">
+                                    {row.name.substring(0, 2).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <button 
+                                      onClick={() => handleOpenViewDetails(row)}
+                                      className="text-slate-800 hover:text-blue-600 font-extrabold text-left transition-colors cursor-pointer block outline-none"
+                                    >
+                                      {row.name}
+                                    </button>
+                                    {row.organization && (
+                                      <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wide mt-0.5">
+                                        {row.organization}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Investor Type Badge */}
+                              <td className="px-4 py-4.5">
+                                <span className={cn(
+                                  "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider",
+                                  row.type === "Individual" 
+                                    ? "bg-purple-50 text-purple-700 border border-purple-100" 
+                                    : "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                                )}>
+                                  {row.type}
+                                </span>
+                              </td>
+
+                              {/* Email Address */}
+                              <td className="px-6 py-4.5 text-slate-600 font-medium font-sans">
+                                {row.email}
+                              </td>
+
+                              {/* Mobile Phone Number */}
+                              <td className="px-4 py-4.5 text-slate-500 font-mono text-xs">
+                                {row.mobile || "N/A"}
+                              </td>
+
+                              {/* Organization Organization */}
+                              <td className="px-6 py-4.5 text-slate-600 font-medium">
+                                {row.organization || <span className="text-slate-300 font-bold">-</span>}
+                              </td>
+
+                              {/* Status Badge */}
+                              <td className="px-4 py-4.5">
+                                <span className={cn(
+                                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide",
+                                  row.status === "active" 
+                                    ? "bg-emerald-50 text-emerald-700" 
+                                    : "bg-slate-100 text-slate-500"
+                                )}>
+                                  <span className={cn(
+                                    "w-1.5 h-1.5 rounded-full",
+                                    row.status === "active" ? "bg-emerald-500" : "bg-slate-400"
+                                  )} />
+                                  {row.status}
+                                </span>
+                              </td>
+
+                              {/* Hover Action Triggers */}
+                              <td className="px-6 py-4.5 text-right">
+                                <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button 
+                                    onClick={() => handleOpenViewDetails(row)}
+                                    title="View Portfolio"
+                                    className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition-colors cursor-pointer"
+                                  >
+                                    <Eye className="w-4.5 h-4.5" />
+                                  </button>
+                                  
+                                  {!isClient && (
+                                    <>
+                                      <button 
+                                        onClick={() => handleOpenEdit(row)}
+                                        title="Modify Details"
+                                        className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-lg transition-colors cursor-pointer"
+                                      >
+                                        <Edit className="w-4.5 h-4.5" />
+                                      </button>
+                                      <button 
+                                        onClick={() => handleOpenDelete(row)}
+                                        title="Delete Account"
+                                        className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                                      >
+                                        <Trash2 className="w-4.5 h-4.5" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1 || loading}
-                    className="p-2 border border-slate-200 bg-white rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
+                {/* Table pagination footer */}
+                <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm font-medium text-slate-500">
+                  <div>
+                    Showing {totalEntries === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1} to{" "}
+                    {Math.min(currentPage * entriesPerPage, totalEntries)} of {totalEntries} entries
+                  </div>
 
-                  {Array.from({ length: totalPages }).map((_, idx) => {
-                    const pageNum = idx + 1;
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={cn(
-                          "w-9 h-9 flex items-center justify-center rounded-xl font-bold transition-all",
-                          currentPage === pageNum 
-                            ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" 
-                            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800"
-                        )}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1 || loading}
+                      className="p-2 border border-slate-200 bg-white rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
 
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages || loading}
-                    className="p-2 border border-slate-200 bg-white rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                    {Array.from({ length: totalPages }).map((_, idx) => {
+                      const pageNum = idx + 1;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={cn(
+                            "w-9 h-9 flex items-center justify-center rounded-xl font-bold transition-all",
+                            currentPage === pageNum 
+                              ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" 
+                              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+                          )}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages || loading}
+                      className="p-2 border border-slate-200 bg-white rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-            </motion.div>
-          </motion.div>
-        )}
+              </motion.div>
+            </div>
+          )}
+        </motion.div>
+      )}
 
         {/* -- VIEW 2: ADD NEW INVESTOR VIEW (Screenshot 6 Layout) -- */}
         {activeView === "add" && (

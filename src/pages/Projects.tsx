@@ -4,6 +4,7 @@ import { RootState } from "../store";
 import { Project } from "../types";
 import { BaseModal } from "../components/BaseModal";
 import { cn } from "../lib/utils";
+import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Folder,
@@ -484,7 +485,6 @@ export const Projects = () => {
         )}
       </AnimatePresence>
 
-      {/* ======================= VIEW A: PROJECTS LIST VIEW ======================= */}
       {viewState === "list" && (
         <div className="space-y-6">
           
@@ -504,6 +504,19 @@ export const Projects = () => {
               </button>
             )}
           </div>
+
+          {loading ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+              </div>
+              <TableSkeleton />
+            </div>
+          ) : (
+            <>
 
           {/* Statistics Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -931,11 +944,11 @@ export const Projects = () => {
                 )}
               </div>
             )}
-
-          </div>
-
-        </div>
-      )}
+            </div>
+          </>
+        )}
+      </div>
+    )}
 
 
       {/* ======================= VIEW B: ADD NEW PROJECT VIEW ======================= */}

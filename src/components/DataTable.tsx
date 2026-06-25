@@ -13,8 +13,8 @@ interface Column {
 interface DataTableProps {
   columns: Column[];
   data: any[];
-  searchTerm: string;
-  onSearchChange: (value: string) => void;
+  searchTerm?: string;
+  onSearchChange?: (value: string) => void;
   emptyMessage?: string;
   emptyIcon?: ReactNode;
   title?: string;
@@ -31,7 +31,7 @@ const item = {
 export const DataTable = ({ 
   columns, 
   data, 
-  searchTerm, 
+  searchTerm = "", 
   onSearchChange,
   emptyMessage = "No records found",
   emptyIcon,
@@ -41,7 +41,7 @@ export const DataTable = ({
 }: DataTableProps) => {
   return (
     <motion.div variants={item} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-      {(title || searchTerm !== undefined || actions) && (
+      {(title || onSearchChange || actions) && (
         <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="flex-1">
             {title && <h3 className="text-lg font-display font-bold text-slate-900">{title}</h3>}

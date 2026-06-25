@@ -277,6 +277,8 @@ export function initializeMockApi() {
 
         if (path === "/login") {
           targetPath = "/Auth/login";
+        } else if (path === "/logout") {
+          targetPath = "/Auth/logout";
         } else if (path === "/register") {
           targetPath = "/Auth/register";
         } else if (path === "/register-verify") {
@@ -419,87 +421,7 @@ export function initializeMockApi() {
             });
           }
         } else if (path === "/projects" || path.startsWith("/projects/")) {
-          // Since there is no projects controller on the backend, route this request to the client-side mock emulator database.
-          const db = loadDB();
-          let body: any = {};
-          if (init?.body && typeof init.body === "string") {
-            try {
-              body = JSON.parse(init.body);
-            } catch (err) {}
-          }
-          
-          if (path === "/projects" && method === "GET") {
-            const blob = new Blob([JSON.stringify(db.projects)], { type: "application/json" });
-            return new Response(blob, { status: 200, headers: { "Content-Type": "application/json" } });
-          }
-          
-          if (path === "/projects" && method === "POST") {
-            const { title, description, budget, duration, start_date, end_date, comments, status } = body;
-            const newId = String(db.projects.length > 0 ? Math.max(...db.projects.map(p => Number(p.id))) + 1 : 1);
-            const newProj = {
-              id: newId,
-              title,
-              description,
-              budget: Number(budget) || 0,
-              duration,
-              start_date,
-              end_date,
-              comments,
-              status: status || "active"
-            };
-            db.projects.push(newProj);
-            saveDB(db);
-            const blob = new Blob([JSON.stringify(newProj)], { type: "application/json" });
-            return new Response(blob, { status: 201, headers: { "Content-Type": "application/json" } });
-          }
-          
-          const projectMatch = path.match(/^\/projects\/([^/]+)$/);
-          if (projectMatch && method === "PUT") {
-            const targetId = projectMatch[1];
-            const { title, description, budget, duration, start_date, end_date, comments, status } = body;
-            const idx = db.projects.findIndex(p => String(p.id) === String(targetId));
-            if (idx === -1) {
-              const blob = new Blob([JSON.stringify({ message: "Project not found." })], { type: "application/json" });
-              return new Response(blob, { status: 404, headers: { "Content-Type": "application/json" } });
-            }
-            db.projects[idx] = {
-              ...db.projects[idx],
-              title,
-              description,
-              budget: Number(budget) || 0,
-              duration,
-              start_date,
-              end_date,
-              comments,
-              status: status || "active"
-            };
-            saveDB(db);
-            const blob = new Blob([JSON.stringify(db.projects[idx])], { type: "application/json" });
-            return new Response(blob, { status: 200, headers: { "Content-Type": "application/json" } });
-          }
-          
-          if (projectMatch && method === "DELETE") {
-            const targetId = projectMatch[1];
-            db.projects = db.projects.filter(p => String(p.id) !== String(targetId));
-            saveDB(db);
-            const blob = new Blob([JSON.stringify({ success: true })], { type: "application/json" });
-            return new Response(blob, { status: 200, headers: { "Content-Type": "application/json" } });
-          }
-          
-          const projectStatusMatch = path.match(/^\/projects\/([^/]+)\/status$/);
-          if (projectStatusMatch && method === "PATCH") {
-            const targetId = projectStatusMatch[1];
-            const { status } = body;
-            const idx = db.projects.findIndex(p => String(p.id) === String(targetId));
-            if (idx === -1) {
-              const blob = new Blob([JSON.stringify({ message: "Project not found." })], { type: "application/json" });
-              return new Response(blob, { status: 404, headers: { "Content-Type": "application/json" } });
-            }
-            db.projects[idx].status = status;
-            saveDB(db);
-            const blob = new Blob([JSON.stringify({ success: true, message: "Project status modified." })], { type: "application/json" });
-            return new Response(blob, { status: 200, headers: { "Content-Type": "application/json" } });
-          }
+          targetPath = path.replace(/^\/projects/, "/admin/projects");
         } else {
           shouldTranslate = false;
         }
@@ -1059,11 +981,7 @@ export function initializeMockApi() {
 
       return jsonResponse({ success: true, message: "Project status modified." });
     }
-
-    // 7. DOWNLOAD POSTMAN COLLECTION VIA CLIENT MOCK
-    if (pathname === "/api/postman-collection" && method === "GET") {
-      return originalFetch(input, init);
-    }
+    
 
     // Fallback error
     return Promise.resolve(new Response(JSON.stringify({ message: `Mock route ${method} ${pathname} not found.` }), {

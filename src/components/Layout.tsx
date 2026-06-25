@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
+import { API_BASE_URL } from "../config/api";
 
 export const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -53,7 +54,18 @@ export const Layout = () => {
     { name: "Documents", path: "/documents", icon: FileText, roles: ["admin", "manager", "client"] },
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      await fetch(`${API_BASE_URL}/api/logout`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+    } catch (e) {
+      console.error("Logout API request failed", e);
+    }
     dispatch(logout());
     navigate("/login");
   };
@@ -156,27 +168,6 @@ export const Layout = () => {
         <div className="px-3 py-4 flex-shrink-0">
           <div className="h-px bg-white/5 w-full mb-4 mx-3" />
           
-          <a 
-            href="/postman_collection.json" 
-            download="postman_collection.json"
-            className="flex items-center w-full h-12 rounded-xl text-slate-400 hover:bg-blue-600/10 hover:text-blue-400 transition-all font-medium group mb-2"
-          >
-            <div className="w-14 h-12 flex-shrink-0 flex items-center justify-center">
-              <Download className="w-5 h-5 text-slate-400 group-hover:text-blue-400 transition-transform duration-300 group-hover:scale-110" />
-            </div>
-            <AnimatePresence mode="wait">
-              {isSidebarOpen && (
-                <motion.span 
-                  initial={{ opacity: 0, x: -5 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -5 }}
-                  className="text-sm"
-                >
-                  Postman API
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </a>
 
           <button 
             onClick={handleLogout}

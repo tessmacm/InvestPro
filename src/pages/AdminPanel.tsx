@@ -8,13 +8,18 @@ import {
   CheckCircle2,
   XCircle,
   X,
-  Edit
+  Edit,
+  Shield,
+  UserCheck,
+  Plus,
+  Search
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { User, Role } from "../types";
 import { cn } from "../lib/utils";
 import { DataTable } from "../components/DataTable";
 import { API_BASE_URL } from "../config/api";
+import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
 
 const container = {
   hidden: { opacity: 0 },
@@ -36,6 +41,7 @@ export const AdminPanel = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,6 +61,7 @@ export const AdminPanel = () => {
   }, []);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/users`, {
         headers: {
@@ -66,6 +73,8 @@ export const AdminPanel = () => {
       setUsers(data);
     } catch (error) {
       console.error("Failed to fetch users");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -448,6 +457,12 @@ export const AdminPanel = () => {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Derived stats
+  const totalUsersCount = users.length;
+  const activeUsersCount = users.filter(u => u.status === "active").length;
+  const adminUsersCount = users.filter(u => u.role === "admin").length;
+  const clientUsersCount = users.filter(u => u.role === "client").length;
+
   return (
     <motion.div 
       variants={container}
@@ -458,28 +473,118 @@ export const AdminPanel = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <motion.div variants={item}>
           <h1 className="text-3xl font-display font-extrabold text-slate-900">User Management</h1>
-          <p className="text-slate-500 mt-1">Manage platform roles, permissions and account statuses.</p>
+          <p className="text-slate-500 mt-1 font-medium">Manage platform roles, permissions and account statuses.</p>
         </motion.div>
         {isAdminUser && (
           <motion.button 
             variants={item} 
             onClick={openAddModal}
-            className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 cursor-pointer"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-[0.98] transition-transform flex-shrink-0 self-start md:self-auto"
           >
-            <Users className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             Add New User
           </motion.button>
         )}
       </div>
 
-      <DataTable 
-        columns={columns}
-        data={filteredUsers}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        emptyMessage="No users found"
-        emptyIcon={<Users className="w-8 h-8 text-slate-300" />}
-      />
+      {loading ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
+          <TableSkeleton />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          
+          {/* Statistics Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Total Users */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Total Users</span>
+                </div>
+                <div className="flex items-baseline gap-2 pt-2">
+                  <span className="text-3xl font-extrabold text-slate-900">{totalUsersCount}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Users */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                    <UserCheck className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Active Users</span>
+                </div>
+                <div className="flex items-baseline gap-2 pt-2">
+                  <span className="text-3xl font-extrabold text-slate-900">{activeUsersCount}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Users */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Admins</span>
+                </div>
+                <div className="flex items-baseline gap-2 pt-2">
+                  <span className="text-3xl font-extrabold text-slate-900">{adminUsersCount}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Client Users */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Clients</span>
+                </div>
+                <div className="flex items-baseline gap-2 pt-2">
+                  <span className="text-3xl font-extrabold text-slate-900">{clientUsersCount}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Search/Filter Panel */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="relative w-full md:max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search users by name or email..."
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-transparent focus:border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 rounded-xl transition-all text-sm font-semibold"
+              />
+            </div>
+          </div>
+
+          <DataTable 
+            columns={columns}
+            data={filteredUsers}
+            emptyMessage="No users found"
+            emptyIcon={<Users className="w-8 h-8 text-slate-300" />}
+          />
+        </div>
+      )}
 
       <AnimatePresence>
         {isModalOpen && (

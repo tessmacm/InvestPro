@@ -10,12 +10,15 @@ import {
   FileImage, 
   File, 
   Calendar,
+  CheckCircle,
+  Search
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Document } from "../types";
 import { DataTable } from "../components/DataTable";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL } from "../config/api";
+import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
 
 const container = {
   hidden: { opacity: 0 },
@@ -33,24 +36,20 @@ const item = {
 };
 
 export const Documents = () => {
+  const { user } = useSelector((state: RootState) => state.auth);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { user } = useSelector((state: RootState) => state.auth);
-
-  // Form State
   const [formData, setFormData] = useState({
     title: "",
     type: "PDF"
   });
 
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
-
   const fetchDocuments = async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/documents`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/documents`, {
         headers: {
           "x-user-role": user?.role || "",
           "x-user-id": user?.id || ""
@@ -59,50 +58,51 @@ export const Documents = () => {
       const data = await response.json();
       setDocuments(data);
     } catch (error) {
-      console.error("Failed to fetch documents");
+      console.error("Failed to fetch documents", error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (user?.role === "client") {
-      alert("Access Denied. Clients are not authorized to upload documents.");
-      return;
-    }
+    if (!formData.title) return;
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/documents`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/documents`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "x-user-role": user?.role || "",
           "x-user-id": user?.id || ""
         },
         body: JSON.stringify({
-          ...formData,
-          size: "0.2 MB", // Mock size
-          uploaded_by: user?.name || "System",
-          url: "#"
-        }),
+          title: formData.title,
+          type: formData.type,
+          size: "0.2 MB",
+          url: "#",
+          uploaded_by: user?.id || "System Admin"
+        })
       });
-
       if (response.ok) {
-        fetchDocuments();
         setIsModalOpen(false);
         setFormData({ title: "", type: "PDF" });
+        fetchDocuments();
       }
     } catch (error) {
-      console.error("Failed to add document");
+      console.error("Failed to upload document", error);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (user?.role === "client") {
-      alert("Access Denied. Clients are not authorized to delete documents.");
-      return;
-    }
-    if (!confirm("Are you sure you want to delete this document?")) return;
+  const handleDelete = async (id: number | string) => {
+    if (!window.confirm("Are you sure you want to delete this document?")) return;
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/documents/${id}`, { 
+      const response = await fetch(`${API_BASE_URL}/api/admin/documents/${id}`, {
         method: "DELETE",
         headers: {
           "x-user-role": user?.role || "",
@@ -110,33 +110,32 @@ export const Documents = () => {
         }
       });
       if (response.ok) {
-        setDocuments(documents.filter(d => d.id !== id));
+        fetchDocuments();
       }
     } catch (error) {
-      console.error("Failed to delete document");
+      console.error("Failed to delete document", error);
     }
   };
 
   const getFileIcon = (type: string) => {
-    const t = type.toUpperCase();
-    if (t === 'PDF') return <FileText className="w-5 h-5 text-red-500" />;
-    if (t === 'DOCX' || t === 'DOC') return <File className="w-5 h-5 text-blue-500" />;
-    if (t === 'XLSX' || t === 'CSV') return <FileCode className="w-5 h-5 text-emerald-500" />;
-    if (t === 'JPG' || t === 'PNG') return <FileImage className="w-5 h-5 text-purple-500" />;
-    return <FileText className="w-5 h-5 text-slate-500" />;
+    const t = type.toLowerCase();
+    if (t.includes("pdf")) return <FileText className="w-8 h-8 text-rose-500" />;
+    if (t.includes("image") || t.includes("png") || t.includes("jpg")) return <FileImage className="w-8 h-8 text-blue-500" />;
+    if (t.includes("excel") || t.includes("csv") || t.includes("sheet")) return <FileCode className="w-8 h-8 text-emerald-500" />;
+    return <File className="w-8 h-8 text-slate-500" />;
   };
 
   const columns = [
     {
       header: "Document",
       render: (d: Document) => (
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-blue-50 transition-colors">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center">
             {getFileIcon(d.type)}
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-900">{d.title}</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{d.size} • {d.type}</p>
+            <h4 className="font-extrabold text-slate-900 text-sm hover:text-blue-600 cursor-pointer">{d.title}</h4>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 inline-block">{d.type}</span>
           </div>
         </div>
       )
@@ -178,7 +177,7 @@ export const Documents = () => {
               onClick={() => handleDelete(d.id)}
               className="p-2 hover:bg-red-50 text-red-500 rounded-xl transition-colors"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4.5 h-4.5" />
             </button>
           )}
         </div>
@@ -191,6 +190,12 @@ export const Documents = () => {
     d.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Derived stats
+  const totalDocsCount = documents.length;
+  const pdfDocsCount = documents.filter(d => d.type.toUpperCase().includes("PDF")).length;
+  const sheetDocsCount = documents.filter(d => d.type.toUpperCase().includes("XLSX") || d.type.toUpperCase().includes("CSV")).length;
+  const wordDocsCount = documents.filter(d => d.type.toUpperCase().includes("DOC") || d.type.toUpperCase().includes("DOCX")).length;
+
   return (
     <motion.div 
       variants={container}
@@ -201,28 +206,118 @@ export const Documents = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <motion.div variants={item}>
           <h1 className="text-3xl font-display font-extrabold text-slate-900">Document Repository</h1>
-          <p className="text-slate-500 mt-1">Access secure reports, agreements, and compliance files.</p>
+          <p className="text-slate-500 mt-1 font-medium">Access secure reports, agreements, and compliance files.</p>
         </motion.div>
         {user?.role !== 'client' && (
           <motion.button 
             variants={item}
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-[0.98] transition-transform flex-shrink-0 self-start md:self-auto"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             Upload Document
           </motion.button>
         )}
       </div>
 
-      <DataTable 
-        columns={columns}
-        data={filteredDocs}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        emptyMessage="No documents found"
-        emptyIcon={<FileText className="w-8 h-8 text-slate-300" />}
-      />
+      {loading ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
+          <TableSkeleton />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          
+          {/* Statistics Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Total Documents */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Total Documents</span>
+                </div>
+                <div className="flex items-baseline gap-2 pt-2">
+                  <span className="text-3xl font-extrabold text-slate-900">{totalDocsCount}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* PDFs */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">PDF Files</span>
+                </div>
+                <div className="flex items-baseline gap-2 pt-2">
+                  <span className="text-3xl font-extrabold text-slate-900">{pdfDocsCount}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Spreadsheets */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                    <FileCode className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Spreadsheets</span>
+                </div>
+                <div className="flex items-baseline gap-2 pt-2">
+                  <span className="text-3xl font-extrabold text-slate-900">{sheetDocsCount}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Word Docs */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                    <File className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Word Docs</span>
+                </div>
+                <div className="flex items-baseline gap-2 pt-2">
+                  <span className="text-3xl font-extrabold text-slate-900">{wordDocsCount}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Search/Filter Panel */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="relative w-full md:max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search documents by title or type..."
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-transparent focus:border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 rounded-xl transition-all text-sm font-semibold"
+              />
+            </div>
+          </div>
+
+          <DataTable 
+            columns={columns}
+            data={filteredDocs}
+            emptyMessage="No documents found"
+            emptyIcon={<FileText className="w-8 h-8 text-slate-300" />}
+          />
+        </div>
+      )}
 
       <BaseModal
         isOpen={isModalOpen}
