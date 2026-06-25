@@ -102,7 +102,7 @@ export const Documents = () => {
         ? `/uploads/${selectedFile.name}` 
         : "#";
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/documents`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/documents?id=0`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
