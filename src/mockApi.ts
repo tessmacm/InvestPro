@@ -314,7 +314,8 @@ export function initializeMockApi() {
                 Email: bodyObj.email || "",
                 Password: bodyObj.password || "password",
                 FirstName: firstName,
-                LastName: lastName
+                LastName: lastName,
+                Role: bodyObj.role || "admin"
               };
               newBody = JSON.stringify(mappedCreate);
               headers.set("Content-Type", "application/json");
@@ -445,7 +446,7 @@ export function initializeMockApi() {
                 id: u.Id || u.id,
                 email: u.Email || u.email,
                 name: `${u.FirstName || u.firstName || ""} ${u.LastName || u.lastName || ""}`.trim() || u.Email || u.email,
-                role: "admin", // Backend returns admin users
+                role: u.Role || u.role || "admin",
                 status: (u.IsActive !== undefined ? u.IsActive : u.isActive) ? "active" : "inactive"
               }));
               

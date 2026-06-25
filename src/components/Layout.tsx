@@ -47,11 +47,11 @@ export const Layout = () => {
   }, [location.pathname, isMobile]);
 
   const menuItems = [
-    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["admin", "manager", "client"] },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["admin", "manager", "client", "investor"] },
     { name: "Admin Panel", path: "/admin", icon: ShieldCheck, roles: ["admin"] },
-    { name: "Investors", path: "/investors", icon: Users, roles: ["admin", "manager", "client"] },
-    { name: "Projects", path: "/projects", icon: Folder, roles: ["admin", "manager", "client"] },
-    { name: "Documents", path: "/documents", icon: FileText, roles: ["admin", "manager", "client"] },
+    { name: "Investors", path: "/investors", icon: Users, roles: ["admin", "manager", "client", "investor"] },
+    { name: "Projects", path: "/projects", icon: Folder, roles: ["admin", "manager", "client", "investor"] },
+    { name: "Documents", path: "/documents", icon: FileText, roles: ["admin", "manager", "client", "investor"] },
   ];
 
   const handleLogout = async () => {

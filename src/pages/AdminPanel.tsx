@@ -380,6 +380,18 @@ export const AdminPanel = () => {
               >
                 Client
               </button>
+              <button
+                type="button"
+                onClick={() => updateRole(u.id, "investor")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all duration-250 cursor-pointer",
+                  u.role === "investor" 
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-500/10" 
+                    : "text-slate-500 hover:text-slate-800"
+                )}
+              >
+                Investor
+              </button>
             </div>
           );
         }
@@ -390,6 +402,7 @@ export const AdminPanel = () => {
             "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold ring-1 ring-inset capitalize select-none",
             u.role === 'admin' ? "text-amber-700 bg-amber-50/50 ring-amber-600/10" :
             u.role === 'manager' ? "text-blue-700 bg-blue-50/50 ring-blue-600/10" :
+            u.role === 'investor' ? "text-purple-700 bg-purple-50/50 ring-purple-600/10" :
             "text-slate-600 bg-slate-50 ring-slate-600/10"
           )}>
             {u.role}
@@ -678,7 +691,7 @@ export const AdminPanel = () => {
                     Role selection
                   </label>
                   <div className="flex rounded-xl p-0.5 bg-slate-100 border border-slate-200">
-                    {(["admin", "manager", "client"] as Role[]).map((roleOption) => {
+                    {(["admin", "manager", "client", "investor"] as Role[]).map((roleOption) => {
                       const isLocked = selectedUser && (selectedUser.email === "admin@investpro.com" || selectedUser.name === "System Admin");
                       return (
                         <button

@@ -34,7 +34,7 @@ import {
 
 export const Projects = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const isGuest = user?.role === "client";
+  const isGuest = user?.role === "client" || user?.role === "investor";
 
   // Views state: 'list' | 'add' | 'details' | 'edit'
   const [viewState, setViewState] = useState<"list" | "add" | "details" | "edit">("list");

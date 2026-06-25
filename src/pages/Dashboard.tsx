@@ -84,6 +84,7 @@ const StatCardSkeleton = () => (
 
 export const Dashboard = () => {
   const { user } = useSelector((state: RootState) => state.auth);
+  const isReadOnly = user?.role === "client" || user?.role === "investor";
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     users: 0,
@@ -322,9 +323,9 @@ export const Dashboard = () => {
               <Link to="/investors" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                    <Plus className="w-4 h-4 text-blue-600" />
+                    {isReadOnly ? <Users className="w-4 h-4 text-blue-600" /> : <Plus className="w-4 h-4 text-blue-600" />}
                   </div>
-                  <span className="text-sm font-bold text-slate-700">Add New Investor</span>
+                  <span className="text-sm font-bold text-slate-700">{isReadOnly ? "View Registered Investors" : "Add New Investor"}</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
               </Link>
@@ -333,7 +334,7 @@ export const Dashboard = () => {
                   <div className="p-2 bg-violet-100 rounded-lg group-hover:bg-violet-200 transition-colors">
                     <FileText className="w-4 h-4 text-violet-600" />
                   </div>
-                  <span className="text-sm font-bold text-slate-700">Upload Documents</span>
+                  <span className="text-sm font-bold text-slate-700">{isReadOnly ? "View Documents" : "Upload Documents"}</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
               </Link>
@@ -342,7 +343,7 @@ export const Dashboard = () => {
                   <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
                     <Folder className="w-4 h-4 text-blue-600" />
                   </div>
-                  <span className="text-sm font-bold text-slate-700">Manage Active Projects</span>
+                  <span className="text-sm font-bold text-slate-700">{isReadOnly ? "View Active Projects" : "Manage Active Projects"}</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
               </Link>

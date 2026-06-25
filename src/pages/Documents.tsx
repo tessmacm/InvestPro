@@ -37,6 +37,7 @@ const item = {
 
 export const Documents = () => {
   const { user } = useSelector((state: RootState) => state.auth);
+  const isReadOnly = user?.role === "client" || user?.role === "investor";
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -202,7 +203,7 @@ export const Documents = () => {
           <button className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400">
             <Download className="w-4 h-4" />
           </button>
-          {user?.role !== 'client' && (
+          {!isReadOnly && (
             <button 
               onClick={() => handleDelete(d.id)}
               className="p-2 hover:bg-red-50 text-red-500 rounded-xl transition-colors"
@@ -238,7 +239,7 @@ export const Documents = () => {
           <h1 className="text-3xl font-display font-extrabold text-slate-900">Document Repository</h1>
           <p className="text-slate-500 mt-1 font-medium">Access secure reports, agreements, and compliance files.</p>
         </motion.div>
-        {user?.role !== 'client' && (
+        {!isReadOnly && (
           <motion.button 
             variants={item}
             onClick={() => setIsModalOpen(true)}

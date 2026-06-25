@@ -46,7 +46,7 @@ const itemVariants = {
 
 export const Investors = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const isClient = user?.role === "client";
+  const isClient = user?.role === "client" || user?.role === "investor";
 
   // Primary States
   const [investors, setInvestors] = useState<Investor[]>([]);
