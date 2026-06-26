@@ -12,7 +12,8 @@ import {
   Shield,
   UserCheck,
   Plus,
-  Search
+  Search,
+  AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { User, Role } from "../types";
@@ -42,6 +43,16 @@ export const AdminPanel = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Toast state
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const showToast = (type: "success" | "error", message: string) => {
+    setToast({ type, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -80,7 +91,7 @@ export const AdminPanel = () => {
 
   const updateRole = async (userId: string, newRole: Role) => {
     if (!isAdminUser) {
-      alert("Only admins can modify roles.");
+      showToast("error", "Only admins can modify roles.");
       return;
     }
     try {
@@ -95,19 +106,21 @@ export const AdminPanel = () => {
       });
       if (response.ok) {
         setUsers(users.map(u => String(u.id) === String(userId) ? { ...u, role: newRole } : u));
+        showToast("success", "User role updated successfully!");
       } else {
         const text = await response.text();
         const data = text ? JSON.parse(text) : {};
-        alert(data.message || data.Message || "Failed to update role");
+        showToast("error", data.message || data.Message || "Failed to update role");
       }
     } catch (error) {
       console.error("Failed to update role", error);
+      showToast("error", "Failed to update role");
     }
   };
 
   const updateStatus = async (userId: string, newStatus: "active" | "inactive") => {
     if (!isAdminUser) {
-      alert("Only admins can modify status.");
+      showToast("error", "Only admins can modify status.");
       return;
     }
     try {
@@ -122,19 +135,21 @@ export const AdminPanel = () => {
       });
       if (response.ok) {
         setUsers(users.map(u => String(u.id) === String(userId) ? { ...u, status: newStatus } : u));
+        showToast("success", "User status updated successfully!");
       } else {
         const text = await response.text();
         const data = text ? JSON.parse(text) : {};
-        alert(data.message || data.Message || "Failed to update status");
+        showToast("error", data.message || data.Message || "Failed to update status");
       }
     } catch (error) {
       console.error("Failed to update status", error);
+      showToast("error", "Failed to update status");
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
     if (!isAdminUser) {
-      alert("Only admins can delete users.");
+      showToast("error", "Only admins can delete users.");
       return;
     }
     try {
@@ -148,20 +163,22 @@ export const AdminPanel = () => {
       if (response.ok) {
         setUsers(users.filter(u => String(u.id) !== String(userId)));
         setDeleteConfirmId(null);
+        showToast("success", "User deleted successfully.");
       } else {
         const text = await response.text();
         const data = text ? JSON.parse(text) : {};
-        alert(data.message || data.Message || "Failed to delete user");
+        showToast("error", data.message || data.Message || "Failed to delete user");
       }
     } catch (error) {
       console.error("Failed to delete user", error);
+      showToast("error", "Failed to delete user");
     }
   };
 
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email) {
-      alert("Name and email are required.");
+      showToast("error", "Name and email are required.");
       return;
     }
 
@@ -206,11 +223,11 @@ export const AdminPanel = () => {
         } catch (_) {}
       }
       
-      alert(isEdit ? "User updated successfully!" : "User created successfully!");
+      showToast("success", isEdit ? "User updated successfully!" : "User created successfully!");
       setIsModalOpen(false);
       fetchUsers(); // Refresh complete list
     } catch (error: any) {
-      alert(error.message || "Failed to save user");
+      showToast("error", error.message || "Failed to save user");
     }
   };
 
@@ -767,6 +784,28 @@ export const AdminPanel = () => {
           </div>
         )}
       </AnimatePresence>
+      {/* Toast Notification Top Right */}
+      <div className="fixed top-6 right-6 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none">
+        {toast && (
+          <div className={`p-4 rounded-xl border shadow-xl flex items-start gap-3 backdrop-blur-md transition-all duration-300 transform translate-y-0 opacity-100 pointer-events-auto ${
+              toast.type === "success" 
+                ? "bg-emerald-50/95 border-emerald-100/80 text-emerald-800" 
+                : "bg-rose-50/95 border-rose-100/80 text-rose-800"
+            }`}>
+            {toast.type === "success" ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+            )}
+            <div className="flex-1">
+              <p className="text-sm font-semibold">{toast.message}</p>
+            </div>
+            <button onClick={() => setToast(null)} className="p-1 hover:bg-black/5 rounded-lg transition-colors cursor-pointer">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 };
