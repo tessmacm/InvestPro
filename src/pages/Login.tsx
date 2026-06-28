@@ -2,105 +2,140 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { loginStart, loginSuccess, loginFailure } from "../store/authSlice";
 import { RootState } from "../store";
-import { ShieldCheck, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { ShieldCheck, Mail, Loader2, ArrowRight, KeyRound, ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
 import { API_BASE_URL } from "../config/api";
 
-const loginSchema = z.object({
+const emailSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  rememberMe: z.boolean().optional(),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type EmailFormValues = z.infer<typeof emailSchema>;
 
 export const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [searchParams] = useSearchParams();
   const { loading, error } = useSelector((state: RootState) => state.auth);
-  
-  const [magicLoading, setMagicLoading] = useState(false);
-  const [magicError, setMagicError] = useState("");
+
+  const [hasUsers, setHasUsers] = useState<boolean | null>(null);
+  const [step, setStep] = useState<"email" | "otp">("email");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [otpValue, setOtpValue] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [verificationError, setVerificationError] = useState("");
+  const [sandboxOtp, setSandboxOtp] = useState("");
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<EmailFormValues>({
+    resolver: zodResolver(emailSchema),
   });
 
+  // Check if DB is empty on load
   useEffect(() => {
-    const handleMagicLogin = async () => {
-      const token = searchParams.get("token");
-      if (!token) return;
-
-      setMagicLoading(true);
-      dispatch(loginStart());
+    const checkUsersExist = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/magic-login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        });
-
-        const result = await response.json();
+        const response = await fetch(`${API_BASE_URL}/api/auth/check-users`);
         if (response.ok) {
-          dispatch(loginSuccess({ 
-            user: result.user, 
-            token: result.token, 
-            rememberMe: true 
-          }));
-          navigate("/dashboard");
-        } else {
-          setMagicError(result.message || "Invalid or expired magic link");
-          dispatch(loginFailure(result.message || "Magic login failed"));
+          const data = await response.json();
+          setHasUsers(data.hasUsers);
+          if (data.hasUsers === false) {
+            navigate("/register");
+          }
         }
       } catch (err) {
-        setMagicError("Network error occurred during magic login");
-        dispatch(loginFailure("Network error occurred"));
-      } finally {
-        setMagicLoading(false);
+        console.error("Failed to check users exist status:", err);
       }
     };
+    checkUsersExist();
+  }, [navigate]);
 
-    handleMagicLogin();
-  }, [searchParams, navigate, dispatch]);
-
-  const onSubmit = async (data: LoginFormValues) => {
+  const onSendOtp = async (data: EmailFormValues) => {
     dispatch(loginStart());
+    setVerificationError("");
     try {
-      const response = await fetch(`${API_BASE_URL}/api/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/send-login-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.email, password: data.password }),
+        body: JSON.stringify({ email: data.email }),
       });
 
       const result = await response.json();
       if (response.ok) {
-        dispatch(loginSuccess({ 
-          user: result.user, 
-          token: result.token, 
-          rememberMe: !!data.rememberMe 
-        }));
-        navigate("/dashboard");
+        setLoginEmail(data.email);
+        if (result.otp) {
+          setSandboxOtp(String(result.otp));
+        }
+        setStep("otp");
+        dispatch(loginFailure("")); // clear state errors
       } else {
-        dispatch(loginFailure(result.message || "Login failed"));
+        dispatch(loginFailure(result.message || "Failed to send verification code"));
       }
     } catch (err) {
       dispatch(loginFailure("Network error occurred"));
     }
   };
 
-  if (magicLoading) {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpValue || otpValue.trim().length < 6) {
+      setVerificationError("Please enter a valid 6-digit OTP code.");
+      return;
+    }
+    setVerificationError("");
+    setVerifying(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify-login-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, otp: otpValue.trim() }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        dispatch(loginSuccess(result));
+        navigate("/dashboard");
+      } else {
+        setVerificationError(result.message || "Invalid or expired OTP");
+      }
+    } catch (err) {
+      setVerificationError("Network error occurred during verification");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setVerificationError("");
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/send-login-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail }),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        if (result.otp) {
+          setSandboxOtp(String(result.otp));
+        }
+        setVerificationError("A new 6-digit login code has been sent to your email!");
+      } else {
+        setVerificationError(result.message || "Failed to resend code");
+      }
+    } catch (err) {
+      setVerificationError("Network error. Unable to resend OTP code.");
+    }
+  };
+
+  if (hasUsers === null) {
     return (
       <div className="min-h-screen relative flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center bg-no-repeat overflow-hidden font-sans">
-        {/* Background Overlay */}
         <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[2px]"></div>
         <div className="relative z-10 w-full max-w-[460px] mx-auto text-center">
           <motion.div 
@@ -110,10 +145,7 @@ export const Login = () => {
           >
             <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
             <div>
-              <h2 className="text-2xl font-display font-bold text-slate-800">Verifying Magic Link...</h2>
-              <p className="text-slate-500 mt-2 text-sm leading-relaxed font-sans">
-                Please wait while we establish your secure passwordless session.
-              </p>
+              <h2 className="text-2xl font-display font-bold text-slate-800">Checking DB State...</h2>
             </div>
           </motion.div>
         </div>
@@ -153,81 +185,126 @@ export const Login = () => {
           transition={{ delay: 0.2 }}
           className="bg-white/95 backdrop-blur-md py-10 px-6 sm:px-10 shadow-2xl shadow-slate-950/20 rounded-[32px] border border-white/20"
         >
-          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600">
-                {error}
-              </div>
-            )}
-            
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2">Email Address</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-slate-400" />
+          {step === "email" ? (
+            <form className="space-y-6" onSubmit={handleSubmit(onSendOtp)}>
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600">
+                  {error}
                 </div>
-                <input
-                  {...register("email")}
-                  type="email"
-                  className="block w-full pl-12 pr-4 py-4 border-0 rounded-2xl bg-[#edf2fd]/70 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm text-slate-900"
-                  placeholder="manager@investpro.com"
-                />
-              </div>
-              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2">Password</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-400" />
+              )}
+              
+              <div>
+                <label className="block text-sm font-semibold text-slate-600 mb-2">Email Address</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    {...register("email")}
+                    type="email"
+                    className="block w-full pl-12 pr-4 py-4 border-0 rounded-2xl bg-[#edf2fd]/70 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm text-slate-900"
+                    placeholder="name@investpro.com"
+                  />
                 </div>
-                <input
-                  {...register("password")}
-                  type="password"
-                  className="block w-full pl-12 pr-4 py-4 border-0 rounded-2xl bg-[#edf2fd]/70 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm text-slate-900"
-                  placeholder="••••••••"
-                />
-              </div>
-              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  {...register("rememberMe")}
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-xs font-semibold text-slate-500 cursor-pointer">
-                  Remember me
-                </label>
+                {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
               </div>
 
-              <div className="text-sm">
-                <Link to="/forgot-password" className="text-xs font-bold text-blue-600 hover:text-blue-500 transition-colors">
-                  Forgot password?
-                </Link>
+              <div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex justify-center items-center py-4 px-4 rounded-2xl shadow-lg shadow-blue-500/20 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      Send Login Code <ArrowRight className="ml-2 w-5 h-5" />
+                    </>
+                  )}
+                </button>
               </div>
-            </div>
+            </form>
+          ) : (
+            <form className="space-y-6" onSubmit={handleVerifyOtp}>
+              {sandboxOtp && (
+                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-sm text-left text-blue-800 flex flex-col gap-2 shadow-sm animate-pulse">
+                  <div className="flex items-start gap-2">
+                    <span className="text-base">💡</span>
+                    <div>
+                      <p className="font-extrabold text-blue-900 leading-tight">Sandbox Tester Mode</p>
+                      <p className="text-xs text-blue-700 mt-0.5">Verification code is <strong className="font-mono text-blue-900 bg-blue-100 px-1.5 py-0.5 rounded">{sandboxOtp}</strong>.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOtpValue(sandboxOtp)}
+                    className="mt-1 w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl active:scale-[0.98] transition-all cursor-pointer text-center flex items-center justify-center gap-1.5"
+                  >
+                    ⚡ Auto-fill Code
+                  </button>
+                </div>
+              )}
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center items-center py-4 px-4 rounded-2xl shadow-lg shadow-blue-500/20 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    Sign In <ArrowRight className="ml-2 w-5 h-5" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+              {verificationError && (
+                <div className={`p-4 rounded-2xl text-sm text-left ${verificationError.includes("sent") ? "bg-emerald-50 border border-emerald-100 text-emerald-700" : "bg-red-50 border border-red-100 text-red-600"}`}>
+                  {verificationError}
+                </div>
+              )}
+
+              <div className="text-left">
+                <label className="block text-sm font-semibold text-slate-600 mb-2">Enter Verification Code</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <KeyRound className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input 
+                    type="text" 
+                    maxLength={6}
+                    value={otpValue}
+                    onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
+                    placeholder="123456" 
+                    className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-[#edf2fd]/70 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-center text-lg font-bold tracking-[8px]" 
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 mt-2 text-center">
+                  Please enter the 6-digit verification code sent to your email.
+                </p>
+              </div>
+
+              <div className="pt-1 flex flex-col gap-3">
+                <button 
+                  type="submit" 
+                  disabled={verifying}
+                  className="w-full flex justify-center items-center py-4 px-4 rounded-2xl shadow-lg shadow-blue-500/20 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                >
+                  {verifying ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verify & Login <ArrowRight className="ml-2 w-5 h-5" /></>}
+                </button>
+
+                <div className="flex items-center justify-between mt-2 pt-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("email");
+                      setOtpValue("");
+                      setVerificationError("");
+                    }}
+                    className="flex items-center text-slate-500 hover:text-slate-800 transition-colors font-semibold"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1" /> Back
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    className="text-blue-600 hover:text-blue-700 transition-colors font-bold"
+                  >
+                    Resend Code
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
 
           <div className="mt-8 pt-8 border-t border-slate-100">
             <p className="text-center text-sm text-slate-500">

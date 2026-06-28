@@ -12,9 +12,9 @@ import { motion } from "motion/react";
 import { API_BASE_URL } from "../config/api";
 
 const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -27,7 +27,8 @@ export const Register = () => {
   // Verification state machine
   const [step, setStep] = useState<"form" | "otp">("form");
   const [registeredEmail, setRegisteredEmail] = useState("");
-  const [registeredName, setRegisteredName] = useState("");
+  const [registeredFirstName, setRegisteredFirstName] = useState("");
+  const [registeredLastName, setRegisteredLastName] = useState("");
   const [otpValue, setOtpValue] = useState("");
   const [verificationError, setVerificationError] = useState("");
   const [verifying, setVerifying] = useState(false);
@@ -45,7 +46,7 @@ export const Register = () => {
   const onSubmit = async (data: RegisterFormValues) => {
     dispatch(loginStart());
     try {
-      const response = await fetch(`${API_BASE_URL}/api/register`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -54,12 +55,12 @@ export const Register = () => {
       const result = await response.json();
       if (response.ok) {
         setRegisteredEmail(data.email);
-        setRegisteredName(data.name);
+        setRegisteredFirstName(data.firstName);
+        setRegisteredLastName(data.lastName);
         if (result.otp) {
           setSandboxOtp(String(result.otp));
         }
         setStep("otp");
-        // Clear login start loading since we transitioned to step 2
         dispatch(loginFailure("")); // clear state errors
       } else {
         dispatch(loginFailure(result.message || "Registration failed"));
@@ -78,7 +79,7 @@ export const Register = () => {
     setVerificationError("");
     setVerifying(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/register-verify`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register-verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: registeredEmail, otp: otpValue.trim() }),
@@ -101,14 +102,13 @@ export const Register = () => {
   const handleResendOtp = async () => {
     setVerificationError("");
     try {
-      const values = getValues();
-      const response = await fetch(`${API_BASE_URL}/api/register`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: registeredEmail,
-          name: registeredName,
-          password: values.password || "TempPass123"
+          firstName: registeredFirstName,
+          lastName: registeredLastName
         }),
       });
       const result = await response.json();
@@ -169,19 +169,35 @@ export const Register = () => {
               )}
               
               <div>
-                <label className="block text-sm font-semibold text-slate-600 mb-1.5">Full Name</label>
+                <label className="block text-sm font-semibold text-slate-600 mb-1.5">First Name</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <User className="h-5 w-5 text-slate-400" />
                   </div>
                   <input 
-                    {...register("name")}
+                    {...register("firstName")}
                     type="text" 
                     className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-[#edf2fd]/70 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm text-slate-900" 
-                    placeholder="John Doe" 
+                    placeholder="John" 
                   />
                 </div>
-                {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
+                {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-600 mb-1.5">Last Name</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input 
+                    {...register("lastName")}
+                    type="text" 
+                    className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-[#edf2fd]/70 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm text-slate-900" 
+                    placeholder="Doe" 
+                  />
+                </div>
+                {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName.message}</p>}
               </div>
 
               <div>
@@ -200,25 +216,7 @@ export const Register = () => {
                 {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-600 mb-1.5">Password</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input 
-                    {...register("password")}
-                    type="password" 
-                    placeholder="••••••••" 
-                    className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-[#edf2fd]/70 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm text-slate-900" 
-                  />
-                </div>
-                {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
-              </div>
 
-              <div className="flex items-center gap-2 text-xs text-slate-500 py-1">
-                <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> At least 8 characters
-              </div>
 
               <div className="pt-2">
                 <button 
