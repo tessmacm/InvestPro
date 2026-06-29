@@ -91,7 +91,8 @@ export const Dashboard = () => {
     investors: 0,
     investment: 0,
     documents: 0,
-    projects: 0
+    projects: 0,
+    totalRoi: 0
   });
 
   const [capitalFlowView, setCapitalFlowView] = useState<"chart" | "list">("chart");
@@ -126,7 +127,8 @@ export const Dashboard = () => {
         investors: data.investors !== undefined ? data.investors : (data.investorCount ?? 0),
         investment: data.investment !== undefined ? data.investment : (data.totalInvestment ?? 0),
         documents: data.documents !== undefined ? data.documents : (data.documentCount ?? 0),
-        projects: data.projects !== undefined ? data.projects : (data.projectCount ?? 0)
+        projects: data.projects !== undefined ? data.projects : (data.projectCount ?? 0),
+        totalRoi: data.totalRoi ?? 0
       });
 
       // Fetch real investments from API
@@ -199,22 +201,22 @@ export const Dashboard = () => {
               color="bg-blue-50 text-blue-600" 
             />
             <StatCard 
-              title="Projects" 
+              title="Ongoing Projects" 
               value={stats.projects.toString()} 
               icon={Folder} 
               trend="12" 
               color="bg-emerald-50 text-emerald-600" 
             />
             <StatCard 
-              title="Documents" 
-              value={stats.documents.toString()} 
-              icon={FileText} 
+              title="Total ROI" 
+              value={`$${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+              icon={TrendingUp} 
               trend="8.5" 
               color="bg-violet-50 text-violet-600" 
             />
             <StatCard 
-              title="Total Users" 
-              value={stats.users.toString()} 
+              title="Total Investors" 
+              value={stats.investors.toString()} 
               icon={Users} 
               trend="2.1" 
               color="bg-amber-50 text-amber-600" 

@@ -381,7 +381,7 @@ export function initializeMockApi() {
               const investors = await investorsRes.json();
               if (Array.isArray(investors)) {
                 investorCount = investors.length;
-                totalInvestment = investors.reduce((sum: number, inv: any) => sum + (Number(inv.Amount || inv.amount || inv.InvestmentAmount || inv.investmentAmount) || 0), 0);
+                totalInvestment = investors.reduce((sum: number, inv: any) => sum + (Number(inv.Amount || inv.amount || inv.InvestmentAmount || inv.investmentAmount || inv.capitalAmount) || 0), 0);
               }
             }
             if (docsRes.ok) {
@@ -389,12 +389,15 @@ export function initializeMockApi() {
               documentCount = Array.isArray(docs) ? docs.length : 0;
             }
 
+            const totalRoi = totalInvestment * 0.075; // Calculate 7.5% average ROI
+
             const statsData = {
               userCount,
               investorCount,
               totalInvestment,
               documentCount,
-              projectCount
+              projectCount,
+              totalRoi
             };
             const blob = new Blob([JSON.stringify(statsData)], { type: "application/json" });
             return new Response(blob, {
@@ -413,7 +416,8 @@ export function initializeMockApi() {
               investorCount: 3,
               totalInvestment: 1850000,
               documentCount: 1,
-              projectCount
+              projectCount,
+              totalRoi: 1850000 * 0.075
             };
             const blob = new Blob([JSON.stringify(dummyStats)], { type: "application/json" });
             return new Response(blob, {
@@ -423,6 +427,14 @@ export function initializeMockApi() {
           }
         } else if (path === "/projects" || path.startsWith("/projects/")) {
           targetPath = path.replace(/^\/projects/, "/admin/projects");
+        } else if (path === "/payments" || path.startsWith("/payments/")) {
+          targetPath = path.replace(/^\/payments/, "/admin/payments");
+        } else if (path === "/roi" || path.startsWith("/roi/")) {
+          targetPath = path.replace(/^\/roi/, "/admin/roi");
+        } else if (path === "/notifications" || path.startsWith("/notifications/")) {
+          targetPath = path.replace(/^\/notifications/, "/admin/notifications");
+        } else if (path === "/reports" || path.startsWith("/reports/")) {
+          targetPath = path.replace(/^\/reports/, "/admin/reports");
         } else {
           shouldTranslate = false;
         }

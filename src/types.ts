@@ -54,3 +54,36 @@ export interface AuthState {
   loading: boolean;
   error: string | null;
 }
+
+export interface Payment {
+  paymentId: number;
+  investorId: number;
+  investorName: string;
+  amount: number;
+  paymentDate: string;
+  status: string;
+}
+
+export interface RoiContract {
+  id: number;
+  investorId: number;
+  investorName: string;
+  projectId: number;
+  projectTitle: string;
+  roiAgreed: number;
+  monthlyPayment: number;
+  nextPaymentDate: string;
+  status: string;
+}
+
+export interface SystemNotification {
+  id: number;
+  title: string;
+  message: string;
+  eventType: string;
+  isRead: boolean;
+  createdAt: string;
+  investorId?: number;
+  investorName?: string;
+  status: string;
+}

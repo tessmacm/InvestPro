@@ -12,7 +12,10 @@ import {
   Users,
   FileText,
   Folder,
-  Download
+  Download,
+  Landmark,
+  TrendingUp,
+  Bell
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -52,6 +55,10 @@ export const Layout = () => {
     { name: "Investors", path: "/investors", icon: Users, roles: ["admin", "manager", "client", "investor"] },
     { name: "Projects", path: "/projects", icon: Folder, roles: ["admin", "manager", "client", "investor"] },
     { name: "Documents", path: "/documents", icon: FileText, roles: ["admin", "manager", "client", "investor"] },
+    { name: "Payments", path: "/payments", icon: Landmark, roles: ["admin", "manager", "client", "investor"] },
+    { name: "ROI", path: "/roi", icon: TrendingUp, roles: ["admin", "manager", "client", "investor"] },
+    { name: "Notifications", path: "/notifications", icon: Bell, roles: ["admin", "manager", "client", "investor"] },
+    { name: "Reports", path: "/reports", icon: Download, roles: ["admin", "manager", "client", "investor"] },
   ];
 
   const handleLogout = async () => {
