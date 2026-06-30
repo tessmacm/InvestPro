@@ -73,8 +73,9 @@ export const Payments = () => {
     <motion.div variants={container} initial="hidden" animate="show" className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-display font-bold text-slate-900">Investor Payments</h2>
-          <p className="text-sm text-slate-500">Track and manage financial deposits and transaction payments.</p>
+          <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Portal &gt; Payments</span>
+          <h2 className="text-2xl font-display font-bold text-slate-900 mt-0.5">Investor Payments</h2>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Track and manage financial deposits and transaction payments.</p>
         </div>
       </div>
 

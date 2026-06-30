@@ -955,19 +955,22 @@ export const Projects = () => {
       {viewState === "add" && (
         <form onSubmit={handleAddProject} className="space-y-6">
           
-          {/* Header row navigation */}
-          <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-100">
-            <div>
-              <h1 className="text-2xl font-display font-extrabold text-slate-900">Add New Project</h1>
-              <p className="text-xs text-slate-400 mt-1 font-semibold">Create and manage your new investment project details.</p>
-            </div>
+          <div className="flex items-center gap-3 pb-2 border-b border-slate-100">
             <button
               type="button"
               onClick={() => setViewState("list")}
-              className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-250 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-colors"
+              className="p-2 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-xl transition-all cursor-pointer bg-white"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Projects
+              <ArrowLeft className="w-5 h-5 text-slate-600" />
             </button>
+            <div>
+              <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
+                Projects &gt; Add Project
+              </span>
+              <h1 className="text-2xl font-display font-bold text-slate-900 mt-0.5">
+                Add New Project
+              </h1>
+            </div>
           </div>
 
           {/* Form container frame design */}
@@ -1123,25 +1126,25 @@ export const Projects = () => {
           
           {/* Header row navigation breadcrumbs */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div>
-              <h1 className="text-2xl font-display font-extrabold text-slate-900">Project Details</h1>
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 font-bold mt-1">
-                <span className="hover:text-blue-600 cursor-pointer" onClick={() => setViewState("list")}>Projects</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-                <span className="text-slate-600">Project Details</span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setViewState("list")}
+                className="p-2 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-xl transition-all cursor-pointer bg-white"
+              >
+                <ArrowLeft className="w-5 h-5 text-slate-600" />
+              </button>
+              <div>
+                <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
+                  Projects &gt; Project Details
+                </span>
+                <h1 className="text-2xl font-display font-bold text-slate-900 mt-0.5">
+                  Project Details
+                </h1>
               </div>
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-auto">
-              
-              <button
-                type="button"
-                onClick={() => setViewState("list")}
-                className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-150 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-all active:scale-95 border border-slate-200"
-              >
-                <ArrowLeft className="w-4 h-4" /> Back to Projects
-              </button>
-
               {!isGuest && (
                 <>
                   <button
@@ -1155,13 +1158,12 @@ export const Projects = () => {
                       setProjectToDelete(selectedProject);
                       setIsDeleteModalOpen(true);
                     }}
-                    className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-all border border-rose-100 animate-pulse-once"
+                    className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-all border border-rose-100"
                   >
                     <Trash2 className="w-4 h-4" /> Delete Project
                   </button>
                 </>
               )}
-
             </div>
           </div>
 
@@ -1446,24 +1448,23 @@ export const Projects = () => {
           
           {/* Header row navigation breadcrumbs */}
           <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-100">
-            <div>
-              <h1 className="text-2xl font-display font-extrabold text-slate-900">Edit Project</h1>
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 font-bold mt-1">
-                <span className="hover:text-blue-600 cursor-pointer" onClick={() => setViewState("list")}>Projects</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-                <span className="hover:text-blue-600 cursor-pointer" onClick={() => setViewState("details")}>Project Details</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-                <span className="text-slate-600">Edit Project</span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setViewState("details")}
+                className="p-2 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-xl transition-all cursor-pointer bg-white"
+              >
+                <ArrowLeft className="w-5 h-5 text-slate-600" />
+              </button>
+              <div>
+                <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
+                  Projects &gt; Project Details &gt; Edit Project
+                </span>
+                <h1 className="text-2xl font-display font-bold text-slate-900 mt-0.5">
+                  Edit Project
+                </h1>
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setViewState("details")}
-              className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-150 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back to Project Details
-            </button>
           </div>
 
           {/* Edit form contents container */}
