@@ -15,7 +15,8 @@ import {
   Download,
   Landmark,
   TrendingUp,
-  Bell
+  Bell,
+  Loader2
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -61,7 +62,12 @@ export const Layout = () => {
     { name: "Reports", path: "/reports", icon: Download, roles: ["admin", "manager", "investor"] },
   ];
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = async () => {
+    setIsLoggingOut(true);
+    // wait a moment for smooth transition
+    await new Promise(resolve => setTimeout(resolve, 1000));
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       await fetch(`${API_BASE_URL}/api/logout`, {
@@ -78,6 +84,27 @@ export const Layout = () => {
   };
 
   const sidebarWidth = isSidebarOpen ? 280 : (isMobile ? 0 : 80);
+
+  if (isLoggingOut) {
+    return (
+      <div className="min-h-screen relative flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center bg-no-repeat overflow-hidden font-sans w-full">
+        <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[2px]"></div>
+        <div className="relative z-10 w-full max-w-[460px] mx-auto text-center">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white/95 backdrop-blur-md py-12 px-10 shadow-2xl rounded-[32px] border border-white/20 flex flex-col items-center space-y-6"
+          >
+            <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
+            <div>
+              <h2 className="text-2xl font-display font-bold text-slate-800">Getting things ready…</h2>
+              <p className="text-sm text-slate-500 mt-1">Please wait while we set up your experience.</p>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
