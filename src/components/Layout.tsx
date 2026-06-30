@@ -66,8 +66,6 @@ export const Layout = () => {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    // wait a moment for smooth transition
-    await new Promise(resolve => setTimeout(resolve, 1000));
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       await fetch(`${API_BASE_URL}/api/logout`, {

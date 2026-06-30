@@ -87,11 +87,30 @@ export const AdminPanel = () => {
     }
   };
 
+  const getAdminCount = () => {
+    return users.filter(u => (u.role === "admin" || u.role === "superadmin") && u.status === "active").length;
+  };
+
+  const isUserOnlyAdmin = (userId: string) => {
+    const target = users.find(u => String(u.id) === String(userId));
+    if (!target) return false;
+    const isTargetAdmin = target.role === "admin" || target.role === "superadmin";
+    return isTargetAdmin && getAdminCount() <= 1;
+  };
+
   const updateRole = async (userId: string, newRole: Role) => {
     if (!isAdminUser) {
       showToast("error", "Only admins can modify roles.");
       return;
     }
+    
+    // Last admin protection
+    const changingFromAdmin = !("admin" === newRole || "superadmin" === newRole);
+    if (changingFromAdmin && isUserOnlyAdmin(userId)) {
+      showToast("error", "Cannot demote the only remaining active Administrator.");
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
         method: "PATCH",
@@ -121,6 +140,13 @@ export const AdminPanel = () => {
       showToast("error", "Only admins can modify status.");
       return;
     }
+
+    // Last admin protection
+    if (newStatus === "inactive" && isUserOnlyAdmin(userId)) {
+      showToast("error", "Cannot deactivate the only remaining active Administrator.");
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/${userId}/status`, {
         method: "PATCH",
@@ -150,6 +176,13 @@ export const AdminPanel = () => {
       showToast("error", "Only admins can delete users.");
       return;
     }
+
+    // Last admin protection
+    if (isUserOnlyAdmin(userId)) {
+      showToast("error", "Cannot delete the only remaining active Administrator.");
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
         method: "DELETE",
@@ -341,7 +374,7 @@ export const AdminPanel = () => {
                 onClick={() => updateRole(u.id, "admin")}
                 className={cn(
                   "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all duration-250 cursor-pointer",
-                  u.role === "admin" 
+                  (u.role === "admin" || u.role === "superadmin")
                     ? "bg-amber-600 text-white shadow-md shadow-amber-500/10" 
                     : "text-slate-500 hover:text-slate-800"
                 )}
@@ -359,30 +392,6 @@ export const AdminPanel = () => {
                 )}
               >
                 Manager
-              </button>
-              <button
-                type="button"
-                onClick={() => updateRole(u.id, "client")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all duration-250 cursor-pointer",
-                  u.role === "client" 
-                    ? "bg-slate-600 text-white shadow-md shadow-slate-500/10" 
-                    : "text-slate-500 hover:text-slate-800"
-                )}
-              >
-                Client
-              </button>
-              <button
-                type="button"
-                onClick={() => updateRole(u.id, "investor")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all duration-250 cursor-pointer",
-                  u.role === "investor" 
-                    ? "bg-purple-600 text-white shadow-md shadow-purple-500/10" 
-                    : "text-slate-500 hover:text-slate-800"
-                )}
-              >
-                Investor
               </button>
             </div>
           );
@@ -461,15 +470,18 @@ export const AdminPanel = () => {
   ];
 
   const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    user.role !== "investor" && user.role !== "client" && (
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   );
 
   // Derived stats
-  const totalUsersCount = users.length;
-  const activeUsersCount = users.filter(u => u.status === "active").length;
-  const adminUsersCount = users.filter(u => u.role === "admin").length;
-  const clientUsersCount = users.filter(u => u.role === "client").length;
+  const displayUsers = users.filter(u => u.role !== "investor" && u.role !== "client");
+  const totalUsersCount = displayUsers.length;
+  const activeUsersCount = displayUsers.filter(u => u.status === "active").length;
+  const adminUsersCount = displayUsers.filter(u => u.role === "admin" || u.role === "superadmin").length;
+  const managerUsersCount = displayUsers.filter(u => u.role === "manager").length;
 
   return (
     <motion.div 
@@ -554,17 +566,17 @@ export const AdminPanel = () => {
               </div>
             </div>
 
-            {/* Client Users */}
+            {/* Manager Users */}
             <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
                     <Users className="w-5 h-5" />
                   </div>
-                  <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Clients</span>
+                  <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Managers</span>
                 </div>
                 <div className="flex items-baseline gap-2 pt-2">
-                  <span className="text-3xl font-extrabold text-slate-900">{clientUsersCount}</span>
+                  <span className="text-3xl font-extrabold text-slate-900">{managerUsersCount}</span>
                 </div>
               </div>
             </div>

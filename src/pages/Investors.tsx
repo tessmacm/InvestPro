@@ -871,7 +871,7 @@ export const Investors = () => {
             </div>
 
             {/* Input card wrapper */}
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 max-w-4xl">
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 w-full">
               <div className="border-b border-slate-100 pb-5 mb-8 flex justify-between items-start gap-4">
                 <div>
                   <h3 className="text-lg font-display font-bold text-slate-800">

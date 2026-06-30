@@ -21,7 +21,10 @@ export const Login = () => {
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state: RootState) => state.auth);
 
-  const [hasUsers, setHasUsers] = useState<boolean | null>(null);
+  const [hasUsers, setHasUsers] = useState<boolean | null>(() => {
+    const cached = sessionStorage.getItem("cached_has_users");
+    return cached === "true" ? true : null;
+  });
   const [step, setStep] = useState<"email" | "otp">("email");
   const [loginEmail, setLoginEmail] = useState("");
   const [otpValue, setOtpValue] = useState("");
@@ -45,7 +48,9 @@ export const Login = () => {
         if (response.ok) {
           const data = await response.json();
           setHasUsers(data.hasUsers);
-          if (data.hasUsers === false) {
+          if (data.hasUsers) {
+            sessionStorage.setItem("cached_has_users", "true");
+          } else {
             navigate("/register");
           }
         }

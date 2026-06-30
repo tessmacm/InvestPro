@@ -446,26 +446,26 @@ export const Dashboard = () => {
           </motion.div>
 
           {/* Quick Stats Grid */}
-          <motion.div variants={item} className="bg-slate-900 p-6 rounded-3xl shadow-xl shadow-slate-200 text-white relative overflow-hidden">
+          <motion.div variants={item} className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6 rounded-3xl shadow-xl border border-slate-800 text-white relative overflow-hidden">
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-white/10 rounded-xl">
-                  <LayoutGrid className="w-4 h-4 text-slate-300" />
+                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                  <LayoutGrid className="w-4 h-4 text-blue-400" />
                 </div>
-                <h3 className="text-sm font-bold uppercase tracking-widest">Active Access</h3>
+                <h3 className="text-sm font-extrabold uppercase tracking-wider text-blue-400">Active Access</h3>
               </div>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-200 font-bold">Role Status</span>
-                  <span className="text-xs font-bold bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md uppercase">{user?.role}</span>
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                  <span className="text-xs text-slate-300 font-bold">Role Status</span>
+                  <span className="text-xs font-extrabold bg-blue-500 text-white px-2.5 py-1 rounded-lg uppercase tracking-wide shadow-md shadow-blue-500/20">{user?.role}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-200 font-bold">Permissions</span>
-                  <span className="text-xs font-bold text-emerald-400">Verified</span>
+                  <span className="text-xs text-slate-300 font-bold">Permissions</span>
+                  <span className="text-xs font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg uppercase tracking-wide">Verified</span>
                 </div>
               </div>
             </div>
-            <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-blue-500 rounded-full blur-3xl opacity-10" />
+            <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-blue-500 rounded-full blur-3xl opacity-20" />
           </motion.div>
         </div>
       </div>
