@@ -145,7 +145,8 @@ export const Login = () => {
           >
             <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
             <div>
-              <h2 className="text-2xl font-display font-bold text-slate-800">Checking DB State...</h2>
+              <h2 className="text-2xl font-display font-bold text-slate-800">Getting things ready…</h2>
+              <p className="text-sm text-slate-500 mt-1">Please wait while we set up your experience.</p>
             </div>
           </motion.div>
         </div>
