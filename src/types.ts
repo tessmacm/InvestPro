@@ -23,6 +23,10 @@ export interface Investor {
   status: "active" | "inactive";
   date_of_onboarding?: string;
   last_investment_date?: string;
+  roi?: string;
+  roiType?: string;
+  bank?: string;
+  acNumber?: string;
 }
 
 export interface Document {

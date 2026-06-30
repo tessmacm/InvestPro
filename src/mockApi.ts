@@ -535,6 +535,46 @@ export function initializeMockApi() {
 
     // --- MAPPING API ENDPOINTS ---
 
+    if (pathname === "/api/lookups/investor-types") {
+      return jsonResponse([
+        { value: 1, text: "Individual" },
+        { value: 2, text: "Business" }
+      ]);
+    }
+    if (pathname === "/api/lookups/investment-interests") {
+      return jsonResponse([
+        { value: 1, text: "50,000 - 100,000" },
+        { value: 2, text: "100,000 - 500,000" },
+        { value: 3, text: "500,000 - 1,000,000" },
+        { value: 4, text: "1,000,000+" }
+      ]);
+    }
+    if (pathname === "/api/lookups/roi-ranges") {
+      return jsonResponse([
+        { value: 1, text: "5.0% Fixed Minimum" },
+        { value: 2, text: "7.5% Target Conservative" },
+        { value: 3, text: "10.0% Growth Dynamic" },
+        { value: 4, text: "12.5% High-Yield Aggressive" }
+      ]);
+    }
+    if (pathname === "/api/lookups/roi-types") {
+      return jsonResponse([
+        { value: 1, text: "Fixed" },
+        { value: 2, text: "Half-Yearly" },
+        { value: 3, text: "Quarterly" },
+        { value: 4, text: "Monthly" }
+      ]);
+    }
+    if (pathname === "/api/lookups/banks") {
+      return jsonResponse([
+        { value: 1, text: "JPMorgan Chase" },
+        { value: 2, text: "Bank of America" },
+        { value: 3, text: "Wells Fargo" },
+        { value: 4, text: "Citigroup" },
+        { value: 5, text: "Goldman Sachs" }
+      ]);
+    }
+
     // 1. STATS
     if (pathname === "/api/stats") {
       const userCount = db.users.length;

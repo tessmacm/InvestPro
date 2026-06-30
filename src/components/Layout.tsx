@@ -50,15 +50,15 @@ export const Layout = () => {
   }, [location.pathname, isMobile]);
 
   const menuItems = [
-    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["admin", "manager", "client", "investor"] },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["admin", "manager", "investor"] },
     { name: "Admin Panel", path: "/admin", icon: ShieldCheck, roles: ["admin"] },
-    { name: "Investors", path: "/investors", icon: Users, roles: ["admin", "manager", "client", "investor"] },
-    { name: "Projects", path: "/projects", icon: Folder, roles: ["admin", "manager", "client", "investor"] },
-    { name: "Documents", path: "/documents", icon: FileText, roles: ["admin", "manager", "client", "investor"] },
-    { name: "Payments", path: "/payments", icon: Landmark, roles: ["admin", "manager", "client", "investor"] },
-    { name: "ROI", path: "/roi", icon: TrendingUp, roles: ["admin", "manager", "client", "investor"] },
-    { name: "Notifications", path: "/notifications", icon: Bell, roles: ["admin", "manager", "client", "investor"] },
-    { name: "Reports", path: "/reports", icon: Download, roles: ["admin", "manager", "client", "investor"] },
+    { name: "Investors", path: "/investors", icon: Users, roles: ["admin", "manager"] },
+    { name: "Projects", path: "/projects", icon: Folder, roles: ["admin", "manager"] },
+    { name: "Documents", path: "/documents", icon: FileText, roles: ["admin", "manager", "investor"] },
+    { name: "Payments", path: "/payments", icon: Landmark, roles: ["admin", "manager", "investor"] },
+    { name: "ROI", path: "/roi", icon: TrendingUp, roles: ["admin", "manager", "investor"] },
+    { name: "Notifications", path: "/notifications", icon: Bell, roles: ["admin", "manager", "investor"] },
+    { name: "Reports", path: "/reports", icon: Download, roles: ["admin", "manager", "investor"] },
   ];
 
   const handleLogout = async () => {

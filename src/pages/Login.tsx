@@ -306,17 +306,6 @@ export const Login = () => {
             </form>
           )}
 
-          <div className="mt-8 pt-8 border-t border-slate-100">
-            <p className="text-center text-sm text-slate-500">
-              Don't have an account?{" "}
-              <Link 
-                to="/register" 
-                className="font-bold text-blue-600 hover:text-blue-700 transition-colors"
-              >
-                Create a new account
-              </Link>
-            </p>
-          </div>
         </motion.div>
       </div>
     </div>

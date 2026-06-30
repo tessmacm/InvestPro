@@ -188,8 +188,15 @@ export const AdminPanel = () => {
         ? `${API_BASE_URL}/api/users/${selectedUser.id}` 
         : `${API_BASE_URL}/api/users`;
       const method = isEdit ? "PUT" : "POST";
+
+      const names = (formData.name || "").trim().split(/\s+/);
+      const firstName = names[0] || "User";
+      const lastName = names.slice(1).join(" ") || "Account";
+
       const bodyData = {
         ...formData,
+        firstName,
+        lastName,
         password: isEdit ? undefined : (formData.password || "Password123!")
       };
 
@@ -237,7 +244,7 @@ export const AdminPanel = () => {
       name: "",
       email: "",
       password: "",
-      role: "client",
+      role: "admin",
       status: "active"
     });
     setIsModalOpen(true);
@@ -515,7 +522,15 @@ export const AdminPanel = () => {
           <h1 className="text-3xl font-display font-extrabold text-slate-900">User Management</h1>
           <p className="text-slate-500 mt-1 font-medium">Manage platform roles, permissions and account statuses.</p>
         </motion.div>
-        {/* Hide create user button from admin panel as per new OTP registration flow */}
+        {isAdminUser && (
+          <motion.button
+            variants={item}
+            onClick={openAddModal}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-[0.98] transition-transform flex-shrink-0 self-start md:self-auto"
+          >
+            <Plus className="w-4 h-4" /> Add New User
+          </motion.button>
+        )}
       </div>
 
       {loading ? (
@@ -699,7 +714,7 @@ export const AdminPanel = () => {
                     Role selection
                   </label>
                   <div className="flex rounded-xl p-0.5 bg-slate-100 border border-slate-200">
-                    {(["admin", "manager", "client", "investor"] as Role[]).map((roleOption) => {
+                    {(["admin", "manager"] as Role[]).map((roleOption) => {
                       const isLocked = selectedUser && (selectedUser.email === "admin@investpro.com" || selectedUser.name === "System Admin");
                       return (
                         <button
@@ -712,9 +727,7 @@ export const AdminPanel = () => {
                             formData.role === roleOption
                               ? roleOption === "admin"
                                 ? "bg-amber-600 text-white shadow-md shadow-amber-500/10"
-                                : roleOption === "manager"
-                                ? "bg-blue-600 text-white shadow-md shadow-blue-500/10"
-                                : "bg-slate-600 text-white shadow-md shadow-slate-500/10"
+                                : "bg-blue-600 text-white shadow-md shadow-blue-500/10"
                               : "text-slate-500 hover:text-slate-800"
                           )}
                         >

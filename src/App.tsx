@@ -49,8 +49,22 @@ export default function App() {
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="investors" element={<Investors />} />
-        <Route path="projects" element={<Projects />} />
+        <Route 
+          path="investors" 
+          element={
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <Investors />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="projects" 
+          element={
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <Projects />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="documents" element={<Documents />} />
         <Route path="payments" element={<Payments />} />
         <Route path="roi" element={<Roi />} />
