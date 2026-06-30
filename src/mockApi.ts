@@ -307,15 +307,14 @@ export function initializeMockApi() {
           } else if (method === "POST" && path === "/users") {
             targetPath = "/admin/users";
             if (bodyObj) {
-              const nameParts = (bodyObj.name || "").trim().split(/\s+/);
-              const firstName = nameParts[0] || "";
-              const lastName = nameParts.slice(1).join(" ") || "";
+              const firstName = bodyObj.firstName || "";
+              const lastName = bodyObj.lastName || "";
               const mappedCreate = {
                 Email: bodyObj.email || "",
-                Password: bodyObj.password || "password",
+                Password: bodyObj.password || "Password123!",
                 FirstName: firstName,
                 LastName: lastName,
-                Role: bodyObj.role || "admin"
+                Role: bodyObj.role || "manager"
               };
               newBody = JSON.stringify(mappedCreate);
               headers.set("Content-Type", "application/json");
@@ -741,9 +740,11 @@ export function initializeMockApi() {
     }
 
     if (pathname === "/api/users" && method === "POST") {
-      const { name, email, password, role, status } = body;
-      if (!name || !email || !role) {
-        return jsonResponse({ message: "Name, email and role are required." }, 400);
+      const { name, email, password, role, status, firstName, lastName } = body;
+      const finalName = name || `${firstName || ""} ${lastName || ""}`.trim() || "New User";
+      const finalRole = role || "manager";
+      if (!email) {
+        return jsonResponse({ message: "Email is required." }, 400);
       }
       if (db.users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
         return jsonResponse({ message: "Email is already taken." }, 400);
@@ -751,17 +752,17 @@ export function initializeMockApi() {
 
       const newUser = {
         id: String(db.users.length + 1),
-        name,
+        name: finalName,
         email,
-        password: password || "password",
-        role,
+        password: password || "Password123!",
+        role: finalRole,
         status: status || "active"
       };
 
       db.users.push(newUser);
       saveDB(db);
 
-      return jsonResponse({ id: newUser.id, name, email, role, status: newUser.status }, 201);
+      return jsonResponse({ id: newUser.id, name: finalName, email, role: finalRole, status: newUser.status }, 201);
     }
 
     // Nested User updates or CRUD Matching regex-style wildcard

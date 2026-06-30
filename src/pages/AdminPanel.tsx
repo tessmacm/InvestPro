@@ -56,13 +56,11 @@ export const AdminPanel = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "client" as Role,
-    status: "active" as "active" | "inactive"
+    firstName: "",
+    lastName: "",
+    email: ""
   });
 
   const isAdminUser = currentUser?.role === "admin";
@@ -177,37 +175,28 @@ export const AdminPanel = () => {
 
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email) {
-      showToast("error", "Name and email are required.");
+    if (!formData.firstName || !formData.lastName || !formData.email) {
+      showToast("error", "First name, last name and email are required.");
       return;
     }
 
+    setSubmitting(true);
     try {
-      const isEdit = !!selectedUser;
-      const url = isEdit 
-        ? `${API_BASE_URL}/api/users/${selectedUser.id}` 
-        : `${API_BASE_URL}/api/users`;
-      const method = isEdit ? "PUT" : "POST";
-
-      const names = (formData.name || "").trim().split(/\s+/);
-      const firstName = names[0] || "User";
-      const lastName = names.slice(1).join(" ") || "Account";
-
-      const bodyData = {
-        ...formData,
-        firstName,
-        lastName,
-        password: isEdit ? undefined : (formData.password || "Password123!")
+      const payload = {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        role: "manager" // default manager role
       };
 
-      const response = await fetch(url, {
-        method,
+      const response = await fetch(`${API_BASE_URL}/api/users`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-user-role": currentUser?.role || "",
           "x-user-id": currentUser?.id || ""
         },
-        body: JSON.stringify(bodyData)
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -215,49 +204,28 @@ export const AdminPanel = () => {
         const errData = text ? JSON.parse(text) : {};
         let errMsg = errData.message || errData.Message || "API error occurred";
         if (errData.errors && Array.isArray(errData.errors)) {
-          errMsg += "\n" + errData.errors.join("\n");
+          errMsg += ": " + errData.errors.join(", ");
         } else if (errData.Errors && Array.isArray(errData.Errors)) {
-          errMsg += "\n" + errData.Errors.join("\n");
+          errMsg += ": " + errData.Errors.join(", ");
         }
         throw new Error(errMsg);
       }
 
-      // Safe body read if present
-      const text = await response.text();
-      if (text) {
-        try {
-          JSON.parse(text);
-        } catch (_) {}
-      }
-      
-      showToast("success", isEdit ? "User updated successfully!" : "User created successfully!");
+      showToast("success", "User created successfully!");
       setIsModalOpen(false);
       fetchUsers(); // Refresh complete list
     } catch (error: any) {
       showToast("error", error.message || "Failed to save user");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const openAddModal = () => {
-    setSelectedUser(null);
     setFormData({
-      name: "",
-      email: "",
-      password: "",
-      role: "admin",
-      status: "active"
-    });
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (u: User) => {
-    setSelectedUser(u);
-    setFormData({
-      name: u.name,
-      email: u.email,
-      password: "",
-      role: u.role,
-      status: u.status || "active"
+      firstName: "",
+      lastName: "",
+      email: ""
     });
     setIsModalOpen(true);
   };
@@ -480,13 +448,6 @@ export const AdminPanel = () => {
         return (
           <div className="flex items-center justify-end gap-1">
             <button 
-              onClick={() => openEditModal(u)}
-              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
-              title="Edit User Details"
-            >
-              <Edit className="w-4.5 h-4.5" />
-            </button>
-            <button 
               onClick={() => setDeleteConfirmId(u.id)}
               className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
               title="Delete User"
@@ -641,10 +602,7 @@ export const AdminPanel = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
             />
-
-            {/* Modal Body */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -653,29 +611,38 @@ export const AdminPanel = () => {
             >
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <h3 className="text-xl font-display font-extrabold text-slate-900">
-                  {selectedUser ? "Edit User Details" : "Add New User"}
+                  Add New User
                 </h3>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-slate-600 rounded-xl transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
 
               <form onSubmit={handleSaveUser} className="mt-4 space-y-4">
                 <div>
                   <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest pl-1 mb-1.5">
-                    User Display Name
+                    First Name
                   </label>
                   <input
                     type="text"
                     required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     className="block w-full px-4 py-3 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm text-slate-900"
-                    placeholder="e.g. Robert Jr."
-                    disabled={selectedUser ? (selectedUser.email === "admin@investpro.com" || selectedUser.name === "System Admin") : false}
+                    placeholder="e.g. John"
+                    disabled={submitting}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest pl-1 mb-1.5">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="block w-full px-4 py-3 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm text-slate-900"
+                    placeholder="e.g. Doe"
+                    disabled={submitting}
                   />
                 </div>
 
@@ -690,97 +657,37 @@ export const AdminPanel = () => {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="block w-full px-4 py-3 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm text-slate-900"
                     placeholder="e.g. names@investpro.com"
-                    disabled={!!selectedUser}
+                    disabled={submitting}
                   />
-                </div>
-
-                {!selectedUser && (
-                  <div>
-                    <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest pl-1 mb-1.5">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm text-slate-900"
-                      placeholder="e.g. securepass (defaults to 'password')"
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest pl-1 mb-1.5">
-                    Role selection
-                  </label>
-                  <div className="flex rounded-xl p-0.5 bg-slate-100 border border-slate-200">
-                    {(["admin", "manager"] as Role[]).map((roleOption) => {
-                      const isLocked = selectedUser && (selectedUser.email === "admin@investpro.com" || selectedUser.name === "System Admin");
-                      return (
-                        <button
-                          key={roleOption}
-                          type="button"
-                          disabled={isLocked}
-                          onClick={() => setFormData({ ...formData, role: roleOption })}
-                          className={cn(
-                            "flex-1 py-1 px-3 rounded-lg text-xs font-bold transition-all duration-200 disabled:opacity-50 cursor-pointer capitalize",
-                            formData.role === roleOption
-                              ? roleOption === "admin"
-                                ? "bg-amber-600 text-white shadow-md shadow-amber-500/10"
-                                : "bg-blue-600 text-white shadow-md shadow-blue-500/10"
-                              : "text-slate-500 hover:text-slate-800"
-                          )}
-                        >
-                          {roleOption}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest pl-1 mb-1.5">
-                    User Status
-                  </label>
-                  <div className="flex rounded-xl p-0.5 bg-slate-100 border border-slate-200">
-                    {[
-                      { key: "active", color: "bg-emerald-600 shadow-emerald-500/10" },
-                      { key: "inactive", color: "bg-rose-600 shadow-rose-500/10" }
-                    ].map((statusOption) => {
-                      const isLocked = selectedUser && (selectedUser.email === "admin@investpro.com" || selectedUser.name === "System Admin");
-                      return (
-                        <button
-                          key={statusOption.key}
-                          type="button"
-                          disabled={isLocked}
-                          onClick={() => setFormData({ ...formData, status: statusOption.key as "active" | "inactive" })}
-                          className={cn(
-                            "flex-1 py-1 px-3 rounded-lg text-xs font-bold transition-all duration-200 disabled:opacity-50 cursor-pointer capitalize",
-                            formData.status === statusOption.key
-                              ? `${statusOption.color} text-white`
-                              : "text-slate-500 hover:text-slate-800"
-                          )}
-                        >
-                          {statusOption.key}
-                        </button>
-                      );
-                    })}
-                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 text-slate-700 font-bold text-sm rounded-xl hover:bg-slate-100 cursor-pointer active:scale-95 transition-all"
+                    disabled={submitting}
+                    className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 text-slate-700 font-bold text-sm rounded-xl hover:bg-slate-100 cursor-pointer active:scale-95 transition-all disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl cursor-pointer active:scale-95 transition-all shadow-lg shadow-blue-500/15"
+                    disabled={submitting || !formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim()}
+                    className={cn(
+                      "flex-1 px-4 py-3 text-white font-bold text-sm rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2",
+                      (submitting || !formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim())
+                        ? "bg-slate-300 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-lg shadow-blue-500/15"
+                    )}
                   >
-                    Save Changes
+                    {submitting ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      "Add User"
+                    )}
                   </button>
                 </div>
               </form>

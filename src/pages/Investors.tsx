@@ -62,6 +62,7 @@ export const Investors = () => {
   
   // Selection/Target states
   const [selectedInvestor, setSelectedInvestor] = useState<Investor | null>(null);
+  const [isViewDetailsMode, setIsViewDetailsMode] = useState(false);
   const [checkedInvestors, setCheckedInvestors] = useState<Set<string>>(new Set());
   const [dropdownOpenRowId, setDropdownOpenRowId] = useState<string | null>(null);
 
@@ -92,12 +93,36 @@ export const Investors = () => {
     date_of_onboarding: "",
   });
 
-  // Lookup data from API
-  const [investorTypes, setInvestorTypes] = useState<{ value: number; text: string }[]>([]);
-  const [investmentInterests, setInvestmentInterests] = useState<{ value: number; text: string }[]>([]);
-  const [roiRanges, setRoiRanges] = useState<{ value: number; text: string }[]>([]);
-  const [roiTypes, setRoiTypes] = useState<{ value: number; text: string }[]>([]);
-  const [banks, setBanks] = useState<{ value: number; text: string }[]>([]);
+  // Lookup data from API with fallback values
+  const [investorTypes, setInvestorTypes] = useState<{ value: number; text: string }[]>([
+    { value: 1, text: "Individual" },
+    { value: 2, text: "Business" }
+  ]);
+  const [investmentInterests, setInvestmentInterests] = useState<{ value: number; text: string }[]>([
+    { value: 1, text: "50,000 - 100,000" },
+    { value: 2, text: "100,000 - 500,000" },
+    { value: 3, text: "500,000 - 1,000,000" },
+    { value: 4, text: "1,000,000+" }
+  ]);
+  const [roiRanges, setRoiRanges] = useState<{ value: number; text: string }[]>([
+    { value: 1, text: "5.0% Fixed Minimum" },
+    { value: 2, text: "7.5% Target Conservative" },
+    { value: 3, text: "10.0% Growth Dynamic" },
+    { value: 4, text: "12.5% High-Yield Aggressive" }
+  ]);
+  const [roiTypes, setRoiTypes] = useState<{ value: number; text: string }[]>([
+    { value: 1, text: "Fixed" },
+    { value: 2, text: "Half-Yearly" },
+    { value: 3, text: "Quarterly" },
+    { value: 4, text: "Monthly" }
+  ]);
+  const [banks, setBanks] = useState<{ value: number; text: string }[]>([
+    { value: 1, text: "JPMorgan Chase" },
+    { value: 2, text: "Bank of America" },
+    { value: 3, text: "Wells Fargo" },
+    { value: 4, text: "Citigroup" },
+    { value: 5, text: "Goldman Sachs" }
+  ]);
 
   // Initialize
   useEffect(() => {
@@ -114,13 +139,28 @@ export const Investors = () => {
         fetch(`${API_BASE_URL}/api/lookups/roi-types`),
         fetch(`${API_BASE_URL}/api/lookups/banks`),
       ]);
-      if (typesRes.ok) setInvestorTypes(await typesRes.json());
-      if (interestsRes.ok) setInvestmentInterests(await interestsRes.json());
-      if (roiRangesRes.ok) setRoiRanges(await roiRangesRes.json());
-      if (roiTypesRes.ok) setRoiTypes(await roiTypesRes.json());
-      if (banksRes.ok) setBanks(await banksRes.json());
+      if (typesRes.ok) {
+        const data = await typesRes.json();
+        if (data && data.length > 0) setInvestorTypes(data);
+      }
+      if (interestsRes.ok) {
+        const data = await interestsRes.json();
+        if (data && data.length > 0) setInvestmentInterests(data);
+      }
+      if (roiRangesRes.ok) {
+        const data = await roiRangesRes.json();
+        if (data && data.length > 0) setRoiRanges(data);
+      }
+      if (roiTypesRes.ok) {
+        const data = await roiTypesRes.json();
+        if (data && data.length > 0) setRoiTypes(data);
+      }
+      if (banksRes.ok) {
+        const data = await banksRes.json();
+        if (data && data.length > 0) setBanks(data);
+      }
     } catch {
-      // silently fail — dropdowns will be empty
+      // silently fail — dropdowns will keep fallback values
     }
   };
 
@@ -154,6 +194,7 @@ export const Investors = () => {
   const resetFormAndGoHome = () => {
     setActiveView("list");
     setIsEditModalOpen(false);
+    setIsViewDetailsMode(false);
     setFormData({
       name: "",
       type: "1",
@@ -174,23 +215,28 @@ export const Investors = () => {
   // Prefill Form for Editor
   const handleOpenEdit = (investor: Investor) => {
     setSelectedInvestor(investor);
+    const matchedType = investorTypes.find(t => t.text === investor.type || String(t.value) === String(investor.type))?.value || 1;
+    const matchedInterest = investmentInterests.find(i => String(i.value) === String(investor.interest) || i.text === investor.interest)?.value || "";
+    const matchedRoi = roiRanges.find(r => String(r.value) === String(investor.roi) || r.text === investor.roi)?.value || "";
+    const matchedRoiType = roiTypes.find(t => t.text === investor.roiType || String(t.value) === String(investor.roiType))?.value || "";
+    const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.value || "";
+
     setFormData({
       name: investor.name,
-      type: String(investor.type || "1"),
+      type: String(matchedType),
       email: investor.email || "",
       organization: investor.organization || "",
       reg_number: investor.reg_number || "",
-      interest: String(investor.interest || ""),
-      roi: investor.roi || "",
-      roiType: investor.roiType || "",
-      bank: investor.bank || "",
+      interest: String(matchedInterest),
+      roi: String(matchedRoi),
+      roiType: String(matchedRoiType),
+      bank: String(matchedBank),
       acNumber: investor.acNumber || "",
       status: investor.status || "active",
-      date_of_onboarding: investor.date_of_onboarding
-        ? investor.date_of_onboarding.split("T")[0]
-        : "",
+      date_of_onboarding: investor.date_of_onboarding ? investor.date_of_onboarding.split("T")[0] : "",
     });
-    setIsEditModalOpen(true);
+    setIsViewDetailsMode(false);
+    setActiveView("add");
   };
 
   // Open Add Flow
@@ -209,13 +255,35 @@ export const Investors = () => {
       status: "active",
       date_of_onboarding: new Date().toISOString().split("T")[0],
     });
+    setIsViewDetailsMode(false);
     setActiveView("add");
   };
 
-  // Details dialog
+  // Details flow: opens Add view in read-only details mode
   const handleOpenViewDetails = (investor: Investor) => {
     setSelectedInvestor(investor);
-    setIsViewModalOpen(true);
+    const matchedType = investorTypes.find(t => t.text === investor.type || String(t.value) === String(investor.type))?.value || 1;
+    const matchedInterest = investmentInterests.find(i => String(i.value) === String(investor.interest) || i.text === investor.interest)?.value || "";
+    const matchedRoi = roiRanges.find(r => String(r.value) === String(investor.roi) || r.text === investor.roi)?.value || "";
+    const matchedRoiType = roiTypes.find(t => t.text === investor.roiType || String(t.value) === String(investor.roiType))?.value || "";
+    const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.value || "";
+
+    setFormData({
+      name: investor.name,
+      type: String(matchedType),
+      email: investor.email || "",
+      organization: investor.organization || "",
+      reg_number: investor.reg_number || "",
+      interest: String(matchedInterest),
+      roi: String(matchedRoi),
+      roiType: String(matchedRoiType),
+      bank: String(matchedBank),
+      acNumber: investor.acNumber || "",
+      status: investor.status || "active",
+      date_of_onboarding: investor.date_of_onboarding ? investor.date_of_onboarding.split("T")[0] : "",
+    });
+    setIsViewDetailsMode(true);
+    setActiveView("add");
   };
 
   // Delete dialog
@@ -303,7 +371,7 @@ export const Investors = () => {
       showToast("success", "Investor profile deleted successfully.");
       setInvestors(investors.filter(i => i.id !== selectedInvestor.id));
       setIsDeleteModalOpen(false);
-      setSelectedInvestor(null);
+      resetFormAndGoHome();
     } catch (err: any) {
       showToast("error", "Failed to delete investor profile.");
     }
@@ -707,33 +775,14 @@ export const Investors = () => {
 
                               {/* Hover Action Triggers */}
                               <td className="px-6 py-4.5 text-right">
-                                <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center justify-end gap-1.5">
                                   <button 
                                     onClick={() => handleOpenViewDetails(row)}
                                     title="View Portfolio"
-                                    className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition-colors cursor-pointer"
+                                    className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-lg transition-colors cursor-pointer"
                                   >
                                     <Eye className="w-4.5 h-4.5" />
                                   </button>
-                                  
-                                  {!isClient && (
-                                    <>
-                                      <button 
-                                        onClick={() => handleOpenEdit(row)}
-                                        title="Modify Details"
-                                        className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-lg transition-colors cursor-pointer"
-                                      >
-                                        <Edit className="w-4.5 h-4.5" />
-                                      </button>
-                                      <button 
-                                        onClick={() => handleOpenDelete(row)}
-                                        title="Delete Account"
-                                        className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
-                                      >
-                                        <Trash2 className="w-4.5 h-4.5" />
-                                      </button>
-                                    </>
-                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -794,7 +843,7 @@ export const Investors = () => {
         </motion.div>
       )}
 
-        {/* -- VIEW 2: ADD NEW INVESTOR VIEW (Screenshot 6 Layout) -- */}
+        {/* -- VIEW 2: ADD / EDIT / VIEW DETAILS VIEW -- */}
         {activeView === "add" && (
           <motion.div
             key="add"
@@ -812,18 +861,45 @@ export const Investors = () => {
                 <ArrowLeft className="w-5 h-5 text-slate-600" />
               </button>
               <div>
-                <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Investors &gt; Add Investor</span>
-                <h1 className="text-2xl font-display font-bold text-slate-900 mt-0.5">Add New Investor</h1>
+                <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
+                  {isViewDetailsMode ? "Investors > View Details" : selectedInvestor ? "Investors > Edit Details" : "Investors > Add Investor"}
+                </span>
+                <h1 className="text-2xl font-display font-bold text-slate-900 mt-0.5">
+                  {isViewDetailsMode ? "View Investor Details" : selectedInvestor ? "Edit Investor Details" : "Add New Investor"}
+                </h1>
               </div>
             </div>
 
             {/* Input card wrapper */}
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 max-w-4xl">
-              <div className="border-b border-slate-100 pb-5 mb-8">
-                <h3 className="text-lg font-display font-bold text-slate-800">New Investor Registration</h3>
-                <p className="text-sm text-slate-500 mt-1">
-                  Enter legal organization or individual credentials below to add them to the system database.
-                </p>
+              <div className="border-b border-slate-100 pb-5 mb-8 flex justify-between items-start gap-4">
+                <div>
+                  <h3 className="text-lg font-display font-bold text-slate-800">
+                    {isViewDetailsMode ? "Investor Profile Details" : selectedInvestor ? "Modify Investor Details" : "New Investor Registration"}
+                  </h3>
+                  <p className="text-sm text-slate-500 mt-1">
+                    {isViewDetailsMode ? "Legal and financial particulars of the selected investor." : "Enter legal organization or individual credentials below."}
+                  </p>
+                </div>
+                {/* Edit and Delete Buttons top right */}
+                {isViewDetailsMode && !isClient && (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsViewDetailsMode(false)}
+                      className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-transparent hover:border-blue-200"
+                    >
+                      <Edit className="w-3.5 h-3.5" /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenDelete(selectedInvestor!)}
+                      className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-transparent hover:border-rose-200"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                    </button>
+                  </div>
+                )}
               </div>
 
               <form onSubmit={handleSaveInvestor} className="space-y-6">
@@ -841,11 +917,12 @@ export const Investors = () => {
                       </label>
                       <input
                         required
+                        disabled={isViewDetailsMode}
                         type="text"
                         placeholder="Enter full name"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                       />
                     </div>
 
@@ -856,11 +933,12 @@ export const Investors = () => {
                       </label>
                       <input
                         required
+                        disabled={isViewDetailsMode || !!selectedInvestor}
                         type="email"
                         placeholder="Enter email address"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                       />
                     </div>
 
@@ -870,9 +948,10 @@ export const Investors = () => {
                         Investor Type <span className="text-rose-500">*</span>
                       </label>
                       <select
+                        disabled={isViewDetailsMode}
                         value={formData.type}
                         onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all appearance-none cursor-pointer"
+                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all appearance-none cursor-pointer"
                       >
                         {investorTypes.map(t => (
                           <option key={t.value} value={String(t.value)}>{t.text}</option>
@@ -886,11 +965,12 @@ export const Investors = () => {
                         Company / Org
                       </label>
                       <input
+                        disabled={isViewDetailsMode}
                         type="text"
                         placeholder="Company or organization name"
                         value={formData.organization}
                         onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                       />
                     </div>
 
@@ -900,11 +980,12 @@ export const Investors = () => {
                         Co Reg Number
                       </label>
                       <input
+                        disabled={isViewDetailsMode}
                         type="text"
                         placeholder="Company registration number"
                         value={formData.reg_number}
                         onChange={(e) => setFormData({ ...formData, reg_number: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                       />
                     </div>
 
@@ -916,10 +997,11 @@ export const Investors = () => {
                       </label>
                       <input
                         required
+                        disabled={isViewDetailsMode}
                         type="date"
                         value={formData.date_of_onboarding}
                         onChange={(e) => setFormData({ ...formData, date_of_onboarding: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                       />
                     </div>
 
@@ -935,9 +1017,10 @@ export const Investors = () => {
                       </label>
                       <select
                         required
+                        disabled={isViewDetailsMode}
                         value={formData.interest}
                         onChange={(e) => setFormData({ ...formData, interest: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
                       >
                         <option value="">Select investment interest</option>
                         {investmentInterests.map(i => (
@@ -953,9 +1036,10 @@ export const Investors = () => {
                       </label>
                       <select
                         required
+                        disabled={isViewDetailsMode}
                         value={formData.roi}
                         onChange={(e) => setFormData({ ...formData, roi: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
                       >
                         <option value="">Select ROI range</option>
                         {roiRanges.map(r => (
@@ -971,9 +1055,10 @@ export const Investors = () => {
                       </label>
                       <select
                         required
+                        disabled={isViewDetailsMode}
                         value={formData.roiType}
                         onChange={(e) => setFormData({ ...formData, roiType: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
                       >
                         <option value="">Select ROI type</option>
                         {roiTypes.map(t => (
@@ -988,9 +1073,10 @@ export const Investors = () => {
                         Bank
                       </label>
                       <select
+                        disabled={isViewDetailsMode}
                         value={formData.bank}
                         onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
                       >
                         <option value="">Select bank</option>
                         {banks.map(b => (
@@ -1005,11 +1091,12 @@ export const Investors = () => {
                         AC No
                       </label>
                       <input
+                        disabled={isViewDetailsMode}
                         type="text"
                         placeholder="Bank account number"
                         value={formData.acNumber}
                         onChange={(e) => setFormData({ ...formData, acNumber: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                       />
                     </div>
 
@@ -1020,10 +1107,11 @@ export const Investors = () => {
                       </label>
                       <div className="flex items-center gap-3 pt-1">
                         <button
+                          disabled={isViewDetailsMode}
                           type="button"
                           onClick={() => setFormData({ ...formData, status: formData.status === "active" ? "inactive" : "active" })}
                           className={cn(
-                            "relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none",
+                            "relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
                             formData.status === "active" ? "bg-emerald-500" : "bg-slate-300"
                           )}
                         >
@@ -1047,21 +1135,39 @@ export const Investors = () => {
 
                 {/* Bottom interactive submit bar */}
                 <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={resetFormAndGoHome}
-                    className="px-5 py-3 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-all cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    id="btn-confirm-add"
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-blue-500/15 cursor-pointer transition-all active:scale-95"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Investor
-                  </button>
+                  {isViewDetailsMode ? (
+                    <button
+                      type="button"
+                      onClick={resetFormAndGoHome}
+                      className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition-all cursor-pointer shadow-md"
+                    >
+                      Back to List
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={resetFormAndGoHome}
+                        className="px-5 py-3 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-blue-500/15 cursor-pointer transition-all active:scale-95"
+                      >
+                        {selectedInvestor ? (
+                          <>
+                            <Check className="w-4 h-4" /> Save Changes
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4" /> Add Investor
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
                 </div>
 
               </form>
@@ -1070,173 +1176,6 @@ export const Investors = () => {
         )}
 
       </AnimatePresence>
-
-      {/* -- OVERLAY MODAL 1: EDIT INVESTOR MODAL -- */}
-      <BaseModal
-        isOpen={isEditModalOpen}
-        onClose={resetFormAndGoHome}
-        title="Edit Investor"
-        description={`ID: INV-${String(selectedInvestor?.id).padStart(3, "0")} • Modify legal particulars`}
-        className="max-w-2xl flex flex-col max-h-[90vh]"
-      >
-        {/* Scrollable form fields */}
-        <form onSubmit={handleSaveInvestor} className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar text-left font-sans">
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            {/* Full Name */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Full Name *</label>
-              <input required type="text" value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold" />
-            </div>
-
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Email ID *</label>
-              <input required type="email" value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold" />
-            </div>
-
-            {/* Investor Type */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Investor Type *</label>
-              <select value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold">
-                {investorTypes.map(t => (
-                  <option key={t.value} value={String(t.value)}>{t.text}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Company / Org */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Company / Org</label>
-              <input type="text" value={formData.organization}
-                onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold" />
-            </div>
-
-            {/* Co Reg Number */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Co Reg Number</label>
-              <input type="text" value={formData.reg_number}
-                onChange={(e) => setFormData({ ...formData, reg_number: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold" />
-            </div>
-
-            {/* Date of Boarding */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Date of Boarding *</label>
-              <input required type="date" value={formData.date_of_onboarding}
-                onChange={(e) => setFormData({ ...formData, date_of_onboarding: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold" />
-            </div>
-
-            {/* Investment Interest */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Investment Interest *</label>
-              <select required value={formData.interest}
-                onChange={(e) => setFormData({ ...formData, interest: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold cursor-pointer">
-                <option value="">Select investment interest</option>
-                {investmentInterests.map(i => (
-                  <option key={i.value} value={String(i.value)}>{i.text}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* ROI */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">ROI *</label>
-              <select required value={formData.roi}
-                onChange={(e) => setFormData({ ...formData, roi: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold cursor-pointer">
-                <option value="">Select ROI range</option>
-                {roiRanges.map(r => (
-                  <option key={r.value} value={String(r.value)}>{r.text}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* ROI Type */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">ROI Type *</label>
-              <select required value={formData.roiType}
-                onChange={(e) => setFormData({ ...formData, roiType: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold cursor-pointer">
-                <option value="">Select ROI type</option>
-                {roiTypes.map(t => (
-                  <option key={t.value} value={String(t.value)}>{t.text}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Bank */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Bank</label>
-              <select value={formData.bank}
-                onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold cursor-pointer">
-                <option value="">Select bank</option>
-                {banks.map(b => (
-                  <option key={b.value} value={String(b.value)}>{b.text}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* AC No */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">AC No</label>
-              <input type="text" value={formData.acNumber}
-                onChange={(e) => setFormData({ ...formData, acNumber: e.target.value })}
-                placeholder="Bank account number"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none transition-all text-sm font-semibold" />
-            </div>
-
-            {/* Status toggle */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Status</label>
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, status: formData.status === "active" ? "inactive" : "active" })}
-                  className={cn(
-                    "relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none",
-                    formData.status === "active" ? "bg-emerald-500" : "bg-slate-300"
-                  )}
-                >
-                  <span className={cn(
-                    "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform",
-                    formData.status === "active" ? "translate-x-6" : "translate-x-1"
-                  )} />
-                </button>
-                <span className={cn("text-sm font-semibold", formData.status === "active" ? "text-emerald-600" : "text-slate-400")}>
-                  {formData.status === "active" ? "Active" : "Inactive"}
-                </span>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Submit buttons */}
-          <div className="pt-5 border-t border-slate-100 flex gap-3 flex-shrink-0">
-            <button type="button" onClick={resetFormAndGoHome}
-              className="flex-1 px-5 py-3.5 border border-slate-200 text-slate-600 font-bold rounded-xl text-center hover:bg-slate-50 transition-colors">
-              Cancel
-            </button>
-            <button type="submit"
-              className="flex-1 px-5 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 cursor-pointer text-center">
-              <Edit className="w-4 h-4" />
-              Update Investor
-            </button>
-          </div>
-
-        </form>
-      </BaseModal>
 
       {/* -- OVERLAY MODAL 2: FILTER INVESTORS MODAL -- */}
       <BaseModal
@@ -1377,99 +1316,7 @@ export const Investors = () => {
         </div>
       </BaseModal>
 
-      {/* -- OVERLAY MODAL 4: INVESTOR VIEW DETAILS MODAL -- */}
-      {selectedInvestor && (
-        <BaseModal
-          isOpen={isViewModalOpen}
-          onClose={() => setIsViewModalOpen(false)}
-          title={selectedInvestor.name}
-          description={`INV-${String(selectedInvestor.id).padStart(3, "0")} • Profile Details`}
-          className="max-w-lg"
-        >
-          {/* Content items grid */}
-          <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar text-left text-sm font-semibold">
-            
-            <div className="grid grid-cols-2 gap-y-4 gap-x-2 border-b border-slate-100 pb-4">
-              <div>
-                <span className="block text-[10px] uppercase tracking-widest text-slate-400">Email Address</span>
-                <span className="text-slate-800 break-all">{selectedInvestor.email || "—"}</span>
-              </div>
-              <div>
-                <span className="block text-[10px] uppercase tracking-widest text-slate-400">Mobile Phone</span>
-                <span className="text-slate-800">{selectedInvestor.mobile || "—"}</span>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-y-4 gap-x-2 border-b border-slate-100 pb-4">
-              <div>
-                <span className="block text-[10px] uppercase tracking-widest text-slate-400">Company / Organization</span>
-                <span className="text-slate-800">{selectedInvestor.organization && selectedInvestor.organization !== "—" ? selectedInvestor.organization : "—"}</span>
-              </div>
-              <div>
-                <span className="block text-[10px] uppercase tracking-widest text-slate-400">Registration Number</span>
-                <span className="text-slate-800">{selectedInvestor.reg_number && selectedInvestor.reg_number !== "—" ? selectedInvestor.reg_number : "—"}</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-y-4 gap-x-2 border-b border-slate-100 pb-4">
-              <div>
-                <span className="block text-[10px] uppercase tracking-widest text-slate-400">Interest Theme</span>
-                <span className="text-slate-800">{selectedInvestor.interest && selectedInvestor.interest !== "—" ? selectedInvestor.interest : "—"}</span>
-              </div>
-              <div>
-                <span className="block text-[10px] uppercase tracking-widest text-slate-400">Accreditation</span>
-                <span className="text-slate-800">{selectedInvestor.accreditation || "Accredited"}</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-y-4 gap-x-2 border-b border-slate-100 pb-4">
-              <div>
-                <span className="block text-[10px] uppercase tracking-widest text-slate-400">Origin Country</span>
-                <span className="text-slate-800 flex items-center gap-1">
-                  <Globe className="w-3.5 h-3.5 text-slate-400" />
-                  {selectedInvestor.country && selectedInvestor.country !== "—" ? selectedInvestor.country : "—"}
-                </span>
-              </div>
-              <div>
-                <span className="block text-[10px] uppercase tracking-widest text-slate-400">Onboarding Date</span>
-                <span className="text-slate-800 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  {selectedInvestor.date_of_onboarding || "—"}
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-y-4 gap-x-2">
-              <div>
-                <span className="block text-[10px] uppercase tracking-widest text-slate-400">Allocated Amount ($)</span>
-                <span className="text-base text-blue-600 font-extrabold">
-                  ${(selectedInvestor.amount || 0).toLocaleString()}
-                </span>
-              </div>
-              <div>
-                <span className="block text-[10px] uppercase tracking-widest text-slate-400">Status State</span>
-                <span className={cn(
-                  "inline-flex items-center gap-1.5 px-2.5 py-1 mt-0.5 rounded-full text-xs font-bold uppercase",
-                  selectedInvestor.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
-                )}>
-                  {selectedInvestor.status || "active"}
-                </span>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Close Button footer bar */}
-          <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-            <button
-              onClick={() => setIsViewModalOpen(false)}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl cursor-pointer transition-colors"
-            >
-              Done
-            </button>
-          </div>
-        </BaseModal>
-      )}
 
     </div>
   );
