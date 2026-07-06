@@ -924,210 +924,239 @@ export const Investors = () => {
                 )}
               </div>
 
-              <form onSubmit={handleSaveInvestor} className="space-y-6">
+              <form onSubmit={handleSaveInvestor} className="space-y-8">
+                {/* Rearranged structured grid sections */}
+                <div className="space-y-8">
 
-                {/* 2-column grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Section 1: Account & Profile */}
+                  <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                      1. Account & Profile
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Full Name */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Full Name <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          required
+                          disabled={isViewDetailsMode}
+                          type="text"
+                          placeholder="Enter full name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
 
-                  {/* LEFT COLUMN */}
-                  <div className="space-y-5">
+                      {/* Email */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Email ID <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          required
+                          disabled={isViewDetailsMode || !!selectedInvestor}
+                          type="email"
+                          placeholder="Enter email address"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
 
-                    {/* Full Name */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Full Name <span className="text-rose-500">*</span>
-                      </label>
-                      <input
-                        required
-                        disabled={isViewDetailsMode}
-                        type="text"
-                        placeholder="Enter full name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                      />
+                      {/* Status Toggle */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Status
+                        </label>
+                        <div className="flex items-center gap-3 pt-2">
+                          <button
+                            disabled={isViewDetailsMode}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, status: formData.status === "active" ? "inactive" : "active" })}
+                            className={cn(
+                              "relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
+                              formData.status === "active" ? "bg-emerald-500" : "bg-slate-300"
+                            )}
+                          >
+                            <span className={cn(
+                              "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform",
+                              formData.status === "active" ? "translate-x-6" : "translate-x-1"
+                            )} />
+                          </button>
+                          <span className={cn(
+                            "text-sm font-semibold",
+                            formData.status === "active" ? "text-emerald-600" : "text-slate-400"
+                          )}>
+                            {formData.status === "active" ? "Active" : "Inactive"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-
-                    {/* Email */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Email ID <span className="text-rose-500">*</span>
-                      </label>
-                      <input
-                        required
-                        disabled={isViewDetailsMode || !!selectedInvestor}
-                        type="email"
-                        placeholder="Enter email address"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                      />
-                    </div>
-
-                    {/* Investor Type */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Investor Type <span className="text-rose-500">*</span>
-                      </label>
-                      <select
-                        disabled={isViewDetailsMode}
-                        value={formData.type}
-                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all appearance-none cursor-pointer"
-                      >
-                        {investorTypes.map(t => (
-                          <option key={t.value} value={String(t.value)}>{t.text}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Company / Org */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Company / Org
-                      </label>
-                      <input
-                        disabled={isViewDetailsMode}
-                        type="text"
-                        placeholder="Company or organization name"
-                        value={formData.organization}
-                        onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                      />
-                    </div>
-
-                    {/* Co Reg Number */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Co Reg Number
-                      </label>
-                      <input
-                        disabled={isViewDetailsMode}
-                        type="text"
-                        placeholder="Company registration number"
-                        value={formData.reg_number}
-                        onChange={(e) => setFormData({ ...formData, reg_number: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                      />
-                    </div>
-
-                    {/* Date of Boarding */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        Date of Boarding <span className="text-rose-500">*</span>
-                      </label>
-                      <input
-                        required
-                        disabled={isViewDetailsMode}
-                        type="date"
-                        value={formData.date_of_onboarding}
-                        onChange={(e) => setFormData({ ...formData, date_of_onboarding: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                      />
-                    </div>
-
-                    {/* Investment Amount */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Investment Amount ($) <span className="text-rose-500">*</span>
-                      </label>
-                      <input
-                        required
-                        disabled={isViewDetailsMode}
-                        type="number"
-                        placeholder="e.g. 50000"
-                        value={formData.amount}
-                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                      />
-                    </div>
-
                   </div>
 
-                  {/* RIGHT COLUMN */}
-                  <div className="space-y-5">
-                    {/* ROI */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        ROI <span className="text-rose-500">*</span>
-                      </label>
-                      <select
-                        required
-                        disabled={isViewDetailsMode}
-                        value={formData.roi}
-                        onChange={(e) => setFormData({ ...formData, roi: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                      >
-                        <option value="">Select ROI range</option>
-                        {roiRanges.map(r => (
-                          <option key={r.value} value={String(r.value)}>{r.text}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Bank */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Bank
-                      </label>
-                      <select
-                        disabled={isViewDetailsMode}
-                        value={formData.bank}
-                        onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                      >
-                        <option value="">Select bank</option>
-                        {banks.map(b => (
-                          <option key={b.value} value={String(b.value)}>{b.text}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* AC No */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        AC No
-                      </label>
-                      <input
-                        disabled={isViewDetailsMode}
-                        type="text"
-                        placeholder="Bank account number"
-                        value={formData.acNumber}
-                        onChange={(e) => setFormData({ ...formData, acNumber: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                      />
-                    </div>
-
-                    {/* Status toggle */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Status
-                      </label>
-                      <div className="flex items-center gap-3 pt-1">
-                        <button
+                  {/* Section 2: Entity Details */}
+                  <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                      2. Entity Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Investor Type */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Investor Type <span className="text-rose-500">*</span>
+                        </label>
+                        <select
                           disabled={isViewDetailsMode}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, status: formData.status === "active" ? "inactive" : "active" })}
-                          className={cn(
-                            "relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
-                            formData.status === "active" ? "bg-emerald-500" : "bg-slate-300"
-                          )}
+                          value={formData.type}
+                          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all appearance-none cursor-pointer"
                         >
-                          <span className={cn(
-                            "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform",
-                            formData.status === "active" ? "translate-x-6" : "translate-x-1"
-                          )} />
-                        </button>
-                        <span className={cn(
-                          "text-sm font-semibold",
-                          formData.status === "active" ? "text-emerald-600" : "text-slate-400"
-                        )}>
-                          {formData.status === "active" ? "Active" : "Inactive"}
-                        </span>
+                          {investorTypes.map(t => (
+                            <option key={t.value} value={String(t.value)}>{t.text}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Company / Org */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Company / Org
+                        </label>
+                        <input
+                          disabled={isViewDetailsMode}
+                          type="text"
+                          placeholder="Company or organization name"
+                          value={formData.organization}
+                          onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
+
+                      {/* Co Reg Number */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Co Reg Number
+                        </label>
+                        <input
+                          disabled={isViewDetailsMode}
+                          type="text"
+                          placeholder="Company registration number"
+                          value={formData.reg_number}
+                          onChange={(e) => setFormData({ ...formData, reg_number: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Financial & Onboarding & settlement */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Investment Terms */}
+                    <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                        3. Investment Terms
+                      </h3>
+                      <div className="space-y-4">
+                        {/* Investment Amount */}
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Investment Amount ($) <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            required
+                            disabled={isViewDetailsMode}
+                            type="number"
+                            placeholder="e.g. 50000"
+                            value={formData.amount}
+                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          />
+                        </div>
+
+                        {/* ROI */}
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            ROI <span className="text-rose-500">*</span>
+                          </label>
+                          <select
+                            required
+                            disabled={isViewDetailsMode}
+                            value={formData.roi}
+                            onChange={(e) => setFormData({ ...formData, roi: e.target.value })}
+                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                          >
+                            <option value="">Select ROI range</option>
+                            {roiRanges.map(r => (
+                              <option key={r.value} value={String(r.value)}>{r.text}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Date of Boarding */}
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            Date of Boarding <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            required
+                            disabled={isViewDetailsMode}
+                            type="date"
+                            value={formData.date_of_onboarding}
+                            onChange={(e) => setFormData({ ...formData, date_of_onboarding: e.target.value })}
+                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          />
+                        </div>
                       </div>
                     </div>
 
+                    {/* Settlement Settlement */}
+                    <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                        4. Bank Settlement
+                      </h3>
+                      <div className="space-y-4">
+                        {/* Bank */}
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Bank Name
+                          </label>
+                          <select
+                            disabled={isViewDetailsMode}
+                            value={formData.bank}
+                            onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
+                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                          >
+                            <option value="">Select bank</option>
+                            {banks.map(b => (
+                              <option key={b.value} value={String(b.value)}>{b.text}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* AC No */}
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            AC No
+                          </label>
+                          <input
+                            disabled={isViewDetailsMode}
+                            type="text"
+                            placeholder="Bank account number"
+                            value={formData.acNumber}
+                            onChange={(e) => setFormData({ ...formData, acNumber: e.target.value })}
+                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                 </div>
