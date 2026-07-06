@@ -94,3 +94,15 @@ export interface SystemNotification {
   investorName?: string;
   status: string;
 }
+
+export interface SystemReport {
+  id: number;
+  title: string;
+  type: string;
+  size: string;
+  url: string;
+  uploadedBy: string;
+  createdAt: string;
+  targetInvestorIds: string;
+  investorName: string;
+}

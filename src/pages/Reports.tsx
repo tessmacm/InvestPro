@@ -1,68 +1,196 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
+import { SystemReport, Investor } from "../types";
+import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Search, FileText, Download, TrendingUp } from "lucide-react";
-import { motion } from "motion/react";
-
-interface ReportRow {
-  investorId: number;
-  investorName: string;
-  projectId: number;
-  projectTitle: string;
-}
+import { Search, Plus, Download, Trash2, FileText, CheckSquare, Square } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 export const Reports = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const [rows, setRows] = useState<ReportRow[]>([]);
+  const isAdmin = user?.role === "admin" || user?.role === "manager" || user?.role === "superadmin";
+
+  const [reports, setReports] = useState<SystemReport[]>([]);
+  const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    title: "",
+    type: "PDF"
+  });
+  const [selectedInvestorIds, setSelectedInvestorIds] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(true);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/reports`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/reports`, {
         headers: {
           "x-user-role": user?.role || "",
           "x-user-id": user?.id || ""
         }
       });
-      if (!response.ok) throw new Error("Failed to fetch reports");
-      const data = await response.json();
-      setRows(data);
+      if (response.ok) {
+        const data = await response.json();
+        setReports(data);
+      }
     } catch (err) {
-      console.warn("Failed to fetch reports, using mock fallback rows", err);
-      setRows([
-        { investorId: 1, investorName: "John Doe", projectId: 1, projectTitle: "InvestPro Mobile App" },
-        { investorId: 2, investorName: "ABC Ventures Ltd.", projectId: 2, projectTitle: "Investor Dashboard Redesign" }
-      ]);
+      console.error("Failed to fetch reports", err);
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchInvestors = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/investors`, {
+        headers: {
+          "x-user-role": user?.role || "",
+          "x-user-id": user?.id || ""
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setInvestors(data);
+        // Default target all
+        setSelectedInvestorIds(data.map((i: Investor) => String(i.id)));
+      }
+    } catch (err) {
+      console.warn("Could not load investors list", err);
+    }
+  };
+
   useEffect(() => {
     fetchReports();
+    if (isAdmin) {
+      fetchInvestors();
+    }
   }, []);
 
-  const handleDownload = (reportNum: number, format: "PDF" | "Excel", row: ReportRow) => {
-    // Mock download generator
-    const content = `InvestPro Report ${reportNum} - ${format} Export\n==========================================\nInvestor: ${row.investorName} (ID: ${row.investorId})\nProject: ${row.projectTitle} (ID: ${row.projectId})\nFormat: ${format}\nDate: ${new Date().toLocaleDateString()}`;
-    const blob = new Blob([content], { type: "text/plain" });
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const titleWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      const ext = file.name.substring(file.name.lastIndexOf('.') + 1).toUpperCase();
+      
+      let typeOption = "PDF";
+      if (ext === "XLS" || ext === "XLSX" || ext === "CSV") typeOption = "EXCEL";
+
+      setFormData({
+        title: titleWithoutExt,
+        type: typeOption
+      });
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedInvestorIds([]);
+      setSelectAll(false);
+    } else {
+      setSelectedInvestorIds(investors.map(i => String(i.id)));
+      setSelectAll(true);
+    }
+  };
+
+  const toggleInvestor = (id: string) => {
+    let updated = [...selectedInvestorIds];
+    if (updated.includes(id)) {
+      updated = updated.filter(item => item !== id);
+      setSelectAll(false);
+    } else {
+      updated.push(id);
+      if (updated.length === investors.length) {
+        setSelectAll(true);
+      }
+    }
+    setSelectedInvestorIds(updated);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title) return;
+
+    try {
+      const fileSize = selectedFile 
+        ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB` 
+        : "0.2 MB";
+      const fileUrl = selectedFile 
+        ? `/uploads/reports/${selectedFile.name}` 
+        : "#";
+
+      const targets = selectAll ? "all" : selectedInvestorIds.join(",");
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/reports`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-role": user?.role || "",
+          "x-user-id": user?.id || ""
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          type: formData.type,
+          size: fileSize,
+          url: fileUrl,
+          targetInvestorIds: targets
+        })
+      });
+
+      if (response.ok) {
+        setIsModalOpen(false);
+        setFormData({ title: "", type: "PDF" });
+        setSelectedFile(null);
+        fetchReports();
+      }
+    } catch (err) {
+      console.error("Failed to upload report", err);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this report?")) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/reports/${id}`, {
+        method: "DELETE",
+        headers: {
+          "x-user-role": user?.role || "",
+          "x-user-id": user?.id || ""
+        }
+      });
+      if (response.ok) {
+        fetchReports();
+      }
+    } catch (err) {
+      console.error("Failed to delete report", err);
+    }
+  };
+
+  const handleDownload = (r: SystemReport) => {
+    // Generate text/file download representation
+    const text = `InvestPro Report - ${r.title}\nFormat: ${r.type}\nSize: ${r.size}\nUploaded: ${new Date(r.createdAt).toLocaleDateString()}\nURL Ref: ${r.url}`;
+    const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Report_${reportNum}_${row.investorName.replace(/\s+/g, "_")}.${format === "PDF" ? "pdf" : "xlsx"}`;
+    link.download = `${r.title.replace(/\s+/g, "_")}.${r.type.toLowerCase() === "pdf" ? "pdf" : "xlsx"}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const filteredRows = rows.filter(r => {
-    return r.investorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.projectTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `Inv#${r.investorId}`.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredReports = reports.filter(r => {
+    return r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.investorName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   return (
@@ -71,8 +199,21 @@ export const Reports = () => {
         <div>
           <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">System &gt; Reports</span>
           <h2 className="text-2xl font-display font-bold text-slate-900 mt-0.5">System Reports</h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Generate and export performance, compliance, and ROI summaries.</p>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Generate, upload, and export performance and compliance summaries.</p>
         </div>
+        {isAdmin && (
+          <button
+            onClick={() => {
+              setSelectAll(true);
+              setSelectedInvestorIds(investors.map(i => String(i.id)));
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/10 cursor-pointer active:scale-95 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            Upload Report
+          </button>
+        )}
       </div>
 
       <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
@@ -80,7 +221,7 @@ export const Reports = () => {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search by investor or project..."
+            placeholder="Search reports..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -89,84 +230,192 @@ export const Reports = () => {
       </div>
 
       {loading ? (
-        <TableSkeleton columns={4} rows={3} />
+        <TableSkeleton columns={isAdmin ? 6 : 5} rows={3} />
       ) : (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Investor ID</th>
-                  <th className="px-6 py-4">Project ID</th>
-                  <th className="px-6 py-4">Project Title</th>
-                  <th className="px-6 py-4 text-right">Reports Actions</th>
+                  <th className="px-6 py-4">Title</th>
+                  <th className="px-6 py-4">Format</th>
+                  <th className="px-6 py-4">Size</th>
+                  <th className="px-6 py-4">Date</th>
+                  {isAdmin && <th className="px-6 py-4">To</th>}
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 text-sm">
-                {filteredRows.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 font-mono font-bold text-slate-500">Inv#{row.investorId}</td>
-                    <td className="px-6 py-4 font-mono font-bold text-slate-500">Proj#{row.projectId}</td>
-                    <td className="px-6 py-4 font-semibold text-slate-900">{row.projectTitle}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-3 items-center">
-                        {/* Report 1 */}
-                        <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-1">
-                          <span className="text-xs font-bold px-1.5 text-slate-400">R1</span>
+                <AnimatePresence mode="popLayout">
+                  {filteredReports.map(r => (
+                    <motion.tr
+                      key={r.id}
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="hover:bg-slate-50/50 transition-colors"
+                    >
+                      <td className="px-6 py-4 font-semibold text-slate-900 flex items-center gap-3">
+                        <FileText className="w-4 h-4 text-rose-500" />
+                        {r.title}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
+                          r.type === "PDF" ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"
+                        }`}>
+                          {r.type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-500 font-mono text-xs">{r.size}</td>
+                      <td className="px-6 py-4 text-slate-500">
+                        {new Date(r.createdAt).toLocaleDateString(undefined, {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}
+                      </td>
+                      {isAdmin && (
+                        <td className="px-6 py-4 text-slate-600 font-medium max-w-[200px] truncate">
+                          {r.investorName}
+                        </td>
+                      )}
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <button
+                          onClick={() => handleDownload(r)}
+                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Download
+                        </button>
+                        {isAdmin && (
                           <button
-                            onClick={() => handleDownload(1, "PDF", row)}
-                            className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 px-2 py-1 rounded cursor-pointer"
+                            onClick={() => handleDelete(r.id)}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                           >
-                            PDF
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
                           </button>
-                          <button
-                            onClick={() => handleDownload(1, "Excel", row)}
-                            className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2 py-1 rounded cursor-pointer"
-                          >
-                            XLS
-                          </button>
-                        </div>
-                        {/* Report 2 */}
-                        <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-1">
-                          <span className="text-xs font-bold px-1.5 text-slate-400">R2</span>
-                          <button
-                            onClick={() => handleDownload(2, "PDF", row)}
-                            className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 px-2 py-1 rounded cursor-pointer"
-                          >
-                            PDF
-                          </button>
-                          <button
-                            onClick={() => handleDownload(2, "Excel", row)}
-                            className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2 py-1 rounded cursor-pointer"
-                          >
-                            XLS
-                          </button>
-                        </div>
-                        {/* Report 3 */}
-                        <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-1">
-                          <span className="text-xs font-bold px-1.5 text-slate-400">R3</span>
-                          <button
-                            onClick={() => handleDownload(3, "PDF", row)}
-                            className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 px-2 py-1 rounded cursor-pointer"
-                          >
-                            PDF
-                          </button>
-                          <button
-                            onClick={() => handleDownload(3, "Excel", row)}
-                            className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2 py-1 rounded cursor-pointer"
-                          >
-                            XLS
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        )}
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>
         </div>
       )}
+
+      {/* Upload Report Modal */}
+      <BaseModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Upload System Report">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Report Title</label>
+            <input 
+              required
+              type="text" 
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              placeholder="e.g. Q3 Growth and Compliance Audit"
+              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">File Type</label>
+            <select 
+              value={formData.type}
+              onChange={(e) => setFormData({...formData, type: e.target.value})}
+              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium appearance-none"
+            >
+              <option value="PDF">PDF Report Document</option>
+              <option value="EXCEL">Excel Sheet Summary</option>
+            </select>
+          </div>
+
+          {/* Targeted Investors Multi-Select */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 block mb-2">Targeted Recipients</label>
+            <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50 max-h-48 overflow-y-auto space-y-2">
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 cursor-pointer"
+              >
+                {selectAll ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-slate-400" />}
+                Select All Investors
+              </button>
+              <hr className="border-slate-200 my-2" />
+              {investors.map(inv => {
+                const isSelected = selectedInvestorIds.includes(String(inv.id));
+                return (
+                  <button
+                    key={inv.id}
+                    type="button"
+                    onClick={() => toggleInvestor(String(inv.id))}
+                    disabled={selectAll}
+                    className={`flex items-center gap-2 text-sm font-semibold w-full text-left transition-colors ${
+                      selectAll ? "text-slate-400 cursor-not-allowed" : "text-slate-700 hover:text-blue-600 cursor-pointer"
+                    }`}
+                  >
+                    {selectAll || isSelected ? (
+                      <CheckSquare className={`w-4 h-4 ${selectAll ? "text-blue-400" : "text-blue-600"}`} />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
+                    {inv.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <input 
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept=".pdf,.xls,.xlsx,.csv"
+          />
+
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="p-10 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50 text-center group hover:border-blue-300 transition-all cursor-pointer"
+          >
+            <div className="bg-white w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <Plus className="w-6 h-6 text-blue-600" />
+            </div>
+            {selectedFile ? (
+              <div>
+                <p className="text-sm font-bold text-blue-600 truncate max-w-[250px] mx-auto">{selectedFile.name}</p>
+                <p className="text-xs text-slate-400 mt-1">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm font-bold text-slate-900">Select Report File</p>
+                <p className="text-xs text-slate-400 mt-1">Drop your file here or click to browse</p>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 flex gap-3">
+            <button 
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 px-6 py-4 border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="flex-1 px-6 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100"
+            >
+              Upload Report
+            </button>
+          </div>
+        </form>
+      </BaseModal>
     </motion.div>
   );
 };
