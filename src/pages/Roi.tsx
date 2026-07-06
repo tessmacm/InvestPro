@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import { RoiContract } from "../types";
 import { BaseModal } from "../components/BaseModal";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
 import { Search, Eye, TrendingUp, Calendar, Landmark, Percent } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -33,10 +33,7 @@ export const Roi = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/roi`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (!response.ok) throw new Error("Failed to fetch ROI contracts");
       const data = await response.json();

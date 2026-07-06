@@ -17,7 +17,7 @@ import { motion } from "motion/react";
 import { Document, Investor } from "../types";
 import { DataTable } from "../components/DataTable";
 import { BaseModal } from "../components/BaseModal";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
 
 const container = {
@@ -75,10 +75,7 @@ export const Documents = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/documents`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       const data = await response.json();
       setDocuments(data);
@@ -92,10 +89,7 @@ export const Documents = () => {
   const fetchInvestors = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/investors`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (response.ok) {
         const data = await response.json();
@@ -127,11 +121,7 @@ export const Documents = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/admin/documents?id=${formData.investorId || 0}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify({
           title: formData.title,
           type: formData.type,
@@ -157,10 +147,7 @@ export const Documents = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/documents/${id}`, {
         method: "DELETE",
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (response.ok) {
         fetchDocuments();

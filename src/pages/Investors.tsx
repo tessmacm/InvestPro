@@ -27,7 +27,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import { Investor } from "../types";
 import { cn } from "../lib/utils";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, authHeaders } from "../config/api";
 import { BaseModal } from "../components/BaseModal";
 import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
 
@@ -176,10 +176,7 @@ export const Investors = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/investors`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (!response.ok) throw new Error("Could not fetch list");
       const data = await response.json();
@@ -354,11 +351,7 @@ export const Investors = () => {
     try {
       const response = await fetch(url, {
         method,
-        headers: { 
-          "Content-Type": "application/json",
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -395,10 +388,7 @@ export const Investors = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/investors/${selectedInvestor.id}`, {
         method: "DELETE",
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (!response.ok) throw new Error("Delete failed");
       

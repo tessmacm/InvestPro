@@ -31,6 +31,7 @@ import {
   Lightbulb,
   Check
 } from "lucide-react";
+import { authHeaders } from "../config/api";
 
 export const Projects = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -113,10 +114,7 @@ export const Projects = () => {
     setLoading(true);
     try {
       const response = await fetch("/api/projects", {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (!response.ok) {
         throw new Error("Failed to load projects from Server API");
@@ -191,11 +189,7 @@ export const Projects = () => {
     try {
       const response = await fetch("/api/projects", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
@@ -242,11 +236,7 @@ export const Projects = () => {
     try {
       const response = await fetch(`/api/projects/${selectedProject.id}`, {
         method: "PUT",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
@@ -298,10 +288,7 @@ export const Projects = () => {
     try {
       const response = await fetch(`/api/projects/${target.id}`, {
         method: "DELETE",
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
 
       if (!response.ok) {
@@ -332,11 +319,7 @@ export const Projects = () => {
     try {
       const response = await fetch(`/api/projects/${projectToToggle.id}/status`, {
         method: "PATCH",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify({ status: nextStatus })
       });
 

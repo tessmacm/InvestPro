@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import { Payment } from "../types";
 import { BaseModal } from "../components/BaseModal";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
 import { Search, Filter, Eye, DollarSign, Calendar, Landmark } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -35,10 +35,7 @@ export const Payments = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/payments`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (!response.ok) throw new Error("Failed to fetch payments");
       const data = await response.json();
@@ -60,10 +57,7 @@ export const Payments = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/payments/${paymentId}/acknowledge-sent`, {
         method: "POST",
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (response.ok) {
         fetchPayments();
@@ -77,10 +71,7 @@ export const Payments = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/payments/${paymentId}/acknowledge-received`, {
         method: "POST",
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (response.ok) {
         fetchPayments();

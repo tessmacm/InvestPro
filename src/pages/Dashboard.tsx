@@ -24,7 +24,7 @@ import {
   ResponsiveContainer 
 } from "recharts";
 import { Link } from "react-router-dom";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, authHeaders } from "../config/api";
 import { cn } from "../lib/utils";
 
 const data = [
@@ -118,10 +118,7 @@ export const Dashboard = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/stats`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       const data = await response.json();
 
@@ -130,10 +127,7 @@ export const Dashboard = () => {
       let totalRoiVal = data.totalRoi ?? 0;
 
       const payResponse = await fetch(`${API_BASE_URL}/api/payments`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (payResponse.ok) {
         const payData = await payResponse.json();
@@ -143,10 +137,7 @@ export const Dashboard = () => {
       }
 
       const roiResponse = await fetch(`${API_BASE_URL}/api/roi`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (roiResponse.ok) {
         const roiData = await roiResponse.json();
@@ -156,10 +147,7 @@ export const Dashboard = () => {
       }
 
       const docResponse = await fetch(`${API_BASE_URL}/api/documents`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (docResponse.ok) {
         const docData = await docResponse.json();
@@ -180,10 +168,7 @@ export const Dashboard = () => {
 
       // Fetch real investments from API
       const invResponse = await fetch(`${API_BASE_URL}/api/investors`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (invResponse.ok) {
         const invData = await invResponse.json();

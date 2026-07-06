@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import { SystemNotification, Investor } from "../types";
 import { BaseModal } from "../components/BaseModal";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
 import {
   Search, Filter, Eye, Edit2, Plus, Bell, Calendar, Tag, CheckCircle,
@@ -76,10 +76,7 @@ export const Notifications = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/notifications`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (!response.ok) throw new Error("Failed to fetch notifications");
       const data = await response.json();
@@ -99,10 +96,7 @@ export const Notifications = () => {
   const fetchInvestors = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/investors`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (response.ok) {
         const data = await response.json();
@@ -137,11 +131,7 @@ export const Notifications = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/notifications`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -190,11 +180,7 @@ export const Notifications = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/notifications/${selectedNotification.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -227,10 +213,7 @@ export const Notifications = () => {
     try {
       await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
         method: "PATCH",
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
     } catch (err) {

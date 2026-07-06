@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import { SystemReport, Investor } from "../types";
 import { BaseModal } from "../components/BaseModal";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
 import { Search, Plus, Download, Trash2, FileText, CheckSquare, Square } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -32,10 +32,7 @@ export const Reports = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/reports`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (response.ok) {
         const data = await response.json();
@@ -51,10 +48,7 @@ export const Reports = () => {
   const fetchInvestors = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/investors`, {
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (response.ok) {
         const data = await response.json();
@@ -131,11 +125,7 @@ export const Reports = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/admin/reports`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify({
           title: formData.title,
           type: formData.type,
@@ -162,10 +152,7 @@ export const Reports = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/reports/${id}`, {
         method: "DELETE",
-        headers: {
-          "x-user-role": user?.role || "",
-          "x-user-id": user?.id || ""
-        }
+        headers: authHeaders()
       });
       if (response.ok) {
         fetchReports();

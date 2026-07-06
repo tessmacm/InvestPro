@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { User, Role } from "../types";
 import { cn } from "../lib/utils";
 import { DataTable } from "../components/DataTable";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
 
 const container = {
@@ -73,10 +73,7 @@ export const AdminPanel = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/users`, {
-        headers: {
-          "x-user-role": currentUser?.role || "",
-          "x-user-id": currentUser?.id || ""
-        }
+        headers: authHeaders()
       });
       const data = await response.json();
       setUsers(data);
@@ -114,11 +111,7 @@ export const AdminPanel = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
         method: "PATCH",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-user-role": currentUser?.role || "",
-          "x-user-id": currentUser?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify({ role: newRole }),
       });
       if (response.ok) {
@@ -150,11 +143,7 @@ export const AdminPanel = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/${userId}/status`, {
         method: "PATCH",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-user-role": currentUser?.role || "",
-          "x-user-id": currentUser?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify({ status: newStatus }),
       });
       if (response.ok) {
@@ -186,10 +175,7 @@ export const AdminPanel = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
         method: "DELETE",
-        headers: {
-          "x-user-role": currentUser?.role || "",
-          "x-user-id": currentUser?.id || ""
-        }
+        headers: authHeaders()
       });
       if (response.ok) {
         setUsers(users.filter(u => String(u.id) !== String(userId)));
@@ -224,11 +210,7 @@ export const AdminPanel = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/users`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-role": currentUser?.role || "",
-          "x-user-id": currentUser?.id || ""
-        },
+        headers: authHeaders(),
         body: JSON.stringify(payload)
       });
 
