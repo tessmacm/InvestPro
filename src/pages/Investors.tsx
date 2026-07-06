@@ -175,7 +175,7 @@ export const Investors = () => {
   const fetchInvestors = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/investors`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/investors`, {
         headers: {
           "x-user-role": user?.role || "",
           "x-user-id": user?.id || ""
@@ -346,7 +346,9 @@ export const Investors = () => {
       notes: "Basic Registration"
     };
 
-    const url = isEdit ? `${API_BASE_URL}/api/investors/${selectedInvestor.id}` : `${API_BASE_URL}/api/investors`;
+    const url = isEdit
+      ? `${API_BASE_URL}/api/admin/investors/update/${selectedInvestor.id}`
+      : `${API_BASE_URL}/api/admin/investors/create`;
     const method = isEdit ? "PUT" : "POST";
 
     try {
@@ -361,8 +363,18 @@ export const Investors = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Operation failed");
+        // Safely parse error — body may be empty on auth/network failures
+        let errMsg = "Operation failed";
+        try {
+          const ct = response.headers.get("content-type") || "";
+          if (ct.includes("application/json")) {
+            const errorData = await response.json();
+            errMsg = errorData.message || errorData.Message || errMsg;
+          } else {
+            errMsg = (await response.text()) || `HTTP ${response.status}`;
+          }
+        } catch { /* ignore parse error, use default message */ }
+        throw new Error(errMsg);
       }
 
       showToast("success", isEdit ? "Investor details updated successfully!" : "New Investor register created successfully!");
@@ -381,7 +393,7 @@ export const Investors = () => {
     }
     if (!selectedInvestor) return;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/investors/${selectedInvestor.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/investors/${selectedInvestor.id}`, {
         method: "DELETE",
         headers: {
           "x-user-role": user?.role || "",
