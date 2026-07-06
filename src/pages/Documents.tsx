@@ -11,7 +11,8 @@ import {
   File, 
   Calendar,
   CheckCircle,
-  Search
+  Search,
+  RefreshCw
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Document, Investor } from "../types";
@@ -51,6 +52,7 @@ export const Documents = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,6 +67,7 @@ export const Documents = () => {
       else if (ext === "JPG" || ext === "JPEG" || ext === "PNG") typeOption = "JPG";
 
       setFormData({
+        ...formData,
         title: titleWithoutExt,
         type: typeOption
       });
@@ -88,7 +91,7 @@ export const Documents = () => {
 
   const fetchInvestors = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/investors`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/investors`, {
         headers: authHeaders()
       });
       if (response.ok) {
@@ -109,35 +112,36 @@ export const Documents = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title) return;
+    if (!formData.title || !selectedFile) return;
 
+    setUploading(true);
     try {
-      const fileSize = selectedFile 
-        ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB` 
-        : "0.2 MB";
-      const fileUrl = selectedFile 
-        ? `/uploads/${selectedFile.name}` 
-        : "#";
+      const uploadData = new FormData();
+      uploadData.append("title", formData.title);
+      uploadData.append("type", formData.type);
+      uploadData.append("file", selectedFile);
+
+      const headers = authHeaders();
+      delete headers["Content-Type"]; // Allow browser to set the multipart boundary boundary automatically
 
       const response = await fetch(`${API_BASE_URL}/api/admin/documents?id=${formData.investorId || 0}`, {
         method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({
-          title: formData.title,
-          type: formData.type,
-          size: fileSize,
-          url: fileUrl,
-          uploaded_by: user?.id || "System Admin"
-        })
+        headers: headers,
+        body: uploadData
       });
       if (response.ok) {
         setIsModalOpen(false);
-        setFormData({ title: "", type: "PDF" });
+        setFormData({ title: "", type: "PDF", investorId: "" });
         setSelectedFile(null);
         fetchDocuments();
+      } else {
+        const errorText = await response.text();
+        console.error("Failed to upload document on server", errorText);
       }
     } catch (error) {
       console.error("Failed to upload document", error);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -440,16 +444,25 @@ export const Documents = () => {
           <div className="flex gap-3 pt-1">
             <button 
               type="button"
+              disabled={uploading}
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-all"
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100"
+              disabled={uploading}
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center gap-2"
             >
-              Upload File
+              {uploading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                "Upload File"
+              )}
             </button>
           </div>
         </form>
