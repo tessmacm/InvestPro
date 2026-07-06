@@ -91,6 +91,7 @@ export const Investors = () => {
     acNumber: "",
     status: "active" as "active" | "inactive",
     date_of_onboarding: "",
+    amount: "",
   });
 
   // Lookup data from API with fallback values
@@ -208,6 +209,7 @@ export const Investors = () => {
       acNumber: "",
       status: "active",
       date_of_onboarding: "",
+      amount: "",
     });
     setSelectedInvestor(null);
   };
@@ -234,6 +236,7 @@ export const Investors = () => {
       acNumber: investor.acNumber || "",
       status: investor.status || "active",
       date_of_onboarding: investor.date_of_onboarding ? investor.date_of_onboarding.split("T")[0] : "",
+      amount: String(investor.amount || ""),
     });
     setIsViewDetailsMode(false);
     setActiveView("add");
@@ -254,6 +257,7 @@ export const Investors = () => {
       acNumber: "",
       status: "active",
       date_of_onboarding: new Date().toISOString().split("T")[0],
+      amount: "",
     });
     setIsViewDetailsMode(false);
     setActiveView("add");
@@ -281,6 +285,7 @@ export const Investors = () => {
       acNumber: investor.acNumber || "",
       status: investor.status || "active",
       date_of_onboarding: investor.date_of_onboarding ? investor.date_of_onboarding.split("T")[0] : "",
+      amount: String(investor.amount || ""),
     });
     setIsViewDetailsMode(true);
     setActiveView("add");
@@ -310,7 +315,7 @@ export const Investors = () => {
       email: formData.email,
       mobile: "",
       organization: formData.organization || "—",
-      amount: 0,
+      amount: parseFloat(formData.amount) || 0,
       reg_number: formData.reg_number || "—",
       interest: formData.interest,
       roi: formData.roi,
@@ -1002,6 +1007,22 @@ export const Investors = () => {
                         value={formData.date_of_onboarding}
                         onChange={(e) => setFormData({ ...formData, date_of_onboarding: e.target.value })}
                         className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                      />
+                    </div>
+
+                    {/* Investment Amount */}
+                    <div className="space-y-1.5 text-left">
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Investment Amount ($) <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        required
+                        disabled={isViewDetailsMode}
+                        type="number"
+                        placeholder="e.g. 50000"
+                        value={formData.amount}
+                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                        className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                       />
                     </div>
 

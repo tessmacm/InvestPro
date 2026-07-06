@@ -66,6 +66,8 @@ export interface Payment {
   amount: number;
   paymentDate: string;
   status: string;
+  isSent: boolean;
+  isReceived: boolean;
 }
 
 export interface RoiContract {
@@ -88,6 +90,7 @@ export interface SystemNotification {
   isRead: boolean;
   createdAt: string;
   investorId?: number;
+  targetInvestorIds?: string;
   investorName?: string;
   status: string;
 }

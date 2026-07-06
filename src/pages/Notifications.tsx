@@ -56,6 +56,7 @@ export const Notifications = () => {
     message: "",
     eventType: "Investment Approved",
     investorId: "",
+    targetInvestorIds: "",
     status: "Active"
   });
 
@@ -130,6 +131,7 @@ export const Notifications = () => {
         message: formData.message,
         eventType: formData.eventType,
         investorId: formData.investorId ? parseInt(formData.investorId) : null,
+        targetInvestorIds: formData.targetInvestorIds || null,
         status: formData.status
       };
 
@@ -145,7 +147,7 @@ export const Notifications = () => {
 
       if (!response.ok) throw new Error("Failed to add notification");
       setIsAddOpen(false);
-      setFormData({ title: "", message: "", eventType: "Investment Approved", investorId: "", status: "Active" });
+      setFormData({ title: "", message: "", eventType: "Investment Approved", investorId: "", targetInvestorIds: "", status: "Active" });
       showToast("Notification Created", "The notification has been sent successfully.", "success");
       fetchNotifications();
     } catch (err) {
@@ -158,12 +160,15 @@ export const Notifications = () => {
         isRead: false,
         createdAt: new Date().toISOString(),
         investorId: formData.investorId ? parseInt(formData.investorId) : undefined,
-        investorName: investors.find(i => i.id === formData.investorId)?.name || "All Investors",
+        targetInvestorIds: formData.targetInvestorIds || undefined,
+        investorName: formData.targetInvestorIds
+          ? investors.filter(i => formData.targetInvestorIds.split(",").includes(String(i.id))).map(i => i.name).join(", ")
+          : (investors.find(i => i.id === formData.investorId)?.name || "All Investors"),
         status: formData.status
       };
       setNotifications(prev => [newNot, ...prev]);
       setIsAddOpen(false);
-      setFormData({ title: "", message: "", eventType: "Investment Approved", investorId: "", status: "Active" });
+      setFormData({ title: "", message: "", eventType: "Investment Approved", investorId: "", targetInvestorIds: "", status: "Active" });
       showToast("Notification Created", "The notification has been added locally.", "info");
     }
   };
@@ -173,6 +178,16 @@ export const Notifications = () => {
     if (!selectedNotification || !validateForm()) return;
 
     try {
+      const payload = {
+        id: selectedNotification.id,
+        title: formData.title,
+        message: formData.message,
+        eventType: formData.eventType,
+        investorId: formData.investorId ? parseInt(formData.investorId) : null,
+        targetInvestorIds: formData.targetInvestorIds || null,
+        status: formData.status
+      };
+
       const response = await fetch(`${API_BASE_URL}/api/notifications/${selectedNotification.id}`, {
         method: "PUT",
         headers: {
@@ -180,7 +195,7 @@ export const Notifications = () => {
           "x-user-role": user?.role || "",
           "x-user-id": user?.id || ""
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) throw new Error("Failed to update notification");
@@ -196,7 +211,10 @@ export const Notifications = () => {
         message: formData.message,
         eventType: formData.eventType,
         investorId: formData.investorId ? parseInt(formData.investorId) : undefined,
-        investorName: investors.find(i => i.id === formData.investorId)?.name || "All Investors",
+        targetInvestorIds: formData.targetInvestorIds || undefined,
+        investorName: formData.targetInvestorIds
+          ? investors.filter(i => formData.targetInvestorIds.split(",").includes(String(i.id))).map(i => i.name).join(", ")
+          : (investors.find(i => i.id === formData.investorId)?.name || "All Investors"),
         status: formData.status
       } : n));
       setIsEditOpen(false);
@@ -231,7 +249,7 @@ export const Notifications = () => {
   };
 
   const resetAddForm = () => {
-    setFormData({ title: "", message: "", eventType: "Investment Approved", investorId: "", status: "Active" });
+    setFormData({ title: "", message: "", eventType: "Investment Approved", investorId: "", targetInvestorIds: "", status: "Active" });
     setFormErrors({});
     setIsAddOpen(true);
   };
@@ -243,6 +261,7 @@ export const Notifications = () => {
       message: n.message,
       eventType: n.eventType,
       investorId: n.investorId ? String(n.investorId) : "",
+      targetInvestorIds: n.targetInvestorIds || "",
       status: n.status
     });
     setFormErrors({});
@@ -570,17 +589,54 @@ export const Notifications = () => {
             </div>
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Target Investor</label>
-            <select
-              value={formData.investorId}
-              onChange={(e) => setFormData({ ...formData, investorId: e.target.value })}
-              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              <option value="">All Investors</option>
-              {investors.map(i => (
-                <option key={i.id} value={i.id}>{i.name}</option>
-              ))}
-            </select>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Target Recipients</label>
+            <div className="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!formData.investorId && !formData.targetInvestorIds}
+                  onChange={() => setFormData({ ...formData, investorId: "", targetInvestorIds: "" })}
+                  className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                />
+                <span>All Investors</span>
+              </label>
+              <div className="border-t border-slate-200 my-1"></div>
+              {investors.map(i => {
+                const isChecked = formData.investorId === String(i.id) || formData.targetInvestorIds.split(",").includes(String(i.id));
+                return (
+                  <label key={i.id} className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        let newTargetIds = formData.targetInvestorIds.split(",").filter(Boolean);
+                        if (formData.investorId) {
+                          newTargetIds.push(formData.investorId);
+                        }
+                        
+                        if (e.target.checked) {
+                          if (!newTargetIds.includes(String(i.id))) {
+                            newTargetIds.push(String(i.id));
+                          }
+                        } else {
+                          newTargetIds = newTargetIds.filter(id => id !== String(i.id));
+                        }
+                        
+                        if (newTargetIds.length === 0) {
+                          setFormData({ ...formData, investorId: "", targetInvestorIds: "" });
+                        } else if (newTargetIds.length === 1) {
+                          setFormData({ ...formData, investorId: newTargetIds[0], targetInvestorIds: "" });
+                        } else {
+                          setFormData({ ...formData, investorId: "", targetInvestorIds: "," + newTargetIds.join(",") + "," });
+                        }
+                      }}
+                      className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>{i.name}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button
@@ -662,17 +718,54 @@ export const Notifications = () => {
             </div>
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Target Investor</label>
-            <select
-              value={formData.investorId}
-              onChange={(e) => setFormData({ ...formData, investorId: e.target.value })}
-              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              <option value="">All Investors</option>
-              {investors.map(i => (
-                <option key={i.id} value={i.id}>{i.name}</option>
-              ))}
-            </select>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Target Recipients</label>
+            <div className="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!formData.investorId && !formData.targetInvestorIds}
+                  onChange={() => setFormData({ ...formData, investorId: "", targetInvestorIds: "" })}
+                  className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                />
+                <span>All Investors</span>
+              </label>
+              <div className="border-t border-slate-200 my-1"></div>
+              {investors.map(i => {
+                const isChecked = formData.investorId === String(i.id) || formData.targetInvestorIds.split(",").includes(String(i.id));
+                return (
+                  <label key={i.id} className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        let newTargetIds = formData.targetInvestorIds.split(",").filter(Boolean);
+                        if (formData.investorId) {
+                          newTargetIds.push(formData.investorId);
+                        }
+                        
+                        if (e.target.checked) {
+                          if (!newTargetIds.includes(String(i.id))) {
+                            newTargetIds.push(String(i.id));
+                          }
+                        } else {
+                          newTargetIds = newTargetIds.filter(id => id !== String(i.id));
+                        }
+                        
+                        if (newTargetIds.length === 0) {
+                          setFormData({ ...formData, investorId: "", targetInvestorIds: "" });
+                        } else if (newTargetIds.length === 1) {
+                          setFormData({ ...formData, investorId: newTargetIds[0], targetInvestorIds: "" });
+                        } else {
+                          setFormData({ ...formData, investorId: "", targetInvestorIds: "," + newTargetIds.join(",") + "," });
+                        }
+                      }}
+                      className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>{i.name}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button
@@ -774,7 +867,7 @@ export const Notifications = () => {
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Recipient</span>
                   <div className="flex items-center gap-3 bg-blue-50/50 p-3.5 rounded-xl border border-blue-100">
                     <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-sm font-bold shrink-0">
-                      {selectedNotification.investorName.split(" ").map(s => s[0]).join("").slice(0, 2).toUpperCase()}
+                      {selectedNotification.investorName.split(/[,\s]+/).map(s => s[0]).join("").slice(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-800">{selectedNotification.investorName}</p>

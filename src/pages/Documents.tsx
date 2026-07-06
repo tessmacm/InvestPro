@@ -14,7 +14,7 @@ import {
   Search
 } from "lucide-react";
 import { motion } from "motion/react";
-import { Document } from "../types";
+import { Document, Investor } from "../types";
 import { DataTable } from "../components/DataTable";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL } from "../config/api";
@@ -39,12 +39,14 @@ export const Documents = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isReadOnly = user?.role === "client" || user?.role === "investor";
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
-    type: "PDF"
+    type: "PDF",
+    investorId: ""
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,8 +89,28 @@ export const Documents = () => {
     }
   };
 
+  const fetchInvestors = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/investors`, {
+        headers: {
+          "x-user-role": user?.role || "",
+          "x-user-id": user?.id || ""
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setInvestors(data);
+      }
+    } catch (err) {
+      console.warn("Could not load investors list", err);
+    }
+  };
+
   useEffect(() => {
     fetchDocuments();
+    if (!isReadOnly) {
+      fetchInvestors();
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,7 +125,7 @@ export const Documents = () => {
         ? `/uploads/${selectedFile.name}` 
         : "#";
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/documents?id=0`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/documents?id=${formData.investorId || 0}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -369,6 +391,23 @@ export const Documents = () => {
               className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium"
             />
           </div>
+
+          {!isReadOnly && (
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Investor Target *</label>
+              <select
+                required
+                value={formData.investorId}
+                onChange={(e) => setFormData({...formData, investorId: e.target.value})}
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium cursor-pointer"
+              >
+                <option value="">Select Investor</option>
+                {investors.map(i => (
+                  <option key={i.id} value={i.id}>{i.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">File Type</label>

@@ -23,6 +23,7 @@ const item = {
 
 export const Payments = () => {
   const { user } = useSelector((state: RootState) => state.auth);
+  const isAdmin = user?.role === "admin" || user?.role === "manager" || user?.role === "superadmin";
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +34,7 @@ export const Payments = () => {
   const fetchPayments = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/payments`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/payments`, {
         headers: {
           "x-user-role": user?.role || "",
           "x-user-id": user?.id || ""
@@ -46,12 +47,46 @@ export const Payments = () => {
       console.warn("Failed to fetch from real API, utilizing mock data", err);
       // Fallback Mock Data
       setPayments([
-        { paymentId: 1, investorId: 1, investorName: "John Doe", amount: 5000, paymentDate: "2026-07-25T10:00:00Z", status: "Completed" },
-        { paymentId: 2, investorId: 2, investorName: "ABC Ventures Ltd.", amount: 15000, paymentDate: "2026-07-26T14:30:00Z", status: "Completed" },
-        { paymentId: 3, investorId: 3, investorName: "Michael Smith", amount: 7500, paymentDate: "2026-07-27T09:15:00Z", status: "Pending" }
+        { paymentId: 1, investorId: 1, investorName: "John Doe", amount: 5000, paymentDate: "2026-07-25T10:00:00Z", status: "Sent", isSent: true, isReceived: false },
+        { paymentId: 2, investorId: 2, investorName: "ABC Ventures Ltd.", amount: 15000, paymentDate: "2026-07-26T14:30:00Z", status: "Received", isSent: true, isReceived: true },
+        { paymentId: 3, investorId: 3, investorName: "Michael Smith", amount: 7500, paymentDate: "2026-07-27T09:15:00Z", status: "Pending", isSent: false, isReceived: false }
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAcknowledgeSent = async (paymentId: number) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/payments/${paymentId}/acknowledge-sent`, {
+        method: "POST",
+        headers: {
+          "x-user-role": user?.role || "",
+          "x-user-id": user?.id || ""
+        }
+      });
+      if (response.ok) {
+        fetchPayments();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAcknowledgeReceived = async (paymentId: number) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/payments/${paymentId}/acknowledge-received`, {
+        method: "POST",
+        headers: {
+          "x-user-role": user?.role || "",
+          "x-user-id": user?.id || ""
+        }
+      });
+      if (response.ok) {
+        fetchPayments();
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -120,6 +155,7 @@ export const Payments = () => {
                   <th className="px-6 py-4">Investor</th>
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Payment Date</th>
+                  <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -144,13 +180,38 @@ export const Payments = () => {
                           year: "numeric"
                         })}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          p.isReceived ? "bg-emerald-50 text-emerald-700" :
+                          p.isSent ? "bg-blue-50 text-blue-700" :
+                          "bg-amber-50 text-amber-700"
+                        }`}>
+                          {p.isReceived ? "Received" : p.isSent ? "Sent" : "Pending"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-2">
+                        {isAdmin && !p.isSent && (
+                          <button
+                            onClick={() => handleAcknowledgeSent(p.paymentId)}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          >
+                            Acknowledge Sent
+                          </button>
+                        )}
+                        {!isAdmin && p.isSent && !p.isReceived && (
+                          <button
+                            onClick={() => handleAcknowledgeReceived(p.paymentId)}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          >
+                            Acknowledge Received
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setSelectedPayment(p);
                             setIsDetailsOpen(true);
                           }}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           View
