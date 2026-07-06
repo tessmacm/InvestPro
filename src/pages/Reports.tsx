@@ -309,44 +309,54 @@ export const Reports = () => {
 
       {/* Upload Report Modal */}
       <BaseModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Upload System Report">
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Report Title</label>
-            <input 
-              required
-              type="text" 
-              value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-              placeholder="e.g. Q3 Growth and Compliance Audit"
-              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium"
-            />
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+
+          {/* Section: Details */}
+          <div className="bg-slate-50/40 p-5 rounded-2xl border border-slate-100 space-y-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+              1. Report Details
+            </h3>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Report Title <strong className="text-rose-500">*</strong></label>
+              <input 
+                required
+                type="text" 
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                placeholder="e.g. Q3 Growth and Compliance Audit"
+                className="w-full px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">File Format</label>
+              <select 
+                value={formData.type}
+                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 cursor-pointer focus:ring-4 focus:ring-blue-100/50"
+              >
+                <option value="PDF">PDF Report Document</option>
+                <option value="EXCEL">Excel Sheet Summary</option>
+              </select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">File Type</label>
-            <select 
-              value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value})}
-              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium appearance-none"
-            >
-              <option value="PDF">PDF Report Document</option>
-              <option value="EXCEL">Excel Sheet Summary</option>
-            </select>
-          </div>
-
-          {/* Targeted Investors Multi-Select */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 block mb-2">Targeted Recipients</label>
-            <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50 max-h-48 overflow-y-auto space-y-2">
+          {/* Section: Targeted Recipients */}
+          <div className="bg-slate-50/40 p-5 rounded-2xl border border-slate-100 space-y-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+              2. Targeted Recipients
+            </h3>
+            <div className="border border-slate-200 rounded-xl p-3 bg-white max-h-44 overflow-y-auto space-y-2">
               <button
                 type="button"
                 onClick={toggleSelectAll}
-                className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 cursor-pointer"
+                className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 cursor-pointer w-full text-left"
               >
-                {selectAll ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-slate-400" />}
+                {selectAll ? <CheckSquare className="w-4 h-4 text-blue-600 flex-shrink-0" /> : <Square className="w-4 h-4 text-slate-400 flex-shrink-0" />}
                 Select All Investors
               </button>
-              <hr className="border-slate-200 my-2" />
+              <hr className="border-slate-100" />
               {investors.map(inv => {
                 const isSelected = selectedInvestorIds.includes(String(inv.id));
                 return (
@@ -355,14 +365,14 @@ export const Reports = () => {
                     type="button"
                     onClick={() => toggleInvestor(String(inv.id))}
                     disabled={selectAll}
-                    className={`flex items-center gap-2 text-sm font-semibold w-full text-left transition-colors ${
+                    className={`flex items-center gap-2 text-sm font-medium w-full text-left transition-colors ${
                       selectAll ? "text-slate-400 cursor-not-allowed" : "text-slate-700 hover:text-blue-600 cursor-pointer"
                     }`}
                   >
                     {selectAll || isSelected ? (
-                      <CheckSquare className={`w-4 h-4 ${selectAll ? "text-blue-400" : "text-blue-600"}`} />
+                      <CheckSquare className={`w-4 h-4 flex-shrink-0 ${selectAll ? "text-blue-400" : "text-blue-600"}`} />
                     ) : (
-                      <Square className="w-4 h-4 text-slate-400" />
+                      <Square className="w-4 h-4 text-slate-400 flex-shrink-0" />
                     )}
                     {inv.name}
                   </button>
@@ -371,45 +381,51 @@ export const Reports = () => {
             </div>
           </div>
 
-          <input 
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            accept=".pdf,.xls,.xlsx,.csv"
-          />
-
-          <div 
-            onClick={() => fileInputRef.current?.click()}
-            className="p-10 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50 text-center group hover:border-blue-300 transition-all cursor-pointer"
-          >
-            <div className="bg-white w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-              <Plus className="w-6 h-6 text-blue-600" />
+          {/* Section: File Upload */}
+          <div className="bg-slate-50/40 p-5 rounded-2xl border border-slate-100 space-y-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+              3. Attach File
+            </h3>
+            <input 
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept=".pdf,.xls,.xlsx,.csv"
+            />
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="p-8 border-2 border-dashed border-slate-200 rounded-2xl bg-white text-center group hover:border-blue-400 hover:bg-blue-50/20 transition-all cursor-pointer"
+            >
+              <div className="bg-slate-50 w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform group-hover:bg-blue-100">
+                <Plus className="w-5 h-5 text-blue-600" />
+              </div>
+              {selectedFile ? (
+                <div>
+                  <p className="text-sm font-bold text-blue-600 truncate max-w-[250px] mx-auto">{selectedFile.name}</p>
+                  <p className="text-xs text-slate-400 mt-1">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm font-bold text-slate-700">Select Report File</p>
+                  <p className="text-xs text-slate-400 mt-1">Drop your file here or click to browse</p>
+                </div>
+              )}
             </div>
-            {selectedFile ? (
-              <div>
-                <p className="text-sm font-bold text-blue-600 truncate max-w-[250px] mx-auto">{selectedFile.name}</p>
-                <p className="text-xs text-slate-400 mt-1">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm font-bold text-slate-900">Select Report File</p>
-                <p className="text-xs text-slate-400 mt-1">Drop your file here or click to browse</p>
-              </div>
-            )}
           </div>
 
-          <div className="pt-4 flex gap-3">
+          <div className="flex gap-3 pt-1">
             <button 
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-6 py-4 border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all"
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="flex-1 px-6 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100"
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 cursor-pointer"
             >
               Upload Report
             </button>

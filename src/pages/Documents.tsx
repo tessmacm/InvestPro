@@ -381,25 +381,25 @@ export const Documents = () => {
       >
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Document Title</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Document Title</label>
             <input 
               required
               type="text" 
               value={formData.title}
               onChange={(e) => setFormData({...formData, title: e.target.value})}
               placeholder="e.g. Quarterly Investment Report"
-              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+              className="w-full px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
             />
           </div>
 
           {!isReadOnly && (
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Investor Target *</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Investor Target *</label>
               <select
                 required
                 value={formData.investorId}
                 onChange={(e) => setFormData({...formData, investorId: e.target.value})}
-                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium cursor-pointer"
+                className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
               >
                 <option value="">Select Investor</option>
                 {investors.map(i => (
@@ -410,11 +410,11 @@ export const Documents = () => {
           )}
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">File Type</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">File Type</label>
             <select 
               value={formData.type}
               onChange={(e) => setFormData({...formData, type: e.target.value})}
-              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium appearance-none"
+              className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
             >
               <option value="PDF">PDF Document</option>
               <option value="DOCX">Word Document</option>
@@ -450,17 +450,17 @@ export const Documents = () => {
             )}
           </div>
 
-          <div className="pt-4 flex gap-3">
+          <div className="flex gap-3 pt-1">
             <button 
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-6 py-4 border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all"
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="flex-1 px-6 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100"
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100"
             >
               Upload File
             </button>

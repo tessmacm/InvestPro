@@ -540,8 +540,8 @@ export const Notifications = () => {
               maxLength={100}
               value={formData.title}
               onChange={(e) => { setFormData({ ...formData, title: e.target.value }); setFormErrors(prev => ({ ...prev, title: undefined })); }}
-              className={`w-full px-3 py-2 text-sm bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
-                formErrors.title ? "border-rose-300 bg-rose-50/50" : "border-slate-200"
+              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all ${
+                formErrors.title ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
               }`}
             />
             {formErrors.title && <p className="text-xs text-rose-500 mt-1 font-medium">{formErrors.title}</p>}
@@ -557,8 +557,8 @@ export const Notifications = () => {
               maxLength={500}
               value={formData.message}
               onChange={(e) => { setFormData({ ...formData, message: e.target.value }); setFormErrors(prev => ({ ...prev, message: undefined })); }}
-              className={`w-full px-3 py-2 text-sm bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none ${
-                formErrors.message ? "border-rose-300 bg-rose-50/50" : "border-slate-200"
+              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none ${
+                formErrors.message ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
               }`}
             />
             {formErrors.message && <p className="text-xs text-rose-500 mt-1 font-medium">{formErrors.message}</p>}
@@ -569,7 +569,7 @@ export const Notifications = () => {
               <select
                 value={formData.eventType}
                 onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
               >
                 {EVENT_TYPES.map(et => (
                   <option key={et} value={et}>{et}</option>
@@ -581,7 +581,7 @@ export const Notifications = () => {
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
               >
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
@@ -638,19 +638,19 @@ export const Notifications = () => {
               })}
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex gap-3 pt-1">
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer"
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-slate-950 hover:bg-slate-900 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer"
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100"
             >
-              Save Notification
+              Send Notification
             </button>
           </div>
         </form>
@@ -669,8 +669,8 @@ export const Notifications = () => {
               maxLength={100}
               value={formData.title}
               onChange={(e) => { setFormData({ ...formData, title: e.target.value }); setFormErrors(prev => ({ ...prev, title: undefined })); }}
-              className={`w-full px-3 py-2 text-sm bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
-                formErrors.title ? "border-rose-300 bg-rose-50/50" : "border-slate-200"
+              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all ${
+                formErrors.title ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
               }`}
             />
             {formErrors.title && <p className="text-xs text-rose-500 mt-1 font-medium">{formErrors.title}</p>}
@@ -686,8 +686,8 @@ export const Notifications = () => {
               maxLength={500}
               value={formData.message}
               onChange={(e) => { setFormData({ ...formData, message: e.target.value }); setFormErrors(prev => ({ ...prev, message: undefined })); }}
-              className={`w-full px-3 py-2 text-sm bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none ${
-                formErrors.message ? "border-rose-300 bg-rose-50/50" : "border-slate-200"
+              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none ${
+                formErrors.message ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
               }`}
             />
             {formErrors.message && <p className="text-xs text-rose-500 mt-1 font-medium">{formErrors.message}</p>}
@@ -698,7 +698,7 @@ export const Notifications = () => {
               <select
                 value={formData.eventType}
                 onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
               >
                 {EVENT_TYPES.map(et => (
                   <option key={et} value={et}>{et}</option>
@@ -710,7 +710,7 @@ export const Notifications = () => {
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
               >
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
@@ -767,17 +767,17 @@ export const Notifications = () => {
               })}
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex gap-3 pt-1">
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer"
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-slate-950 hover:bg-slate-900 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer"
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100"
             >
               Update Notification
             </button>

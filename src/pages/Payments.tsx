@@ -226,10 +226,9 @@ export const Payments = () => {
         </div>
       )}
 
-      {/* Payment Details Modal */}
       <BaseModal isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)} title="Payment Transaction Details">
         {selectedPayment && (
-          <div className="space-y-6">
+          <div className="p-6 space-y-4">
             <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
               <div className="p-3 bg-blue-100 rounded-xl text-blue-600">
                 <DollarSign className="w-6 h-6" />
@@ -240,7 +239,7 @@ export const Payments = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Transaction ID</span>
                 <span className="text-sm font-mono font-bold text-slate-700">PayId#{selectedPayment.paymentId}</span>
@@ -262,10 +261,21 @@ export const Payments = () => {
               </span>
             </div>
 
-            <div className="flex justify-end pt-4 border-t border-slate-100">
+            <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Payment Status</span>
+              <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${
+                selectedPayment.isReceived ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" :
+                selectedPayment.isSent ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" :
+                "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+              }`}>
+                {selectedPayment.isReceived ? "✓ Done" : selectedPayment.isSent ? "→ Sent" : "⏳ Pending"}
+              </span>
+            </div>
+
+            <div className="flex justify-end pt-1 border-t border-slate-100">
               <button
                 onClick={() => setIsDetailsOpen(false)}
-                className="px-4 py-2 bg-slate-950 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors"
+                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Close
               </button>
