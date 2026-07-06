@@ -44,6 +44,7 @@ export const Documents = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     type: "PDF",
@@ -61,7 +62,7 @@ export const Documents = () => {
       const titleWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
       const ext = file.name.substring(file.name.lastIndexOf('.') + 1).toUpperCase();
       
-      let typeOption = "PDF";
+      let typeOption = ext || "FILE";
       if (ext === "DOC" || ext === "DOCX") typeOption = "DOCX";
       else if (ext === "XLS" || ext === "XLSX" || ext === "CSV") typeOption = "XLSX";
       else if (ext === "JPG" || ext === "JPEG" || ext === "PNG") typeOption = "JPG";
@@ -115,6 +116,7 @@ export const Documents = () => {
     if (!formData.title || !selectedFile) return;
 
     setUploading(true);
+    setError(null);
     try {
       const uploadData = new FormData();
       uploadData.append("title", formData.title);
@@ -136,10 +138,10 @@ export const Documents = () => {
         fetchDocuments();
       } else {
         const errorText = await response.text();
-        console.error("Failed to upload document on server", errorText);
+        setError(errorText || `Upload failed with status code ${response.status}.`);
       }
-    } catch (error) {
-      console.error("Failed to upload document", error);
+    } catch (err: any) {
+      setError(err.message || "Failed to establish server connection.");
     } finally {
       setUploading(false);
     }
@@ -256,7 +258,7 @@ export const Documents = () => {
         {!isReadOnly && (
           <motion.button 
             variants={item}
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => { setError(null); setIsModalOpen(true); }}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-[0.98] transition-transform flex-shrink-0 self-start md:self-auto"
           >
             <Plus className="w-4 h-4" />
@@ -371,6 +373,12 @@ export const Documents = () => {
         description="Add secure documents to the repository."
       >
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          {error && (
+            <div className="bg-rose-50 border border-rose-100 text-rose-800 text-xs font-bold p-4 rounded-xl text-left">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Document Title</label>
             <input 
@@ -400,25 +408,11 @@ export const Documents = () => {
             </div>
           )}
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">File Type</label>
-            <select 
-              value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value})}
-              className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
-            >
-              <option value="PDF">PDF Document</option>
-              <option value="DOCX">Word Document</option>
-              <option value="XLSX">Excel Spreadsheet</option>
-              <option value="JPG">Image (JPG)</option>
-            </select>
-          </div>
            <input 
             type="file"
             ref={fileInputRef}
             onChange={handleFileChange}
             className="hidden"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png"
           />
 
           <div 
