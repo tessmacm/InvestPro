@@ -77,7 +77,6 @@ export const Investors = () => {
   // Toast State
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // Form State for Add/Edit
   const [formData, setFormData] = useState({
     name: "",
     type: "1" as string,
@@ -89,9 +88,13 @@ export const Investors = () => {
     roiType: "",
     bank: "",
     acNumber: "",
+    sortCode: "",
+    notes: "",
+    accreditation: "Accredited",
     status: "active" as "active" | "inactive",
     date_of_onboarding: "",
     amount: "",
+    mobile: "",
   });
 
   // Lookup data from API with fallback values
@@ -113,9 +116,10 @@ export const Investors = () => {
   ]);
   const [roiTypes, setRoiTypes] = useState<{ value: number; text: string }[]>([
     { value: 1, text: "Fixed" },
-    { value: 2, text: "Half-Yearly" },
-    { value: 3, text: "Quarterly" },
-    { value: 4, text: "Monthly" }
+    { value: 2, text: "Weekly" },
+    { value: 3, text: "Monthly" },
+    { value: 4, text: "Quarterly" },
+    { value: 5, text: "Yearly" }
   ]);
   const [banks, setBanks] = useState<{ value: number; text: string }[]>([
     { value: 1, text: "JPMorgan Chase" },
@@ -204,9 +208,13 @@ export const Investors = () => {
       roiType: "",
       bank: "",
       acNumber: "",
+      sortCode: "",
+      notes: "",
+      accreditation: "Accredited",
       status: "active",
       date_of_onboarding: "",
       amount: "",
+      mobile: "",
     });
     setSelectedInvestor(null);
   };
@@ -231,9 +239,13 @@ export const Investors = () => {
       roiType: String(matchedRoiType),
       bank: String(matchedBank),
       acNumber: investor.acNumber || "",
+      sortCode: investor.sortCode || "",
+      notes: investor.notes || "",
+      accreditation: investor.accreditation || "Accredited",
       status: investor.status || "active",
       date_of_onboarding: investor.date_of_onboarding ? investor.date_of_onboarding.split("T")[0] : "",
       amount: String(investor.amount || ""),
+      mobile: investor.mobile || "",
     });
     setIsViewDetailsMode(false);
     setActiveView("add");
@@ -252,9 +264,13 @@ export const Investors = () => {
       roiType: roiTypes.length > 0 ? String(roiTypes[0].value) : "",
       bank: banks.length > 0 ? String(banks[0].value) : "",
       acNumber: "",
+      sortCode: "",
+      notes: "",
+      accreditation: "Accredited",
       status: "active",
       date_of_onboarding: new Date().toISOString().split("T")[0],
       amount: "",
+      mobile: "",
     });
     setIsViewDetailsMode(false);
     setActiveView("add");
@@ -280,9 +296,13 @@ export const Investors = () => {
       roiType: String(matchedRoiType),
       bank: String(matchedBank),
       acNumber: investor.acNumber || "",
+      sortCode: investor.sortCode || "",
+      notes: investor.notes || "",
+      accreditation: investor.accreditation || "Accredited",
       status: investor.status || "active",
       date_of_onboarding: investor.date_of_onboarding ? investor.date_of_onboarding.split("T")[0] : "",
       amount: String(investor.amount || ""),
+      mobile: investor.mobile || "",
     });
     setIsViewDetailsMode(true);
     setActiveView("add");
@@ -311,36 +331,38 @@ export const Investors = () => {
       name: formData.name,
       type: parseInt(formData.type) || 1,
       email: formData.email,
-      mobile: "",
+      mobile: formData.mobile || "",
       organization: formData.organization || "—",
       amount: parseFloat(formData.amount) || 0,
       reg_number: formData.reg_number || "—",
-      accreditation: "Accredited",
+      accreditation: formData.accreditation || "Accredited",
       status: formData.status,
       date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0],
       min_roi_id: parseInt(formData.roi) || 1,
       max_roi_id: parseInt(formData.roi) || 1,
-      roiTypeId: 3,
+      roiTypeId: parseInt(formData.roiType) || 3,
       bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
       acNumber: formData.acNumber || "",
-      notes: "Basic Update"
+      sortCode: formData.sortCode || "",
+      notes: formData.notes || ""
     } : {
       name: formData.name,
       type: parseInt(formData.type) || 1,
       email: formData.email,
-      mobile: "",
+      mobile: formData.mobile || "",
       organization: formData.organization || "—",
       amount: parseFloat(formData.amount) || 0,
       reg_number: formData.reg_number || "—",
-      accreditation: "Accredited",
+      accreditation: formData.accreditation || "Accredited",
       status: formData.status,
       date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0],
       min_RoiRangeId: parseInt(formData.roi) || 1,
       max_RoiRangeId: parseInt(formData.roi) || 1,
-      roiTypeId: 3,
+      roiTypeId: parseInt(formData.roiType) || 3,
       bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
       acNumber: formData.acNumber || "",
-      notes: "Basic Registration"
+      soreCode: formData.sortCode || "",
+      notes: formData.notes || ""
     };
 
     const url = isEdit
@@ -936,7 +958,7 @@ export const Investors = () => {
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                       1. Account & Profile
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                       {/* Full Name */}
                       <div className="space-y-1.5 text-left">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -965,6 +987,21 @@ export const Investors = () => {
                           placeholder="Enter email address"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
+
+                      {/* Mobile */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Mobile
+                        </label>
+                        <input
+                          disabled={isViewDetailsMode}
+                          type="text"
+                          placeholder="Enter phone number"
+                          value={formData.mobile}
+                          onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                           className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                         />
                       </div>
@@ -1006,7 +1043,7 @@ export const Investors = () => {
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                       2. Entity Details
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                       {/* Investor Type */}
                       <div className="space-y-1.5 text-left">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -1053,6 +1090,22 @@ export const Investors = () => {
                           className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                         />
                       </div>
+
+                      {/* Accreditation */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Accreditation Status
+                        </label>
+                        <select
+                          disabled={isViewDetailsMode}
+                          value={formData.accreditation}
+                          onChange={(e) => setFormData({ ...formData, accreditation: e.target.value })}
+                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all appearance-none cursor-pointer"
+                        >
+                          <option value="Accredited">Accredited</option>
+                          <option value="Non-Accredited">Non-Accredited</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
@@ -1096,6 +1149,25 @@ export const Investors = () => {
                             <option value="">Select ROI range</option>
                             {roiRanges.map(r => (
                               <option key={r.value} value={String(r.value)}>{r.text}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Payment Cycle */}
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Payment Cycle <span className="text-rose-500">*</span>
+                          </label>
+                          <select
+                            required
+                            disabled={isViewDetailsMode}
+                            value={formData.roiType}
+                            onChange={(e) => setFormData({ ...formData, roiType: e.target.value })}
+                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                          >
+                            <option value="">Select cycle</option>
+                            {roiTypes.map(t => (
+                              <option key={t.value} value={String(t.value)}>{t.text}</option>
                             ))}
                           </select>
                         </div>
@@ -1157,7 +1229,43 @@ export const Investors = () => {
                             className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                           />
                         </div>
+
+                        {/* Sort Code */}
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Sort Code
+                          </label>
+                          <input
+                            disabled={isViewDetailsMode}
+                            type="text"
+                            placeholder="Bank sort code"
+                            value={formData.sortCode}
+                            onChange={(e) => setFormData({ ...formData, sortCode: e.target.value })}
+                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          />
+                        </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Section 5: Additional Info (Notes) */}
+                  <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                      5. Additional Notes
+                    </h3>
+                    <div className="space-y-1.5 text-left">
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Internal Notes
+                      </label>
+                      <textarea
+                        disabled={isViewDetailsMode}
+                        rows={3}
+                        placeholder="Add private annotations, remarks or historical onboarding notes..."
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none"
+                      />
                     </div>
                   </div>
 

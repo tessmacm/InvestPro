@@ -5,7 +5,7 @@ import { SystemReport, Investor } from "../types";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Search, Plus, Download, Trash2, FileText, CheckSquare, Square } from "lucide-react";
+import { Search, Plus, Download, Trash2, FileText, CheckSquare, Square, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export const Reports = () => {
@@ -17,6 +17,7 @@ export const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -47,7 +48,7 @@ export const Reports = () => {
 
   const fetchInvestors = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/investors`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/investors`, {
         headers: authHeaders()
       });
       if (response.ok) {
@@ -111,28 +112,25 @@ export const Reports = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title) return;
+    if (!formData.title || !selectedFile) return;
 
+    setUploading(true);
     try {
-      const fileSize = selectedFile 
-        ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB` 
-        : "0.2 MB";
-      const fileUrl = selectedFile 
-        ? `/uploads/reports/${selectedFile.name}` 
-        : "#";
-
       const targets = selectAll ? "all" : selectedInvestorIds.join(",");
+
+      const uploadData = new FormData();
+      uploadData.append("title", formData.title);
+      uploadData.append("type", formData.type);
+      uploadData.append("targetInvestorIds", targets);
+      uploadData.append("file", selectedFile);
+
+      const headers = authHeaders();
+      delete headers["Content-Type"]; // Allow browser to set correct boundary
 
       const response = await fetch(`${API_BASE_URL}/api/admin/reports`, {
         method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({
-          title: formData.title,
-          type: formData.type,
-          size: fileSize,
-          url: fileUrl,
-          targetInvestorIds: targets
-        })
+        headers: headers,
+        body: uploadData
       });
 
       if (response.ok) {
@@ -140,9 +138,14 @@ export const Reports = () => {
         setFormData({ title: "", type: "PDF" });
         setSelectedFile(null);
         fetchReports();
+      } else {
+        const errorText = await response.text();
+        console.error("Failed to upload report on server", errorText);
       }
     } catch (err) {
       console.error("Failed to upload report", err);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -405,16 +408,25 @@ export const Reports = () => {
           <div className="flex gap-3 pt-1">
             <button 
               type="button"
+              disabled={uploading}
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-all"
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 cursor-pointer"
+              disabled={uploading}
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center gap-2"
             >
-              Upload Report
+              {uploading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                "Upload Report"
+              )}
             </button>
           </div>
         </form>

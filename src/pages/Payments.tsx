@@ -145,6 +145,7 @@ export const Payments = () => {
                   <th className="px-6 py-4">Payment ID</th>
                   <th className="px-6 py-4">Investor</th>
                   <th className="px-6 py-4">Amount</th>
+                  <th className="px-6 py-4">Cycle</th>
                   <th className="px-6 py-4">Payment Date</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
@@ -164,6 +165,11 @@ export const Payments = () => {
                       <td className="px-6 py-4 font-mono font-bold text-slate-500">PayId#{p.paymentId}</td>
                       <td className="px-6 py-4 font-semibold text-slate-900">{p.investorName}</td>
                       <td className="px-6 py-4 font-bold text-emerald-600">${p.amount.toLocaleString()}</td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                          {p.paymentCycle || "Monthly"}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-slate-500">
                         {new Date(p.paymentDate).toLocaleDateString(undefined, {
                           day: "2-digit",

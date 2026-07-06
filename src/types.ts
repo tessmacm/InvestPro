@@ -27,6 +27,8 @@ export interface Investor {
   roiType?: string;
   bank?: string;
   acNumber?: string;
+  sortCode?: string;
+  notes?: string;
 }
 
 export interface Document {
@@ -68,6 +70,7 @@ export interface Payment {
   status: string;
   isSent: boolean;
   isReceived: boolean;
+  paymentCycle?: string;
 }
 
 export interface RoiContract {
