@@ -981,121 +981,150 @@ export const Projects = () => {
               <div>
                 <h3 className="text-sm font-extrabold text-blue-900">Project Information</h3>
                 <p className="text-[11px] text-blue-600 mt-0.5 font-semibold">Fill in the details below to add a new project.</p>
-              </div>
             </div>
+            {/* Rearranged structured grid sections */}
+            <div className="space-y-8">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Field 1: Project Title */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block">Project Title <strong className="text-rose-500">*</strong></label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Enter project title"
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800"
-                />
-              </div>
+              {/* Section 1: General Information */}
+              <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                  1. General Info
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Project Title */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Project Title <strong className="text-rose-500">*</strong></label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="Enter project title"
+                      value={formData.title}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                    />
+                  </div>
 
-              {/* Field 2: Project Description character count limit 500 */}
-              <div className="space-y-2 md:row-span-2 flex flex-col justify-between">
-                <div>
-                  <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block">Project Description <strong className="text-rose-500">*</strong></label>
-                  <textarea
-                    required
-                    maxLength={500}
-                    placeholder="Describe project goals and details..."
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 resize-none mt-2 flex-grow"
-                  />
-                </div>
-                <div className="text-right text-[11px] font-bold text-slate-400 pr-1 mt-1">
-                  {formData.description.length} / 500
-                </div>
-              </div>
+                  {/* Status State */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Status State</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
+                    >
+                      <option value="active">Active State</option>
+                      <option value="inactive">Inactive State</option>
+                    </select>
+                  </div>
 
-              {/* Field 3: Budget wrapper prepended addon prefix icon */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block">Budget <strong className="text-rose-500">*</strong></label>
-                <div className="relative">
-                  <div className="absolute left-3.5 top-3 bg-slate-100 border border-slate-200/50 rounded-lg text-slate-500 w-6 h-6 flex items-center justify-center font-bold text-xs">$</div>
-                  <input
-                    required
-                    type="number"
-                    placeholder="Enter project budget (e.g. 250000)"
-                    value={formData.budget}
-                    onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 font-mono"
-                  />
-                </div>
-              </div>
-
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-              {/* Field 4: Starting Date */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block">Starting Date <strong className="text-rose-500">*</strong></label>
-                <div className="relative">
-                  <input
-                    required
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 appearance-none inline-flex"
-                  />
+                  {/* Project Description */}
+                  <div className="space-y-1.5 md:col-span-2">
+                    <div className="flex justify-between items-baseline">
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Project Description <strong className="text-rose-500">*</strong></label>
+                      <span className="text-[11px] font-bold text-slate-400">{formData.description.length} / 500</span>
+                    </div>
+                    <textarea
+                      required
+                      maxLength={500}
+                      placeholder="Describe project goals and details..."
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      rows={4}
+                      className="w-full px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 resize-none"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Field 5: End Date */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block">End Date <strong className="text-rose-500">*</strong></label>
-                <div className="relative">
-                  <input
-                    required
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 appearance-none inline-flex"
-                  />
+              {/* Section 2: Project Timeline */}
+              <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                  2. Timeline
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Starting Date */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Starting Date <strong className="text-rose-500">*</strong></label>
+                    <input
+                      required
+                      type="date"
+                      value={formData.start_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                      className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 appearance-none"
+                    />
+                  </div>
+
+                  {/* End Date */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">End Date <strong className="text-rose-500">*</strong></label>
+                    <input
+                      required
+                      type="date"
+                      value={formData.end_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                      className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 appearance-none"
+                    />
+                  </div>
+
+                  {/* Duration */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Duration <strong className="text-rose-500">*</strong></label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. 120 Days"
+                      value={formData.duration}
+                      onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold outline-none text-slate-600"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Field 6: Computed Duration info indicator */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block">Duration <strong className="text-rose-500">*</strong></label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Enter duration in days (e.g. 120 Days)"
-                  value={formData.duration}
-                  onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-100 border border-slate-150 rounded-xl text-sm font-bold outline-none text-slate-600 focus:border-slate-350"
-                />
+              {/* Section 3: Budget & Notes */}
+              <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                  3. Budget & Notes
+                </h3>
+                <div className="space-y-4">
+                  {/* Budget */}
+                  <div className="space-y-1.5 text-left">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Budget ($) <strong className="text-rose-500">*</strong></label>
+                    <div className="relative">
+                      <div className="absolute left-3.5 top-3 bg-slate-100 border border-slate-200/50 rounded-lg text-slate-500 w-6 h-6 flex items-center justify-center font-bold text-xs">$</div>
+                      <input
+                        required
+                        type="number"
+                        placeholder="Enter project budget (e.g. 250000)"
+                        value={formData.budget}
+                        onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
+                        className="w-full pl-12 pr-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Additional Comments */}
+                  <div className="space-y-1.5 text-left">
+                    <div className="flex justify-between items-baseline">
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Additional Comments</label>
+                      <span className="text-[11px] font-bold text-slate-400">{formData.comments.length} / 1000</span>
+                    </div>
+                    <textarea
+                      maxLength={1000}
+                      placeholder="Add any additional comments or notes about this project..."
+                      value={formData.comments}
+                      onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
+                      rows={3}
+                      className="w-full px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 resize-none"
+                    />
+                  </div>
+                </div>
               </div>
 
-            </div>
-
-            {/* Field 7: Additional Comments text area Limit 1000 */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-baseline">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block">Additional Comments</label>
-                <span className="text-[11px] font-bold text-slate-400">{formData.comments.length} / 1000</span>
-              </div>
-              <textarea
-                maxLength={1000}
-                placeholder="Add any additional comments or notes about this project..."
-                value={formData.comments}
-                onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
-                rows={3}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 resize-none"
-              />
-            </div>
+            </div></div>
 
           </div>
 
@@ -1476,128 +1505,149 @@ export const Projects = () => {
                 <h3 className="text-sm font-extrabold text-blue-900">Project Information</h3>
                 <p className="text-[11px] text-blue-600 mt-0.5 font-semibold">Update your project details below.</p>
               </div>
-            </div>
+              {/* Rearranged structured grid sections */}
+            <div className="space-y-8">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Field 1: Project Title */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block font-bold">Project Title <strong className="text-rose-500">*</strong></label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Enter project title"
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800"
-                />
-              </div>
+              {/* Section 1: General Info */}
+              <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                  1. General Info
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Project Title */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Project Title <strong className="text-rose-500">*</strong></label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="Enter project title"
+                      value={formData.title}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                    />
+                  </div>
 
-              {/* Field 2: Project Description with limit 500 characters */}
-              <div className="space-y-2 md:row-span-2 flex flex-col justify-between">
-                <div>
-                  <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block font-bold">Project Description <strong className="text-rose-500">*</strong></label>
-                  <textarea
-                    required
-                    maxLength={500}
-                    placeholder="Describe project goals and details..."
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 resize-none mt-2 flex-grow"
-                  />
+                  {/* Status State */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Status State</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
+                    >
+                      <option value="active">Active State</option>
+                      <option value="inactive">Inactive State</option>
+                    </select>
+                  </div>
+
+                  {/* Project Description */}
+                  <div className="space-y-1.5 md:col-span-2">
+                    <div className="flex justify-between items-baseline">
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Project Description <strong className="text-rose-500">*</strong></label>
+                      <span className="text-[11px] font-bold text-slate-400">{formData.description.length} / 500</span>
+                    </div>
+                    <textarea
+                      required
+                      maxLength={500}
+                      placeholder="Describe project goals and details..."
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      rows={4}
+                      className="w-full px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 resize-none"
+                    />
+                  </div>
                 </div>
-                <div className="text-right text-[11px] font-bold text-slate-400 pr-1 mt-1">
-                  {formData.description.length} / 500
+              </div>
+
+              {/* Section 2: Project Timeline */}
+              <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                  2. Timeline
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Starting Date */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Starting Date <strong className="text-rose-500">*</strong></label>
+                    <input
+                      required
+                      type="date"
+                      value={formData.start_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                      className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 appearance-none"
+                    />
+                  </div>
+
+                  {/* End Date */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">End Date <strong className="text-rose-500">*</strong></label>
+                    <input
+                      required
+                      type="date"
+                      value={formData.end_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                      className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 appearance-none"
+                    />
+                  </div>
+
+                  {/* Duration */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Duration <strong className="text-rose-500">*</strong></label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. 120 Days"
+                      value={formData.duration}
+                      onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold outline-none text-slate-600"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Field 3: Budget and dollar prefix symbol */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block font-bold">Budget <strong className="text-rose-500">*</strong></label>
-                <div className="relative">
-                  <div className="absolute left-3.5 top-3 bg-slate-100 border border-slate-200/50 rounded-lg text-slate-500 w-6 h-6 flex items-center justify-center font-bold text-xs">$</div>
-                  <input
-                    required
-                    type="number"
-                    placeholder="Enter budget (e.g. 250000)"
-                    value={formData.budget}
-                    onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 font-mono"
-                  />
+              {/* Section 3: Budget & Notes */}
+              <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                  3. Budget & Notes
+                </h3>
+                <div className="space-y-4">
+                  {/* Budget */}
+                  <div className="space-y-1.5 text-left">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Budget ($) <strong className="text-rose-500">*</strong></label>
+                    <div className="relative">
+                      <div className="absolute left-3.5 top-3 bg-slate-100 border border-slate-200/50 rounded-lg text-slate-500 w-6 h-6 flex items-center justify-center font-bold text-xs">$</div>
+                      <input
+                        required
+                        type="number"
+                        placeholder="Enter project budget (e.g. 250000)"
+                        value={formData.budget}
+                        onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
+                        className="w-full pl-12 pr-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Additional Comments */}
+                  <div className="space-y-1.5 text-left">
+                    <div className="flex justify-between items-baseline">
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Additional Comments</label>
+                      <span className="text-[11px] font-bold text-slate-400">{formData.comments.length} / 1000</span>
+                    </div>
+                    <textarea
+                      maxLength={1000}
+                      placeholder="Add any additional comments or notes about this project..."
+                      value={formData.comments}
+                      onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
+                      rows={3}
+                      className="w-full px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 resize-none"
+                    />
+                  </div>
                 </div>
               </div>
 
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-              {/* Field 4: Start Date */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block font-bold">Starting Date <strong className="text-rose-500">*</strong></label>
-                <input
-                  required
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 appearance-none inline-flex"
-                />
-              </div>
-
-              {/* Field 5: End Date */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block font-bold">End Date <strong className="text-rose-500">*</strong></label>
-                <input
-                  required
-                  type="date"
-                  value={formData.end_date}
-                  onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 appearance-none inline-flex"
-                />
-              </div>
-
-              {/* Field 6: Duration editable */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block font-bold">Duration <strong className="text-rose-500">*</strong></label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Enter duration in days (e.g. 120)"
-                  value={formData.duration}
-                  onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none text-slate-800 font-bold"
-                />
-              </div>
-
-            </div>
-
-            {/* Field 7: Additional Comments text area */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-baseline">
-                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block font-bold">Additional Comments</label>
-                <span className="text-[11px] font-bold text-slate-400">{formData.comments.length} / 1000</span>
-              </div>
-              <textarea
-                maxLength={1000}
-                placeholder="Add any additional comments or notes about this project..."
-                value={formData.comments}
-                onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
-                rows={3}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl text-sm font-semibold outline-none transition-all placeholder:text-slate-400 text-slate-800 resize-none"
-              />
-            </div>
-
-            {/* Field 8: Status Selector */}
-            <div className="space-y-2">
-              <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block font-bold">Status State</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-                className="w-full max-w-xs px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer"
-              >
-                <option value="active">Active State</option>
-                <option value="inactive">Inactive State</option>
-              </select>
             </div>
 
           </div>
