@@ -14,7 +14,6 @@ import { Investors } from "./pages/Investors";
 import { Projects } from "./pages/Projects";
 import { Documents } from "./pages/Documents";
 import { Payments } from "./pages/Payments";
-import { Roi } from "./pages/Roi";
 import { Notifications } from "./pages/Notifications";
 import { Reports } from "./pages/Reports";
 
@@ -67,7 +66,6 @@ export default function App() {
         />
         <Route path="documents" element={<Documents />} />
         <Route path="payments" element={<Payments />} />
-        <Route path="roi" element={<Roi />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="reports" element={<Reports />} />
         <Route 

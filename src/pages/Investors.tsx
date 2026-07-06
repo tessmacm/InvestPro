@@ -1030,26 +1030,6 @@ export const Investors = () => {
 
                   {/* RIGHT COLUMN */}
                   <div className="space-y-5">
-
-                    {/* Investment Interest */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Investment Interest <span className="text-rose-500">*</span>
-                      </label>
-                      <select
-                        required
-                        disabled={isViewDetailsMode}
-                        value={formData.interest}
-                        onChange={(e) => setFormData({ ...formData, interest: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                      >
-                        <option value="">Select investment interest</option>
-                        {investmentInterests.map(i => (
-                          <option key={i.value} value={String(i.value)}>{i.text}</option>
-                        ))}
-                      </select>
-                    </div>
-
                     {/* ROI */}
                     <div className="space-y-1.5 text-left">
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -1065,25 +1045,6 @@ export const Investors = () => {
                         <option value="">Select ROI range</option>
                         {roiRanges.map(r => (
                           <option key={r.value} value={String(r.value)}>{r.text}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* ROI Type */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        ROI Type <span className="text-rose-500">*</span>
-                      </label>
-                      <select
-                        required
-                        disabled={isViewDetailsMode}
-                        value={formData.roiType}
-                        onChange={(e) => setFormData({ ...formData, roiType: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-50/50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                      >
-                        <option value="">Select ROI type</option>
-                        {roiTypes.map(t => (
-                          <option key={t.value} value={String(t.value)}>{t.text}</option>
                         ))}
                       </select>
                     </div>

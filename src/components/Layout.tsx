@@ -57,7 +57,6 @@ export const Layout = () => {
     { name: "Projects", path: "/projects", icon: Folder, roles: ["admin", "manager"] },
     { name: "Documents", path: "/documents", icon: FileText, roles: ["admin", "manager", "investor"] },
     { name: "Payments", path: "/payments", icon: Landmark, roles: ["admin", "manager", "investor"] },
-    { name: "ROI", path: "/roi", icon: TrendingUp, roles: ["admin", "manager", "investor"] },
     { name: "Notifications", path: "/notifications", icon: Bell, roles: ["admin", "manager", "investor"] },
     { name: "Reports", path: "/reports", icon: Download, roles: ["admin", "manager", "investor"] },
   ];

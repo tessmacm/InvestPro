@@ -186,7 +186,7 @@ export const Payments = () => {
                           p.isSent ? "bg-blue-50 text-blue-700" :
                           "bg-amber-50 text-amber-700"
                         }`}>
-                          {p.isReceived ? "Received" : p.isSent ? "Sent" : "Pending"}
+                          {p.isReceived ? "Done" : p.isSent ? (isAdmin ? "Sent" : "Received") : (isAdmin ? "Pending" : "Upcoming")}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
@@ -203,7 +203,7 @@ export const Payments = () => {
                             onClick={() => handleAcknowledgeReceived(p.paymentId)}
                             className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                           >
-                            Acknowledge Received
+                            Acknowledge
                           </button>
                         )}
                         <button
