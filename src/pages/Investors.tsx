@@ -309,26 +309,43 @@ export const Investors = () => {
       return;
     }
 
-    const payload = {
+    const isEdit = !!selectedInvestor;
+    const payload = isEdit ? {
       name: formData.name,
-      type: investorTypes.find(t => String(t.value) === formData.type)?.text || formData.type,
+      type: parseInt(formData.type) || 1,
       email: formData.email,
       mobile: "",
       organization: formData.organization || "—",
       amount: parseFloat(formData.amount) || 0,
       reg_number: formData.reg_number || "—",
-      interest: formData.interest,
-      roi: formData.roi,
-      roiType: roiTypes.find(t => String(t.value) === formData.roiType)?.text || formData.roiType,
+      accreditation: "Accredited",
+      status: formData.status,
+      date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0],
+      min_roi_id: parseInt(formData.roi) || 1,
+      max_roi_id: parseInt(formData.roi) || 1,
+      roiTypeId: 3,
       bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
       acNumber: formData.acNumber || "",
+      notes: "Basic Update"
+    } : {
+      name: formData.name,
+      type: parseInt(formData.type) || 1,
+      email: formData.email,
+      mobile: "",
+      organization: formData.organization || "—",
+      amount: parseFloat(formData.amount) || 0,
+      reg_number: formData.reg_number || "—",
       accreditation: "Accredited",
-      country: "—",
       status: formData.status,
-      date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0]
+      date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0],
+      min_RoiRangeId: parseInt(formData.roi) || 1,
+      max_RoiRangeId: parseInt(formData.roi) || 1,
+      roiTypeId: 3,
+      bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
+      acNumber: formData.acNumber || "",
+      notes: "Basic Registration"
     };
 
-    const isEdit = !!selectedInvestor;
     const url = isEdit ? `${API_BASE_URL}/api/investors/${selectedInvestor.id}` : `${API_BASE_URL}/api/investors`;
     const method = isEdit ? "PUT" : "POST";
 
