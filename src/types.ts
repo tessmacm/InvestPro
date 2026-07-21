@@ -25,6 +25,7 @@ export interface Investor {
   last_investment_date?: string;
   roi?: string;
   roiType?: string;
+  payoutType?: string;
   bank?: string;
   acNumber?: string;
   sortCode?: string;
