@@ -150,6 +150,17 @@ function getInitialDB(): MockDB {
     ],
     projects: [
       {
+        id: "0",
+        title: "Current Operations",
+        description: "Primary ongoing operational investment portfolio and operational activities.",
+        budget: 500000,
+        duration: "365 Days",
+        start_date: "01 Jan 2024",
+        end_date: "31 Dec 2024",
+        comments: "Default active project for general operations.",
+        status: "active"
+      },
+      {
         id: "1",
         title: "InvestPro Mobile App",
         description: "A modern mobile application for investors to track portfolios, analyze performance and manage investments on the go. The InvestPro Mobile App will provide investors with real-time portfolio tracking, market insights, secure transactions, and investment recommendations.",

@@ -91,6 +91,9 @@ export const Investors = () => {
     bank: "",
     acNumber: "",
     sortCode: "",
+    witness: "",
+    address: "",
+    projectId: "1",
     notes: "",
     accreditation: "Accredited",
     status: "active" as "active" | "inactive",
@@ -98,6 +101,10 @@ export const Investors = () => {
     amount: "",
     mobile: "",
   });
+
+  const [projectsList, setProjectsList] = useState<{ id: string | number; title: string }[]>([
+    { id: 1, title: "Current Operations" }
+  ]);
 
   // Lookup data from API with fallback values
   const [investorTypes, setInvestorTypes] = useState<{ value: number; text: string }[]>([
@@ -139,12 +146,13 @@ export const Investors = () => {
 
   const fetchLookups = async () => {
     try {
-      const [typesRes, interestsRes, roiRangesRes, roiTypesRes, banksRes] = await Promise.all([
+      const [typesRes, interestsRes, roiRangesRes, roiTypesRes, banksRes, projectsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/lookups/investor-types`),
         fetch(`${API_BASE_URL}/api/lookups/investment-interests`),
         fetch(`${API_BASE_URL}/api/lookups/roi-ranges`),
         fetch(`${API_BASE_URL}/api/lookups/roi-types`),
         fetch(`${API_BASE_URL}/api/lookups/banks`),
+        fetch(`${API_BASE_URL}/api/projects`, { headers: authHeaders() }).catch(() => null),
       ]);
       if (typesRes.ok) {
         const data = await typesRes.json();
@@ -165,6 +173,16 @@ export const Investors = () => {
       if (banksRes.ok) {
         const data = await banksRes.json();
         if (data && data.length > 0) setBanks(data);
+      }
+      if (projectsRes && projectsRes.ok) {
+        const data = await projectsRes.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const formatted = data.map((p: any) => ({ id: p.id, title: p.title }));
+          if (!formatted.some((p: any) => p.title === "Current Operations")) {
+            formatted.unshift({ id: 1, title: "Current Operations" });
+          }
+          setProjectsList(formatted);
+        }
       }
     } catch {
       // silently fail — dropdowns will keep fallback values
@@ -226,8 +244,6 @@ export const Investors = () => {
     setSelectedInvestor(investor);
     const matchedType = investorTypes.find(t => t.text === investor.type || String(t.value) === String(investor.type))?.value || 1;
     const matchedInterest = investmentInterests.find(i => String(i.value) === String(investor.interest) || i.text === investor.interest)?.value || "";
-    const matchedRoi = roiRanges.find(r => String(r.value) === String(investor.roi) || r.text === investor.roi)?.value || "";
-    const matchedRoiType = roiTypes.find(t => t.text === investor.roiType || String(t.value) === String(investor.roiType))?.value || "";
     const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.value || "";
 
     setFormData({
@@ -244,6 +260,9 @@ export const Investors = () => {
       bank: String(matchedBank),
       acNumber: investor.acNumber || "",
       sortCode: investor.sortCode || "",
+      witness: investor.witness || "",
+      address: investor.address || "",
+      projectId: String(investor.projectId || projectsList[0]?.id || "1"),
       notes: investor.notes || "",
       accreditation: investor.accreditation || "Accredited",
       status: investor.status || "active",
@@ -271,6 +290,9 @@ export const Investors = () => {
       bank: banks.length > 0 ? String(banks[0].value) : "",
       acNumber: "",
       sortCode: "",
+      witness: "",
+      address: "",
+      projectId: String(projectsList[0]?.id || "1"),
       notes: "",
       accreditation: "Accredited",
       status: "active",
@@ -303,6 +325,9 @@ export const Investors = () => {
       bank: String(matchedBank),
       acNumber: investor.acNumber || "",
       sortCode: investor.sortCode || "",
+      witness: investor.witness || "",
+      address: investor.address || "",
+      projectId: String(investor.projectId || projectsList[0]?.id || "1"),
       notes: investor.notes || "",
       accreditation: investor.accreditation || "Accredited",
       status: investor.status || "active",
@@ -355,6 +380,9 @@ export const Investors = () => {
       bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
       acNumber: formData.acNumber || "",
       sortCode: formData.sortCode || "",
+      witness: formData.witness || "",
+      address: formData.address || "",
+      projectId: parseInt(formData.projectId) || 1,
       notes: formData.notes || ""
     } : {
       name: formData.name,
@@ -374,6 +402,9 @@ export const Investors = () => {
       bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
       acNumber: formData.acNumber || "",
       sortCode: formData.sortCode || "",
+      witness: formData.witness || "",
+      address: formData.address || "",
+      projectId: parseInt(formData.projectId) || 1,
       notes: formData.notes || ""
     };
 
@@ -1247,6 +1278,56 @@ export const Investors = () => {
                               </select>
                             </div>
                           )}
+                        </div>
+
+                        {/* Select Project Dropdown */}
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                            <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                            Assigned Project <span className="text-rose-500">*</span>
+                          </label>
+                          <select
+                            required
+                            disabled={isViewDetailsMode}
+                            value={formData.projectId}
+                            onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                          >
+                            {projectsList.map((p) => (
+                              <option key={p.id} value={String(p.id)}>{p.title}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Witness */}
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Witness
+                          </label>
+                          <input
+                            disabled={isViewDetailsMode}
+                            type="text"
+                            placeholder="Enter witness name"
+                            value={formData.witness}
+                            onChange={(e) => setFormData({ ...formData, witness: e.target.value })}
+                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          />
+                        </div>
+
+                        {/* Investor Address */}
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                            Investor Address
+                          </label>
+                          <textarea
+                            disabled={isViewDetailsMode}
+                            rows={2}
+                            placeholder="Enter full address"
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none"
+                          />
                         </div>
 
                         {/* Date of Boarding */}

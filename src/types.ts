@@ -30,6 +30,9 @@ export interface Investor {
   acNumber?: string;
   sortCode?: string;
   notes?: string;
+  witness?: string;
+  address?: string;
+  projectId?: number | string;
 }
 
 export interface Document {
