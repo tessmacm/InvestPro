@@ -101,13 +101,13 @@ export const Dashboard = () => {
   const [rawInvestors, setRawInvestors] = useState<any[]>([]);
 
   const [chartData, setChartData] = useState<any[]>([
-    { name: "Mon", value: 340000 },
-    { name: "Tue", value: 300000 },
-    { name: "Wed", value: 450000 },
-    { name: "Thu", value: 390000 },
-    { name: "Fri", value: 520000 },
-    { name: "Sat", value: 480000 },
-    { name: "Sun", value: 650000 },
+    { name: "Mon", value: 340000, payout: 28900 },
+    { name: "Tue", value: 300000, payout: 25500 },
+    { name: "Wed", value: 450000, payout: 38250 },
+    { name: "Thu", value: 390000, payout: 33150 },
+    { name: "Fri", value: 520000, payout: 44200 },
+    { name: "Sat", value: 480000, payout: 40800 },
+    { name: "Sun", value: 650000, payout: 55250 },
   ]);
 
   useEffect(() => {
@@ -182,6 +182,7 @@ export const Dashboard = () => {
               return dateA.getTime() - dateB.getTime();
             });
             
+            const avgPayout = invData.length > 0 ? totalRoiVal / invData.length : 0;
             const chartPoints = sortedInvestors.map(inv => {
               let displayName = inv.name;
               if (inv.date_of_onboarding) {
@@ -192,9 +193,11 @@ export const Dashboard = () => {
                   displayName = `${day} ${months[date.getMonth()]}`;
                 }
               }
+              const invAmt = Number(inv.amount) || 0;
               return {
                 name: displayName,
-                value: Number(inv.amount) || 0
+                value: invAmt,
+                payout: Math.round(avgPayout > 0 ? avgPayout : invAmt * 0.08)
               };
             });
             setChartData(chartPoints);
@@ -229,21 +232,21 @@ export const Dashboard = () => {
               <>
                 <StatCard 
                   title="My Investment" 
-                  value={`$${stats.investment.toLocaleString()}`} 
-                  icon={DollarSign} 
+                  value={`£${stats.investment.toLocaleString()}`} 
+                  icon={Landmark} 
                   trend="4.2" 
                   color="bg-blue-50 text-blue-600" 
                 />
                 <StatCard 
-                  title="My Payments" 
-                  value={stats.paymentsCount.toString()} 
-                  icon={Landmark} 
-                  trend="10" 
+                  title="Payouts Till Date" 
+                  value={`£${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                  icon={DollarSign} 
+                  trend="12" 
                   color="bg-emerald-50 text-emerald-600" 
                 />
                 <StatCard 
-                  title="My ROI" 
-                  value={`$${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                  title="Average Payouts Till Date" 
+                  value={`£${(stats.paymentsCount > 0 ? stats.totalRoi / stats.paymentsCount : stats.totalRoi).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={TrendingUp} 
                   trend="8.5" 
                   color="bg-violet-50 text-violet-600" 
@@ -252,7 +255,7 @@ export const Dashboard = () => {
                   title="My Documents" 
                   value={stats.documents.toString()} 
                   icon={FileText} 
-                  trend="0" 
+                  trend="2.1" 
                   color="bg-amber-50 text-amber-600" 
                 />
               </>
@@ -260,21 +263,21 @@ export const Dashboard = () => {
               <>
                 <StatCard 
                   title="Total Investment" 
-                  value={`$${stats.investment.toLocaleString()}`} 
-                  icon={DollarSign} 
+                  value={`£${stats.investment.toLocaleString()}`} 
+                  icon={Landmark} 
                   trend="4.2" 
                   color="bg-blue-50 text-blue-600" 
                 />
                 <StatCard 
-                  title="Ongoing Projects" 
-                  value={stats.projects.toString()} 
-                  icon={Folder} 
+                  title="Payouts Till Date" 
+                  value={`£${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                  icon={DollarSign} 
                   trend="12" 
                   color="bg-emerald-50 text-emerald-600" 
                 />
                 <StatCard 
-                  title="Total ROI" 
-                  value={`$${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                  title="Average Payouts Till Date" 
+                  value={`£${(stats.investors > 0 ? stats.totalRoi / stats.investors : (stats.paymentsCount > 0 ? stats.totalRoi / stats.paymentsCount : stats.totalRoi)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={TrendingUp} 
                   trend="8.5" 
                   color="bg-violet-50 text-violet-600" 
@@ -298,7 +301,7 @@ export const Dashboard = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-lg font-display font-bold text-slate-900">Capital Flow</h3>
-              <p className="text-sm text-slate-500">Weekly investment trends</p>
+              <p className="text-sm text-slate-500">Average Payout vs Investments (£)</p>
             </div>
              <div className="flex items-center gap-2">
               <div className="flex bg-slate-50 p-1 rounded-xl">
@@ -336,12 +339,16 @@ export const Dashboard = () => {
                       <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
                       <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                     </linearGradient>
+                    <linearGradient id="colorPayout" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} tickFormatter={(v) => `$${v/1000}k`} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} tickFormatter={(v) => `£${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
                   <Tooltip 
-                    formatter={(v: any) => [`$${v.toLocaleString()}`, 'Investment']}
+                    formatter={(v: any, name: any) => [`£${Number(v).toLocaleString()}`, name === 'payout' ? 'Avg Payout' : 'Investment']}
                     contentStyle={{ 
                       backgroundColor: '#fff', 
                       borderRadius: '16px', 
@@ -350,7 +357,8 @@ export const Dashboard = () => {
                       padding: '12px'
                     }} 
                   />
-                  <Area type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                  <Area type="monotone" dataKey="value" name="Investment" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                  <Area type="monotone" dataKey="payout" name="Avg Payout" stroke="#10b981" strokeWidth={2.5} strokeDasharray="4 4" fillOpacity={1} fill="url(#colorPayout)" />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
