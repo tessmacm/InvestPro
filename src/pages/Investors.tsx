@@ -84,8 +84,10 @@ export const Investors = () => {
     organization: "",
     reg_number: "",
     interest: "",
-    roi: "",
-    roiType: "",
+    minRoi: "1",
+    maxRoi: "5",
+    payoutCategory: "Fixed",
+    payoutCycle: "Constant",
     bank: "",
     acNumber: "",
     sortCode: "",
@@ -235,8 +237,10 @@ export const Investors = () => {
       organization: investor.organization || "",
       reg_number: investor.reg_number || "",
       interest: String(matchedInterest),
-      roi: String(matchedRoi),
-      roiType: String(matchedRoiType),
+      minRoi: "1",
+      maxRoi: "5",
+      payoutCategory: investor.payoutType === "Variant" ? "Variant" : "Fixed",
+      payoutCycle: investor.payoutType === "Variant" ? (investor.roiType || "Monthly") : "Constant",
       bank: String(matchedBank),
       acNumber: investor.acNumber || "",
       sortCode: investor.sortCode || "",
@@ -260,8 +264,10 @@ export const Investors = () => {
       organization: "",
       reg_number: "",
       interest: investmentInterests.length > 0 ? String(investmentInterests[0].value) : "",
-      roi: roiRanges.length > 0 ? String(roiRanges[0].value) : "",
-      roiType: roiTypes.length > 0 ? String(roiTypes[0].value) : "",
+      minRoi: "1",
+      maxRoi: "5",
+      payoutCategory: "Fixed",
+      payoutCycle: "Constant",
       bank: banks.length > 0 ? String(banks[0].value) : "",
       acNumber: "",
       sortCode: "",
@@ -281,8 +287,6 @@ export const Investors = () => {
     setSelectedInvestor(investor);
     const matchedType = investorTypes.find(t => t.text === investor.type || String(t.value) === String(investor.type))?.value || 1;
     const matchedInterest = investmentInterests.find(i => String(i.value) === String(investor.interest) || i.text === investor.interest)?.value || "";
-    const matchedRoi = roiRanges.find(r => String(r.value) === String(investor.roi) || r.text === investor.roi)?.value || "";
-    const matchedRoiType = roiTypes.find(t => t.text === investor.roiType || String(t.value) === String(investor.roiType))?.value || "";
     const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.value || "";
 
     setFormData({
@@ -292,8 +296,10 @@ export const Investors = () => {
       organization: investor.organization || "",
       reg_number: investor.reg_number || "",
       interest: String(matchedInterest),
-      roi: String(matchedRoi),
-      roiType: String(matchedRoiType),
+      minRoi: "1",
+      maxRoi: "5",
+      payoutCategory: investor.payoutType === "Variant" ? "Variant" : "Fixed",
+      payoutCycle: investor.payoutType === "Variant" ? (investor.roiType || "Monthly") : "Constant",
       bank: String(matchedBank),
       acNumber: investor.acNumber || "",
       sortCode: investor.sortCode || "",
@@ -326,6 +332,10 @@ export const Investors = () => {
       return;
     }
 
+    const minRoiVal = parseInt(formData.minRoi) || 1;
+    const maxRoiVal = parseInt(formData.maxRoi) || 1;
+    const calculatedAvgRoi = Math.round((minRoiVal + maxRoiVal) / 2);
+
     const isEdit = !!selectedInvestor;
     const payload = isEdit ? {
       name: formData.name,
@@ -338,9 +348,10 @@ export const Investors = () => {
       accreditation: formData.accreditation || "Accredited",
       status: formData.status,
       date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0],
-      min_roi_id: parseInt(formData.roi) || 1,
-      max_roi_id: parseInt(formData.roi) || 1,
-      roiTypeId: parseInt(formData.roiType) || 3,
+      min_roi_id: minRoiVal,
+      max_roi_id: maxRoiVal,
+      payoutType: formData.payoutCategory,
+      roiTypeId: formData.payoutCategory === "Fixed" ? 1 : (formData.payoutCycle === "Weekly" ? 2 : formData.payoutCycle === "Monthly" ? 3 : formData.payoutCycle === "Quarterly" ? 4 : 5),
       bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
       acNumber: formData.acNumber || "",
       sortCode: formData.sortCode || "",
@@ -356,12 +367,13 @@ export const Investors = () => {
       accreditation: formData.accreditation || "Accredited",
       status: formData.status,
       date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0],
-      min_RoiRangeId: parseInt(formData.roi) || 1,
-      max_RoiRangeId: parseInt(formData.roi) || 1,
-      roiTypeId: parseInt(formData.roiType) || 3,
+      min_RoiRangeId: minRoiVal,
+      max_RoiRangeId: maxRoiVal,
+      payoutType: formData.payoutCategory,
+      roiTypeId: formData.payoutCategory === "Fixed" ? 1 : (formData.payoutCycle === "Weekly" ? 2 : formData.payoutCycle === "Monthly" ? 3 : formData.payoutCycle === "Quarterly" ? 4 : 5),
       bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
       acNumber: formData.acNumber || "",
-      soreCode: formData.sortCode || "",
+      sortCode: formData.sortCode || "",
       notes: formData.notes || ""
     };
 
@@ -1134,42 +1146,107 @@ export const Investors = () => {
                           />
                         </div>
 
-                        {/* ROI */}
-                        <div className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            ROI <span className="text-rose-500">*</span>
-                          </label>
-                          <select
-                            required
-                            disabled={isViewDetailsMode}
-                            value={formData.roi}
-                            onChange={(e) => setFormData({ ...formData, roi: e.target.value })}
-                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                          >
-                            <option value="">Select ROI range</option>
-                            {roiRanges.map(r => (
-                              <option key={r.value} value={String(r.value)}>{r.text}</option>
-                            ))}
-                          </select>
+                        {/* Min and Max ROI Dropdowns */}
+                        <div className="grid grid-cols-2 gap-3 text-left">
+                          <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                              Min ROI (%) <span className="text-rose-500">*</span>
+                            </label>
+                            <select
+                              required
+                              disabled={isViewDetailsMode}
+                              value={formData.minRoi}
+                              onChange={(e) => setFormData({ ...formData, minRoi: e.target.value })}
+                              className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                            >
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                                <option key={num} value={String(num)}>{num}%</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                              Max ROI (%) <span className="text-rose-500">*</span>
+                            </label>
+                            <select
+                              required
+                              disabled={isViewDetailsMode}
+                              value={formData.maxRoi}
+                              onChange={(e) => setFormData({ ...formData, maxRoi: e.target.value })}
+                              className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                            >
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                                <option key={num} value={String(num)}>{num}%</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Calculated Payout Average Display */}
+                        <div className="p-3 bg-blue-50/60 border border-blue-100/80 rounded-xl text-left flex items-center justify-between">
+                          <span className="text-xs font-bold text-blue-700">Calculated Average ROI:</span>
+                          <span className="text-sm font-extrabold text-blue-900 font-mono">
+                            {Math.round(((parseInt(formData.minRoi) || 1) + (parseInt(formData.maxRoi) || 1)) / 2)}%
+                          </span>
                         </div>
 
                         {/* Payment Cycle */}
-                        <div className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            Payment Cycle <span className="text-rose-500">*</span>
-                          </label>
-                          <select
-                            required
-                            disabled={isViewDetailsMode}
-                            value={formData.roiType}
-                            onChange={(e) => setFormData({ ...formData, roiType: e.target.value })}
-                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                          >
-                            <option value="">Select cycle</option>
-                            {roiTypes.map(t => (
-                              <option key={t.value} value={String(t.value)}>{t.text}</option>
-                            ))}
-                          </select>
+                        <div className="space-y-3 text-left">
+                          <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                              Payment Cycle Category <span className="text-rose-500">*</span>
+                            </label>
+                            <select
+                              required
+                              disabled={isViewDetailsMode}
+                              value={formData.payoutCategory}
+                              onChange={(e) => {
+                                const category = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  payoutCategory: category,
+                                  payoutCycle: category === "Fixed" ? "Constant" : "Monthly"
+                                });
+                              }}
+                              className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                            >
+                              <option value="Fixed">Fixed</option>
+                              <option value="Variant">Variant</option>
+                            </select>
+                          </div>
+
+                          {formData.payoutCategory === "Fixed" ? (
+                            <div className="space-y-1.5">
+                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Payment Frequency
+                              </label>
+                              <input
+                                disabled
+                                type="text"
+                                value="Constant"
+                                className="w-full px-4 py-3 bg-slate-100/70 border border-slate-200 rounded-xl text-sm font-bold text-slate-600"
+                              />
+                            </div>
+                          ) : (
+                            <div className="space-y-1.5">
+                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Variant Frequency <span className="text-rose-500">*</span>
+                              </label>
+                              <select
+                                required
+                                disabled={isViewDetailsMode}
+                                value={formData.payoutCycle}
+                                onChange={(e) => setFormData({ ...formData, payoutCycle: e.target.value })}
+                                className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                              >
+                                <option value="Weekly">Weekly</option>
+                                <option value="Monthly">Monthly</option>
+                                <option value="Quarterly">Quarterly</option>
+                                <option value="Yearly">Yearly</option>
+                              </select>
+                            </div>
+                          )}
                         </div>
 
                         {/* Date of Boarding */}
