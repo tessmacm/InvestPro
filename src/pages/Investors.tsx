@@ -930,13 +930,13 @@ export const Investors = () => {
                     </div>
                     <h3 className="text-lg font-display font-bold text-slate-900">No investors found</h3>
                     <p className="text-sm text-slate-500 mt-1 font-medium max-w-sm">
-                      {searchQuery || typeFilter !== "all" || statusFilter !== "all"
+                      {searchTerm || appliedFilterType !== "All"
                         ? "Try adjusting your search or filter criteria."
                         : "No investors have been created yet."}
                     </p>
-                    {!isClient && !searchQuery && typeFilter === "all" && statusFilter === "all" && (
+                    {!isClient && !searchTerm && appliedFilterType === "All" && (
                       <button
-                        onClick={handleAddNewClick}
+                        onClick={handleOpenAdd}
                         className="mt-4 inline-flex items-center gap-2 bg-slate-950 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors cursor-pointer"
                       >
                         <Plus className="w-4 h-4" />

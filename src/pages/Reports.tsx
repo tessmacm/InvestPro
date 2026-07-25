@@ -4,7 +4,7 @@ import { RootState } from "../store";
 import { Investor, Payment, Project } from "../types";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Search, Download, Calendar, Filter, FileSpreadsheet, Users, Folder, Landmark, RefreshCw, CheckCircle2, TrendingUp } from "lucide-react";
+import { Search, Download, Calendar, Filter, FileSpreadsheet, Users, Folder, Landmark, RefreshCw, CheckCircle2, TrendingUp, DollarSign } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
 
