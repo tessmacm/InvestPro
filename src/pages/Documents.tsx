@@ -266,8 +266,7 @@ export const Documents = () => {
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <motion.div variants={item}>
-          <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Portal &gt; Documents</span>
-          <h1 className="text-3xl font-display font-extrabold text-slate-900 mt-0.5">Document Repository</h1>
+          <h1 className="text-3xl font-display font-extrabold text-slate-900">Document Repository</h1>
           <p className="text-slate-500 mt-1 font-medium">Access secure reports, agreements, and compliance files.</p>
         </motion.div>
         {!isReadOnly && (
