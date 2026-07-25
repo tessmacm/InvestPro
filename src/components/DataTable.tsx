@@ -63,55 +63,56 @@ export const DataTable = ({
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-slate-50/50">
-              {columns.map((col, idx) => (
-                <th 
-                  key={idx} 
-                  className={cn(
-                    "px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest",
-                    col.align === "right" && "text-right",
-                    col.align === "center" && "text-center"
-                  )}
-                >
-                  {col.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {data.map((row, rowIdx) => (
-              <tr key={row.id || rowIdx} className="group hover:bg-slate-50/50 transition-colors">
-                {columns.map((col, colIdx) => (
-                  <td 
-                    key={colIdx} 
+      {data.length === 0 ? (
+        <div className="p-12 text-center flex flex-col items-center justify-center">
+          <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
+            {emptyIcon || <Search className="w-8 h-8 text-slate-300" />}
+          </div>
+          <h3 className="text-lg font-display font-bold text-slate-900">{emptyMessage}</h3>
+          <p className="text-sm text-slate-500 mt-1 font-medium max-w-sm">
+            {searchTerm ? "Try adjusting your search or filter criteria." : "No records are available to display."}
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50">
+                {columns.map((col, idx) => (
+                  <th 
+                    key={idx} 
                     className={cn(
-                      "px-8 py-5",
+                      "px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest",
                       col.align === "right" && "text-right",
                       col.align === "center" && "text-center"
                     )}
                   >
-                    {col.render ? col.render(row) : (col.accessor ? row[col.accessor] : null)}
-                  </td>
+                    {col.header}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-        
-        {data.length === 0 && (
-          <div className="p-20 text-center">
-            {emptyIcon && (
-              <div className="bg-slate-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4">
-                {emptyIcon}
-              </div>
-            )}
-            <h3 className="text-slate-900 font-bold">{emptyMessage}</h3>
-          </div>
-        )}
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {data.map((row, rowIdx) => (
+                <tr key={row.id || rowIdx} className="group hover:bg-slate-50/50 transition-colors">
+                  {columns.map((col, colIdx) => (
+                    <td 
+                      key={colIdx} 
+                      className={cn(
+                        "px-8 py-5",
+                        col.align === "right" && "text-right",
+                        col.align === "center" && "text-center"
+                      )}
+                    >
+                      {col.render ? col.render(row) : (col.accessor ? row[col.accessor] : null)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="p-6 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
         <p className="text-sm text-slate-500 font-medium">Showing {data.length} records</p>

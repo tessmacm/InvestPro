@@ -85,6 +85,18 @@ export const Roi = () => {
 
       {loading ? (
         <TableSkeleton columns={7} rows={3} />
+      ) : filteredContracts.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center flex flex-col items-center justify-center">
+          <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
+            <TrendingUp className="w-8 h-8 text-slate-300" />
+          </div>
+          <h3 className="text-lg font-display font-bold text-slate-900">No ROI contracts found</h3>
+          <p className="text-sm text-slate-500 mt-1 font-medium max-w-sm">
+            {searchTerm
+              ? "Try adjusting your search or filter criteria."
+              : "No active ROI contracts have been created yet."}
+          </p>
+        </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">

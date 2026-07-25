@@ -347,26 +347,32 @@ export const Reports = () => {
             
             {/* TAB 1: INVESTORS REPORT */}
             {activeTab === "investors" && (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                    <th className="px-6 py-4">Investor</th>
-                    <th className="px-6 py-4">Type</th>
-                    <th className="px-6 py-4">Organization</th>
-                    <th className="px-6 py-4 text-right">Committed Capital</th>
-                    <th className="px-6 py-4 text-center">Onboarding Date</th>
-                    <th className="px-6 py-4 text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
-                  {filteredInvestors.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-12 text-slate-400 font-semibold">
-                        No investor records match the selected date filters.
-                      </td>
+              filteredInvestors.length === 0 ? (
+                <div className="p-12 text-center flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
+                    <Users className="w-8 h-8 text-slate-300" />
+                  </div>
+                  <h3 className="text-lg font-display font-bold text-slate-900">No investor report records</h3>
+                  <p className="text-sm text-slate-500 mt-1 font-medium max-w-sm">
+                    {searchTerm || datePreset !== "all"
+                      ? "Try adjusting your search or date filter criteria."
+                      : "No investor records are available for reporting."}
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                      <th className="px-6 py-4">Investor</th>
+                      <th className="px-6 py-4">Type</th>
+                      <th className="px-6 py-4">Organization</th>
+                      <th className="px-6 py-4 text-right">Committed Capital</th>
+                      <th className="px-6 py-4 text-center">Onboarding Date</th>
+                      <th className="px-6 py-4 text-right">Status</th>
                     </tr>
-                  ) : (
-                    filteredInvestors.map(i => (
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
+                    {filteredInvestors.map(i => (
                       <tr key={i.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4 font-bold text-slate-900 align-middle">
                           {i.name}
@@ -388,34 +394,40 @@ export const Reports = () => {
                           </span>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              )
             )}
 
             {/* TAB 2: INVESTMENTS / PROJECTS REPORT */}
             {activeTab === "investments" && (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                    <th className="px-6 py-4">Project Title</th>
-                    <th className="px-6 py-4 text-right">Target Funding</th>
-                    <th className="px-6 py-4 text-center">Duration</th>
-                    <th className="px-6 py-4 text-center">Start Date</th>
-                    <th className="px-6 py-4 text-center">End Date</th>
-                    <th className="px-6 py-4 text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
-                  {filteredProjects.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-12 text-slate-400 font-semibold">
-                        No project investment records match the selected date filters.
-                      </td>
+              filteredProjects.length === 0 ? (
+                <div className="p-12 text-center flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
+                    <Folder className="w-8 h-8 text-slate-300" />
+                  </div>
+                  <h3 className="text-lg font-display font-bold text-slate-900">No project report records</h3>
+                  <p className="text-sm text-slate-500 mt-1 font-medium max-w-sm">
+                    {searchTerm || datePreset !== "all"
+                      ? "Try adjusting your search or date filter criteria."
+                      : "No project records are available for reporting."}
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                      <th className="px-6 py-4">Project Title</th>
+                      <th className="px-6 py-4 text-right">Target Funding</th>
+                      <th className="px-6 py-4 text-center">Duration</th>
+                      <th className="px-6 py-4 text-center">Start Date</th>
+                      <th className="px-6 py-4 text-center">End Date</th>
+                      <th className="px-6 py-4 text-right">Status</th>
                     </tr>
-                  ) : (
-                    filteredProjects.map(p => (
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
+                    {filteredProjects.map(p => (
                       <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4 font-bold text-slate-900 align-middle">{p.title}</td>
                         <td className="px-6 py-4 font-bold text-emerald-600 text-right align-middle">£{Number(p.budget).toLocaleString()}</td>
@@ -428,34 +440,40 @@ export const Reports = () => {
                           </span>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              )
             )}
 
             {/* TAB 3: PAYMENTS & PAYOUTS REPORT */}
             {activeTab === "payments" && (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                    <th className="px-6 py-4">Payment ID</th>
-                    <th className="px-6 py-4">Investor</th>
-                    <th className="px-6 py-4 text-right">Amount</th>
-                    <th className="px-6 py-4 text-center">Payment Cycle</th>
-                    <th className="px-6 py-4 text-center">Payment Date</th>
-                    <th className="px-6 py-4 text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
-                  {filteredPayments.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-12 text-slate-400 font-semibold">
-                        No payment payout records match the selected date filters.
-                      </td>
+              filteredPayments.length === 0 ? (
+                <div className="p-12 text-center flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
+                    <DollarSign className="w-8 h-8 text-slate-300" />
+                  </div>
+                  <h3 className="text-lg font-display font-bold text-slate-900">No payment report records</h3>
+                  <p className="text-sm text-slate-500 mt-1 font-medium max-w-sm">
+                    {searchTerm || datePreset !== "all"
+                      ? "Try adjusting your search or date filter criteria."
+                      : "No payment records are available for reporting."}
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                      <th className="px-6 py-4">Payment ID</th>
+                      <th className="px-6 py-4">Investor</th>
+                      <th className="px-6 py-4 text-right">Amount</th>
+                      <th className="px-6 py-4 text-center">Payment Cycle</th>
+                      <th className="px-6 py-4 text-center">Payment Date</th>
+                      <th className="px-6 py-4 text-right">Status</th>
                     </tr>
-                  ) : (
-                    filteredPayments.map(p => (
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
+                    {filteredPayments.map(p => (
                       <tr key={p.paymentId} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4 font-mono font-bold text-slate-500 align-middle">PayId#{p.paymentId}</td>
                         <td className="px-6 py-4 font-bold text-slate-900 align-middle">{p.investorName}</td>
@@ -471,10 +489,10 @@ export const Reports = () => {
                           </span>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              )
             )}
 
           </div>
