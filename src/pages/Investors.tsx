@@ -157,14 +157,14 @@ export const Investors = () => {
 
         // Strict validation of required fields BEFORE creating DTOs
         if (!name || !name.trim()) {
-          errors.push(`Row ${lineNum}: Investor Name is missing. (Correction: Fill in the full name in Column 1)`);
+          errors.push(`Row ${lineNum}, Column 1 (Name): Field is empty.`);
         }
         if (!email || !email.trim() || !emailRegex.test(email.trim())) {
-          errors.push(`Row ${lineNum}: Email address '${email || "empty"}' is invalid. (Correction: Enter a valid email format, e.g., user@domain.com in Column 2)`);
+          errors.push(`Row ${lineNum}, Column 2 (Email): '${email || "blank"}' is invalid. Use format name@domain.com.`);
         }
         const capAmtNum = parseFloat(capitalAmount);
         if (isNaN(capAmtNum) || capAmtNum <= 0) {
-          errors.push(`Row ${lineNum}: Capital Amount '${capitalAmount || "empty"}' is invalid. (Correction: Enter a positive numeric value greater than 0 in Column 8)`);
+          errors.push(`Row ${lineNum}, Column 8 (Capital Amount): '${capitalAmount || "blank"}' must be a positive number greater than 0.`);
         }
 
         const isBusiness = (investorType || '').toLowerCase() === 'business' || investorType === '2';
@@ -1855,11 +1855,8 @@ export const Investors = () => {
             <div className="p-5 bg-rose-50/90 border border-rose-200/90 rounded-2xl space-y-3 max-h-56 overflow-y-auto">
               <div className="flex items-center gap-2 text-rose-900 font-bold text-xs uppercase tracking-wider">
                 <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-                <span>Validation Errors ({bulkValidationErrors.length})</span>
+                <span>Validation Errors Detected ({bulkValidationErrors.length})</span>
               </div>
-              <p className="text-xs font-medium text-rose-800">
-                Please make the exact corrections in your file and upload again:
-              </p>
               <div className="space-y-2">
                 {bulkValidationErrors.map((err, idx) => (
                   <div key={idx} className="p-2.5 bg-white border border-rose-200/80 rounded-xl text-xs text-rose-800 font-mono flex items-start gap-2 shadow-2xs">
