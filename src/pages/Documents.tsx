@@ -12,7 +12,8 @@ import {
   Calendar,
   CheckCircle,
   Search,
-  RefreshCw
+  RefreshCw,
+  Eye
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Document, Investor } from "../types";
@@ -20,6 +21,8 @@ import { DataTable } from "../components/DataTable";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
+import { cn } from "../lib/utils";
+import { AgreementViewerModal } from "../components/AgreementViewerModal";
 
 const container = {
   hidden: { opacity: 0 },
@@ -171,11 +174,13 @@ export const Documents = () => {
     return <File className="w-8 h-8 text-slate-500" />;
   };
 
+  const [selectedViewerDoc, setSelectedViewerDoc] = useState<Document | null>(null);
+
   const columns = [
     {
       header: "Document",
       render: (d: Document) => (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 cursor-pointer" onClick={() => setSelectedViewerDoc(d)}>
           <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center">
             {getFileIcon(d.type)}
           </div>
@@ -187,18 +192,22 @@ export const Documents = () => {
       )
     },
     {
-      header: "Uploaded By",
-      render: (d: Document) => (
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
-            <img 
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${d.uploaded_by}`} 
-              alt="Uploader"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <span className="text-xs font-medium text-slate-500">{d.uploaded_by}</span>
-        </div>
+      header: "Status",
+      render: (d: any) => (
+        <span className={cn(
+          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wide",
+          d.status === "Signed" 
+            ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+            : d.status === "Pending Signature"
+            ? "bg-amber-50 text-amber-700 border border-amber-200"
+            : "bg-slate-100 text-slate-600 border border-slate-200"
+        )}>
+          <span className={cn(
+            "w-1.5 h-1.5 rounded-full",
+            d.status === "Signed" ? "bg-emerald-500" : d.status === "Pending Signature" ? "bg-amber-500" : "bg-slate-400"
+          )} />
+          {d.status || "Approved"}
+        </span>
       )
     },
     {
@@ -214,14 +223,20 @@ export const Documents = () => {
       header: "Actions",
       align: "right" as const,
       render: (d: Document) => (
-        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400">
-            <Download className="w-4 h-4" />
+        <div className="flex items-center justify-end gap-2">
+          <button 
+            onClick={() => setSelectedViewerDoc(d)}
+            className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold"
+            title="View & Print Document"
+          >
+            <Eye className="w-4 h-4" />
+            <span>View</span>
           </button>
           {!isReadOnly && (
             <button 
               onClick={() => handleDelete(d.id)}
-              className="p-2 hover:bg-red-50 text-red-500 rounded-xl transition-colors"
+              className="p-2 hover:bg-red-50 text-red-500 rounded-xl transition-colors cursor-pointer"
+              title="Delete Document"
             >
               <Trash2 className="w-4.5 h-4.5" />
             </button>
@@ -461,6 +476,13 @@ export const Documents = () => {
           </div>
         </form>
       </BaseModal>
+
+      <AgreementViewerModal
+        isOpen={!!selectedViewerDoc}
+        onClose={() => setSelectedViewerDoc(null)}
+        document={selectedViewerDoc}
+        investorData={investors.find(i => String(i.id) === String(selectedViewerDoc?.investor_id || (selectedViewerDoc as any)?.investorId)) || null}
+      />
     </motion.div>
   );
 };

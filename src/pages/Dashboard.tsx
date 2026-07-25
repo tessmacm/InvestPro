@@ -4,14 +4,18 @@ import { RootState } from "../store";
 import { 
   Users, 
   FileText,
-  DollarSign, 
+  DollarSign,
+  PoundSterling, 
   TrendingUp, 
   Plus,
   ArrowRight,
   Shield,
   LayoutGrid,
   Folder,
-  Landmark
+  Landmark,
+  CreditCard,
+  Bell,
+  Download
 } from "lucide-react";
 import { motion } from "motion/react";
 import { 
@@ -240,14 +244,14 @@ export const Dashboard = () => {
                 <StatCard 
                   title="Payouts Till Date" 
                   value={`£${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                  icon={DollarSign} 
+                  icon={PoundSterling} 
                   trend="12" 
                   color="bg-emerald-50 text-emerald-600" 
                 />
                 <StatCard 
                   title="Average Payouts Till Date" 
                   value={`£${(stats.paymentsCount > 0 ? stats.totalRoi / stats.paymentsCount : stats.totalRoi).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                  icon={TrendingUp} 
+                  icon={PoundSterling} 
                   trend="8.5" 
                   color="bg-violet-50 text-violet-600" 
                 />
@@ -271,14 +275,14 @@ export const Dashboard = () => {
                 <StatCard 
                   title="Payouts Till Date" 
                   value={`£${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                  icon={DollarSign} 
+                  icon={PoundSterling} 
                   trend="12" 
                   color="bg-emerald-50 text-emerald-600" 
                 />
                 <StatCard 
                   title="Average Payouts Till Date" 
                   value={`£${(stats.investors > 0 ? stats.totalRoi / stats.investors : (stats.paymentsCount > 0 ? stats.totalRoi / stats.paymentsCount : stats.totalRoi)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                  icon={TrendingUp} 
+                  icon={PoundSterling} 
                   trend="8.5" 
                   color="bg-violet-50 text-violet-600" 
                 />
@@ -295,92 +299,80 @@ export const Dashboard = () => {
         )}
       </motion.div>
 
+      {/* Main Grid Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Chart */}
-        <motion.div variants={item} className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h3 className="text-lg font-display font-bold text-slate-900">Capital Flow</h3>
-              <p className="text-sm text-slate-500">Average Payout vs Investments (£)</p>
-            </div>
-             <div className="flex items-center gap-2">
-              <div className="flex bg-slate-50 p-1 rounded-xl">
-                <button 
-                  onClick={() => setCapitalFlowView("chart")}
-                  className={cn(
-                    "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
-                    capitalFlowView === "chart" 
-                      ? "text-blue-600 bg-white shadow-sm" 
-                      : "text-slate-400 hover:text-slate-600"
-                  )}
-                >
-                  Chart
-                </button>
-                <button 
-                  onClick={() => setCapitalFlowView("list")}
-                  className={cn(
-                    "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
-                    capitalFlowView === "list" 
-                      ? "text-blue-600 bg-white shadow-sm" 
-                      : "text-slate-400 hover:text-slate-600"
-                  )}
-                >
-                  List
-                </button>
+        {/* Left Chart / Activity Section */}
+        <motion.div variants={item} className="lg:col-span-2 space-y-6">
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-display font-bold text-slate-900">Capital Growth & Payout Trends</h3>
+                <p className="text-xs text-slate-500 mt-1">Real-time performance across active portfolio operations</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Active Portfolio
+                </span>
               </div>
             </div>
-          </div>
-          <div className="h-[300px]">
-            {capitalFlowView === "chart" ? (
+            
+            <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
                       <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorPayout" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} tickFormatter={(v) => `£${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v/1000}k` : v}`} />
                   <Tooltip 
-                    formatter={(v: any, name: any) => [`£${Number(v).toLocaleString()}`, name === 'payout' ? 'Avg Payout' : 'Investment']}
-                    contentStyle={{ 
-                      backgroundColor: '#fff', 
-                      borderRadius: '16px', 
-                      border: 'none', 
-                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                      padding: '12px'
-                    }} 
+                    contentStyle={{ backgroundColor: "#0f172a", borderRadius: "16px", color: "#fff", border: "none", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)" }}
+                    formatter={(val: any) => [`£${Number(val).toLocaleString()}`, "Amount"]}
                   />
-                  <Area type="monotone" dataKey="value" name="Investment" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                  <Area type="monotone" dataKey="payout" name="Avg Payout" stroke="#10b981" strokeWidth={2.5} strokeDasharray="4 4" fillOpacity={1} fill="url(#colorPayout)" />
+                  <Area type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" name="Capital Investment" />
+                  <Area type="monotone" dataKey="payout" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorPayout)" name="Total Payout" />
                 </AreaChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Recent Activity List */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-display font-bold text-slate-900">Recent Onboarding Activity</h3>
+              <Link to="/investors" className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                View All <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+            
+            {loading ? (
+              <div className="py-8 text-center text-sm text-slate-400">Loading activity...</div>
             ) : (
-              <div className="h-full overflow-y-auto pr-2 space-y-3 scrollbar-thin">
+              <div className="divide-y divide-slate-100">
                 {rawInvestors.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-slate-400 text-sm font-medium">
-                    No investments found.
-                  </div>
+                  <p className="text-sm text-slate-400 py-4">No recent investor activity recorded.</p>
                 ) : (
-                  rawInvestors.map((inv, idx) => (
-                    <div key={inv.id || idx} className="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100/70 rounded-2xl transition-all border border-slate-100/50">
+                  rawInvestors.slice(0, 4).map((inv: any, idx: number) => (
+                    <div key={idx} className="py-3 flex items-center justify-between hover:bg-slate-50/80 px-2 rounded-xl transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-extrabold text-sm uppercase">
-                          {inv.name ? inv.name.charAt(0) : "I"}
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-sm">
+                          {inv.name ? inv.name.substring(0, 2).toUpperCase() : "IN"}
                         </div>
                         <div>
-                          <h4 className="text-sm font-bold text-slate-900 leading-snug">{inv.name}</h4>
-                          <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Onboarded: {inv.date_of_onboarding || "N/A"}</p>
+                          <p className="text-sm font-bold text-slate-900">{inv.name}</p>
+                          <p className="text-xs text-slate-500">{inv.email} • {inv.date_of_onboarding || "Active"}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-extrabold text-slate-950">${(Number(inv.amount) || 0).toLocaleString()}</p>
+                        <p className="text-sm font-extrabold text-slate-950">£{(Number(inv.amount) || 0).toLocaleString()}</p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{inv.type}</p>
                       </div>
                     </div>
@@ -393,47 +385,96 @@ export const Dashboard = () => {
 
         {/* Right Info Card */}
         <div className="space-y-6">
-          {/* Quick Actions */}
+          {/* Quick Actions / Module Management */}
           <motion.div variants={item} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100">
             <h3 className="text-lg font-display font-bold text-slate-900 mb-4">Module Management</h3>
             <div className="space-y-3">
-              <Link to="/investors" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                    {isReadOnly ? <Users className="w-4 h-4 text-blue-600" /> : <Plus className="w-4 h-4 text-blue-600" />}
-                  </div>
-                  <span className="text-sm font-bold text-slate-700">{isReadOnly ? "View Registered Investors" : "Add New Investor"}</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link to="/documents" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-violet-100 rounded-lg group-hover:bg-violet-200 transition-colors">
-                    <FileText className="w-4 h-4 text-violet-600" />
-                  </div>
-                  <span className="text-sm font-bold text-slate-700">{isReadOnly ? "View Documents" : "Upload Documents"}</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link to="/projects" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                    <Folder className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <span className="text-sm font-bold text-slate-700">{isReadOnly ? "View Active Projects" : "Manage Active Projects"}</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-              </Link>
-              {user?.role === 'admin' && (
-                <Link to="/admin" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
-                      <Shield className="w-4 h-4 text-amber-600" />
+              {user?.role === "investor" ? (
+                <>
+                  <Link to="/documents" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-violet-100 rounded-lg group-hover:bg-violet-200 transition-colors">
+                        <FileText className="w-4 h-4 text-violet-600" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">Signed Agreements & Documents</span>
                     </div>
-                    <span className="text-sm font-bold text-slate-700">System Controls</span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-                </Link>
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
+                  </Link>
+
+                  <Link to="/payments" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                        <Landmark className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">My Payment Ledger</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
+                  </Link>
+
+                  <Link to="/notifications" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                        <Bell className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">System Notifications</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/investors" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                        <Users className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">Investor Onboarding & Directory</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
+                  </Link>
+
+                  <Link to="/documents" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-violet-100 rounded-lg group-hover:bg-violet-200 transition-colors">
+                        <FileText className="w-4 h-4 text-violet-600" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">Digital Agreements & Vault</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
+                  </Link>
+
+                  <Link to="/projects" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                        <Folder className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">Operations & Project Tracking</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
+                  </Link>
+
+                  <Link to="/payments" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
+                        <CreditCard className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">Financial Payment Disbursements</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
+                  </Link>
+
+                  {user?.role === 'admin' && (
+                    <Link to="/admin" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-200 rounded-lg group-hover:bg-slate-300 transition-colors">
+                          <Shield className="w-4 h-4 text-slate-700" />
+                        </div>
+                        <span className="text-sm font-bold text-slate-700">System Governance & Access</span>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  )}
+                </>
               )}
             </div>
           </motion.div>

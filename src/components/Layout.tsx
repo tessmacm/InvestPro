@@ -20,15 +20,48 @@ import {
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, authHeaders } from "../config/api";
+import { AgreementModal } from "./AgreementModal";
 
 export const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [pendingAgreementDoc, setPendingAgreementDoc] = useState<any | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+
+  const checkInvestorAgreement = async () => {
+    const role = user?.role?.toLowerCase();
+    if (role === "investor" || role === "client") {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/documents`, {
+          headers: authHeaders(),
+        });
+        if (res.ok) {
+          const docs = await res.json();
+          if (Array.isArray(docs)) {
+            const pending = docs.find(
+              (d: any) =>
+                (d.type === "Agreement" || d.title?.toLowerCase().includes("agreement")) &&
+                d.status === "Pending Signature"
+            );
+            setPendingAgreementDoc(pending || null);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to check agreement status", err);
+      }
+    } else {
+      setPendingAgreementDoc(null);
+    }
+  };
+
+  useEffect(() => {
+    checkInvestorAgreement();
+  }, [user, location.pathname]);
 
   // Responsive check
   useEffect(() => {
@@ -195,31 +228,29 @@ export const Layout = () => {
           })}
         </nav>
 
-        {/* Logout Section */}
-        <div className="px-3 py-4 flex-shrink-0">
-          <div className="h-px bg-white/5 w-full mb-4 mx-3" />
-          
-
-          <button 
-            onClick={handleLogout}
-            className="flex items-center w-full h-12 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all font-medium group"
-          >
-            <div className="w-14 h-12 flex-shrink-0 flex items-center justify-center">
-              <LogOut className="w-5 h-5 group-hover:translate-x-0.5" />
-            </div>
-            <AnimatePresence mode="wait">
-              {isSidebarOpen && (
-                <motion.span 
-                  initial={{ opacity: 0, x: -5 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -5 }}
-                  className="text-sm"
-                >
-                  Sign Out
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
+        {/* Sidebar Footer Copyright */}
+        <div className="px-6 py-4 flex-shrink-0 border-t border-white/5 text-center">
+          <AnimatePresence mode="wait">
+            {isSidebarOpen ? (
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-[11px] text-slate-500 font-medium leading-relaxed"
+              >
+                © 2026 InvestPro Platform.<br />All rights reserved.
+              </motion.p>
+            ) : (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-[10px] text-slate-500 font-bold"
+              >
+                © 2026
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
       </motion.aside>
 
@@ -230,7 +261,7 @@ export const Layout = () => {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 rounded-xl transition-all shadow-sm active:scale-95"
+              className="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
             >
               {isSidebarOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5 text-slate-600" />}
             </button>
@@ -239,21 +270,64 @@ export const Layout = () => {
             </h2>
           </div>
 
-          <div className="flex items-center gap-4">
-            
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-slate-900 leading-tight">{user?.name}</p>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">{user?.role}</p>
-              </div>
-              <div className="w-11 h-11 rounded-2xl bg-white border-2 border-slate-100 shadow-sm overflow-hidden p-0.5">
-                <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} 
-                  alt="Avatar"
-                  className="rounded-xl"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
+          <div className="flex items-center gap-4 relative">
+            <div className="relative">
+              <button 
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="flex items-center gap-3 p-1.5 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
+              >
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-bold text-slate-900 leading-tight">{user?.name}</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">{user?.role}</p>
+                </div>
+                <div className="w-11 h-11 rounded-2xl bg-white border-2 border-slate-100 shadow-sm overflow-hidden p-0.5">
+                  <img 
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} 
+                    alt="Avatar"
+                    className="rounded-xl w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              </button>
+
+              {/* Profile Dropdown */}
+              <AnimatePresence>
+                {isProfileMenuOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setIsProfileMenuOpen(false)} 
+                    />
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-3 z-50 divide-y divide-slate-100"
+                    >
+                      <div className="p-3">
+                        <p className="text-sm font-bold text-slate-900">{user?.name}</p>
+                        <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                        <span className="inline-block mt-2 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-blue-50 text-blue-600 rounded-full">
+                          {user?.role} Access
+                        </span>
+                      </div>
+
+                      <div className="pt-2">
+                        <button 
+                          onClick={() => {
+                            setIsProfileMenuOpen(false);
+                            handleLogout();
+                          }}
+                          className="flex items-center gap-3 w-full p-2.5 rounded-xl text-red-600 hover:bg-red-50 font-bold text-sm transition-colors cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4 text-red-600" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>
@@ -263,6 +337,20 @@ export const Layout = () => {
           <Outlet />
         </div>
       </div>
+
+      {pendingAgreementDoc && (
+        <AgreementModal
+          isOpen={!!pendingAgreementDoc}
+          documentId={pendingAgreementDoc.id}
+          investorName={user?.name || "Investor"}
+          investorEmail={user?.email || ""}
+          projectName="Current Operations"
+          onSignedSuccessfully={() => {
+            setPendingAgreementDoc(null);
+            checkInvestorAgreement();
+          }}
+        />
+      )}
     </div>
   );
 };
