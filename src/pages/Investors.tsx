@@ -90,8 +90,8 @@ export const Investors = () => {
 
   const handleDownloadCsvTemplate = () => {
     const templateHeader = "Name,Email,Mobile,InvestorType,Organization,CompanyRegistrationNo,AccreditationStatus,CapitalAmount,DateOfOnboarding,AssignedProject,MinRoi,MaxRoi,PayoutCategory,PayoutCycle,BankName,BankAccountNo,SortCode,Address,Witness,Notes\n";
-    const sampleRow1 = 'John Doe,johndoe@example.com,+447123456789,Individual,,,"Accredited",25000,2026-07-26,"Current Operations",1,5,"Fixed","Constant","Barclays","12345678","20-40-60","123 High St, London","Jane Smith","Initial onboarding"\n';
-    const sampleRow2 = 'Apex Capital Ltd,contact@apexcap.com,+447987654321,Business,"Apex Capital Ltd","CRN-884920","Accredited",100000,2026-07-26,"Current Operations",1,5,"Variant","Monthly","HSBC","87654321","40-20-60","45 Commercial Rd, Manchester","Robert Brown","Partner client"\n';
+    const sampleRow1 = 'John Doe,johndoe@example.com,+447123456789,Individual,John Doe,"—","Accredited",25000,2026-07-26,"Current Operations",1,4,"Fixed","Constant","Barclays","12345678","20-40-60","123 High St, London","Jane Smith","Initial onboarding"\n';
+    const sampleRow2 = 'Apex Capital Ltd,contact@apexcap.com,+447987654321,Business,"Apex Capital Ltd","CRN-884920","Accredited",100000,2026-07-26,"Current Operations",1,4,"Variant","Monthly","HSBC","87654321","40-20-60","45 Commercial Rd, Manchester","Robert Brown","Partner client"\n';
     
     const blob = new Blob(["\uFEFF" + templateHeader + sampleRow1 + sampleRow2], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -186,8 +186,8 @@ export const Investors = () => {
             accreditation: (accreditation || '').trim() || "Accredited",
             amount: capAmtNum,
             date_of_onboarding: (date_of_onboarding || '').trim() || new Date().toISOString().split("T")[0],
-            min_RoiRangeId: parseInt(minRoi) || 1,
-            max_RoiRangeId: parseInt(maxRoi) || 5,
+            min_RoiRangeId: Math.min(Math.max(parseInt(minRoi) || 1, 1), 4),
+            max_RoiRangeId: Math.min(Math.max(parseInt(maxRoi) || 4, 1), 4),
             roiTypeId: (payoutCategory || '').toLowerCase() === 'variant'
               ? ((payoutCycle || '').toLowerCase() === 'weekly' ? 2 : (payoutCycle || '').toLowerCase() === 'quarterly' ? 4 : (payoutCycle || '').toLowerCase() === 'yearly' ? 5 : 3)
               : 1,
