@@ -17,7 +17,8 @@ import {
   TrendingUp,
   Bell,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  ArrowLeft
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -266,18 +267,17 @@ export const Layout = () => {
             >
               {isSidebarOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5 text-slate-600" />}
             </button>
-            <div className="hidden sm:flex items-center gap-2.5 text-sm font-medium">
-              <Link 
-                to="/dashboard" 
-                title="InvestPro Dashboard"
-                className="w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center shadow-md shadow-blue-500/15 transition-all active:scale-95 cursor-pointer flex-shrink-0"
+            <div className="hidden sm:flex items-center gap-2">
+              <button 
+                onClick={() => navigate(-1)}
+                title="Go Back"
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               >
-                <ShieldCheck className="w-4.5 h-4.5" />
-              </Link>
-              <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
-              <span className="text-slate-900 font-bold font-display text-base">
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <h2 className="text-xl font-display font-bold text-slate-900">
                 {menuItems.find(m => m.path === location.pathname)?.name || "Dashboard"}
-              </span>
+              </h2>
             </div>
           </div>
 
