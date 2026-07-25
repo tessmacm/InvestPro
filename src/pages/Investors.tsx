@@ -131,7 +131,7 @@ export const Investors = () => {
         const lineNum = i + 1;
         const row = lines[i].split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map(cell => cell.trim().replace(/^"|"$/g, ''));
         
-        if (row.length < 2) continue;
+        if (row.length < 2 || !row.some(cell => cell !== "")) continue;
 
         const [
           name,
@@ -156,22 +156,26 @@ export const Investors = () => {
           notes
         ] = row;
 
+        const rowErrors: string[] = [];
+
         // Strict validation of required fields BEFORE creating DTOs
         if (!name || !name.trim()) {
-          errors.push(`Row ${lineNum}, Column 1 (Name): Field is empty.`);
+          rowErrors.push(`Row ${lineNum}, Column 1 (Name): Field is empty.`);
         }
         if (!email || !email.trim() || !emailRegex.test(email.trim())) {
-          errors.push(`Row ${lineNum}, Column 2 (Email): '${email || "blank"}' is invalid. Use format name@domain.com.`);
+          rowErrors.push(`Row ${lineNum}, Column 2 (Email): '${email || "blank"}' is invalid. Use format name@domain.com.`);
         }
         const capAmtNum = parseFloat(capitalAmount);
         if (isNaN(capAmtNum) || capAmtNum <= 0) {
-          errors.push(`Row ${lineNum}, Column 8 (Capital Amount): '${capitalAmount || "blank"}' must be a positive number greater than 0.`);
+          rowErrors.push(`Row ${lineNum}, Column 8 (Capital Amount): '${capitalAmount || "blank"}' must be a positive number greater than 0.`);
         }
 
-        const isBusiness = (investorType || '').toLowerCase() === 'business' || investorType === '2';
-        const typeId = isBusiness ? 2 : 1;
+        if (rowErrors.length > 0) {
+          errors.push(...rowErrors);
+        } else {
+          const isBusiness = (investorType || '').toLowerCase() === 'business' || investorType === '2';
+          const typeId = isBusiness ? 2 : 1;
 
-        if (errors.length === 0) {
           parsedDtos.push({
             name: (name || '').trim(),
             email: (email || '').trim(),
@@ -200,7 +204,9 @@ export const Investors = () => {
 
       if (errors.length > 0) {
         setBulkValidationErrors(errors);
+        setBulkParsedData([]);
       } else {
+        setBulkValidationErrors([]);
         setBulkParsedData(parsedDtos);
       }
     };
@@ -232,7 +238,15 @@ export const Investors = () => {
         const errJson = await res.json().catch(() => ({}));
         let backendErrors: string[] = [];
         if (Array.isArray(errJson.errors) && errJson.errors.length > 0) {
-          backendErrors = errJson.errors;
+          backendErrors = errJson.errors.map((e: any) => typeof e === "string" ? e : JSON.stringify(e));
+        } else if (errJson.errors && typeof errJson.errors === "object") {
+          Object.entries(errJson.errors).forEach(([field, msgs]) => {
+            if (Array.isArray(msgs)) {
+              msgs.forEach((m: any) => backendErrors.push(`${field}: ${m}`));
+            } else if (typeof msgs === "string") {
+              backendErrors.push(`${field}: ${msgs}`);
+            }
+          });
         } else if (errJson.message) {
           backendErrors = [errJson.message];
         } else {
