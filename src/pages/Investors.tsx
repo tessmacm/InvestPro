@@ -88,11 +88,11 @@ export const Investors = () => {
   const [bulkFileName, setBulkFileName] = useState("");
 
   const handleDownloadCsvTemplate = () => {
-    const templateHeader = "Name,Email,Mobile,Organization,InvestorType,CapitalAmount,BankName,BankAccountNo,SortCode,Address,Witness\n";
-    const sampleRow1 = 'John Doe,johndoe@example.com,+447123456789,Doe Holdings,Individual,15000,Barclays,12345678,20-40-60,"123 High St, London","Jane Smith"\n';
-    const sampleRow2 = 'Apex Capital Ltd,contact@apexcap.com,+447987654321,Apex Capital Ltd,Business,50000,HSBC,87654321,40-20-60,"45 Commercial Rd, Manchester","Robert Brown"\n';
+    const templateHeader = "Name,Email,Mobile,InvestorType,Organization,CompanyRegistrationNo,AccreditationStatus,CapitalAmount,DateOfOnboarding,AssignedProject,MinRoi,MaxRoi,PayoutCategory,PayoutCycle,BankName,BankAccountNo,SortCode,Address,Witness,Notes\n";
+    const sampleRow1 = 'John Doe,johndoe@example.com,+447123456789,Individual,,,"Accredited",25000,2026-07-26,"Current Operations",1,5,"Fixed","Constant","Barclays","12345678","20-40-60","123 High St, London","Jane Smith","Initial onboarding"\n';
+    const sampleRow2 = 'Apex Capital Ltd,contact@apexcap.com,+447987654321,Business,"Apex Capital Ltd","CRN-884920","Accredited",100000,2026-07-26,"Current Operations",1,5,"Variant","Monthly","HSBC","87654321","40-20-60","45 Commercial Rd, Manchester","Robert Brown","Partner client"\n';
     
-    const blob = new Blob([templateHeader + sampleRow1 + sampleRow2], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + templateHeader + sampleRow1 + sampleRow2], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -100,6 +100,7 @@ export const Investors = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleBulkFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,39 +132,67 @@ export const Investors = () => {
         
         if (row.length < 2) continue;
 
-        const [name, email, mobile, organization, investorType, capitalAmount, bankName, bankAccountNo, sortCode, address, witness] = row;
+        const [
+          name,
+          email,
+          mobile,
+          investorType,
+          organization,
+          reg_number,
+          accreditation,
+          capitalAmount,
+          date_of_onboarding,
+          assignedProject,
+          minRoi,
+          maxRoi,
+          payoutCategory,
+          payoutCycle,
+          bankName,
+          bankAccountNo,
+          sortCode,
+          address,
+          witness,
+          notes
+        ] = row;
 
-        if (!name) {
+        // Strict validation of required fields BEFORE creating DTOs
+        if (!name || !name.trim()) {
           errors.push(`Row ${lineNum}: Investor Name is required.`);
         }
-        if (!email || !emailRegex.test(email)) {
-          errors.push(`Row ${lineNum}: Invalid email format '${email || ''}'.`);
+        if (!email || !email.trim() || !emailRegex.test(email.trim())) {
+          errors.push(`Row ${lineNum}: Valid Email Address is required ('${email || ''}').`);
         }
         const capAmtNum = parseFloat(capitalAmount);
         if (isNaN(capAmtNum) || capAmtNum <= 0) {
           errors.push(`Row ${lineNum}: Capital Amount '${capitalAmount || ''}' must be a valid positive number.`);
         }
-        const typeNormalized = (investorType || 'Individual').toLowerCase() === 'business' ? 'Business' : 'Individual';
+
+        const isBusiness = (investorType || '').toLowerCase() === 'business' || investorType === '2';
+        const typeId = isBusiness ? 2 : 1;
 
         if (errors.length === 0) {
           parsedDtos.push({
-            name: name,
-            email: email,
-            mobileNumber: mobile || "",
-            organizationName: organization || "",
-            investorType: typeNormalized === 'Business' ? 2 : 1,
-            capitalAmount: capAmtNum,
-            bankName: bankName || "",
-            bankAccountNumber: bankAccountNo || "",
-            sortCode: sortCode || "",
-            investorAddress: address || "",
-            witnessName: witness || "",
-            projectAssigned: "Current Operations",
-            minRoi: 1,
-            maxRoi: 5,
-            paymentCycleCategory: "Fixed",
-            paymentCycleType: "Constant",
-            paymentCycleCount: 1
+            name: (name || '').trim(),
+            email: (email || '').trim(),
+            mobile: (mobile || '').trim(),
+            type: typeId,
+            organization: (organization || '').trim() || (isBusiness ? (name || '').trim() : "—"),
+            reg_number: (reg_number || '').trim() || "—",
+            accreditation: (accreditation || '').trim() || "Accredited",
+            amount: capAmtNum,
+            date_of_onboarding: (date_of_onboarding || '').trim() || new Date().toISOString().split("T")[0],
+            min_RoiRangeId: parseInt(minRoi) || 1,
+            max_RoiRangeId: parseInt(maxRoi) || 5,
+            roiTypeId: (payoutCategory || '').toLowerCase() === 'variant'
+              ? ((payoutCycle || '').toLowerCase() === 'weekly' ? 2 : (payoutCycle || '').toLowerCase() === 'quarterly' ? 4 : (payoutCycle || '').toLowerCase() === 'yearly' ? 5 : 3)
+              : 1,
+            bank: (bankName || '').trim(),
+            acNumber: (bankAccountNo || '').trim(),
+            soreCode: (sortCode || '').trim(),
+            witness: (witness || '').trim(),
+            address: (address || '').trim(),
+            notes: (notes || '').trim() || "Bulk imported investor",
+            status: "active"
           });
         }
       }
