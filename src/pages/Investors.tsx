@@ -20,7 +20,10 @@ import {
   Check,
   Globe,
   MoreVertical,
-  Briefcase
+  Briefcase,
+  Upload,
+  FileSpreadsheet,
+  Download
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useSelector } from "react-redux";
@@ -76,6 +79,136 @@ export const Investors = () => {
 
   // Toast State
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Bulk CSV Import States
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkParsedData, setBulkParsedData] = useState<any[]>([]);
+  const [bulkValidationErrors, setBulkValidationErrors] = useState<string[]>([]);
+  const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
+  const [bulkFileName, setBulkFileName] = useState("");
+
+  const handleDownloadCsvTemplate = () => {
+    const templateHeader = "Name,Email,Mobile,Organization,InvestorType,CapitalAmount,BankName,BankAccountNo,SortCode,Address,Witness\n";
+    const sampleRow1 = 'John Doe,johndoe@example.com,+447123456789,Doe Holdings,Individual,15000,Barclays,12345678,20-40-60,"123 High St, London","Jane Smith"\n';
+    const sampleRow2 = 'Apex Capital Ltd,contact@apexcap.com,+447987654321,Apex Capital Ltd,Business,50000,HSBC,87654321,40-20-60,"45 Commercial Rd, Manchester","Robert Brown"\n';
+    
+    const blob = new Blob([templateHeader + sampleRow1 + sampleRow2], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "investors_bulk_import_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleBulkFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setBulkFileName(file.name);
+    setBulkValidationErrors([]);
+    setBulkParsedData([]);
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+      if (lines.length <= 1) {
+        setBulkValidationErrors(["The CSV file is empty or only contains header rows."]);
+        return;
+      }
+
+      const errors: string[] = [];
+      const parsedDtos: any[] = [];
+      const emailRegex = /^\S+@\S+\.\S+$/;
+
+      for (let i = 1; i < lines.length; i++) {
+        const lineNum = i + 1;
+        const row = lines[i].split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map(cell => cell.trim().replace(/^"|"$/g, ''));
+        
+        if (row.length < 2) continue;
+
+        const [name, email, mobile, organization, investorType, capitalAmount, bankName, bankAccountNo, sortCode, address, witness] = row;
+
+        if (!name) {
+          errors.push(`Row ${lineNum}: Investor Name is required.`);
+        }
+        if (!email || !emailRegex.test(email)) {
+          errors.push(`Row ${lineNum}: Invalid email format '${email || ''}'.`);
+        }
+        const capAmtNum = parseFloat(capitalAmount);
+        if (isNaN(capAmtNum) || capAmtNum <= 0) {
+          errors.push(`Row ${lineNum}: Capital Amount '${capitalAmount || ''}' must be a valid positive number.`);
+        }
+        const typeNormalized = (investorType || 'Individual').toLowerCase() === 'business' ? 'Business' : 'Individual';
+
+        if (errors.length === 0) {
+          parsedDtos.push({
+            name: name,
+            email: email,
+            mobileNumber: mobile || "",
+            organizationName: organization || "",
+            investorType: typeNormalized === 'Business' ? 2 : 1,
+            capitalAmount: capAmtNum,
+            bankName: bankName || "",
+            bankAccountNumber: bankAccountNo || "",
+            sortCode: sortCode || "",
+            investorAddress: address || "",
+            witnessName: witness || "",
+            projectAssigned: "Current Operations",
+            minRoi: 1,
+            maxRoi: 5,
+            paymentCycleCategory: "Fixed",
+            paymentCycleType: "Constant",
+            paymentCycleCount: 1
+          });
+        }
+      }
+
+      if (errors.length > 0) {
+        setBulkValidationErrors(errors);
+      } else {
+        setBulkParsedData(parsedDtos);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleBulkSubmit = async () => {
+    if (bulkValidationErrors.length > 0) return;
+    if (!bulkParsedData.length) {
+      setBulkValidationErrors(["Please select a valid CSV file with investor rows."]);
+      return;
+    }
+
+    setIsBulkSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/investors/bulk-import`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(bulkParsedData)
+      });
+
+      if (res.ok) {
+        setToast({ type: "success", message: `Successfully created ${bulkParsedData.length} investors!` });
+        setIsBulkModalOpen(false);
+        setBulkParsedData([]);
+        setBulkFileName("");
+        fetchInvestors();
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        setBulkValidationErrors([errJson.message || "Failed to create investors from CSV."]);
+      }
+    } catch (err) {
+      console.error(err);
+      setBulkValidationErrors(["Server error occurred during bulk import."]);
+    } finally {
+      setIsBulkSubmitting(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: "",
@@ -584,15 +717,31 @@ export const Investors = () => {
                 </p>
               </motion.div>
               {!isClient && (
-                <motion.button
-                  variants={itemVariants}
-                  onClick={handleOpenAdd}
-                  id="btn-add-investor"
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-[0.98] transition-transform flex-shrink-0 self-start md:self-auto"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Investor
-                </motion.button>
+                <div className="flex items-center gap-3 self-start md:self-auto flex-shrink-0">
+                  <motion.button
+                    variants={itemVariants}
+                    onClick={() => {
+                      setIsBulkModalOpen(true);
+                      setBulkValidationErrors([]);
+                      setBulkParsedData([]);
+                      setBulkFileName("");
+                    }}
+                    className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-sm px-5 py-3 rounded-2xl border border-emerald-200 shadow-sm cursor-pointer active:scale-[0.98] transition-all"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Bulk Import CSV
+                  </motion.button>
+
+                  <motion.button
+                    variants={itemVariants}
+                    onClick={handleOpenAdd}
+                    id="btn-add-investor"
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-[0.98] transition-transform"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Investor
+                  </motion.button>
+                </div>
               )}
             </div>
 
@@ -1612,7 +1761,111 @@ export const Investors = () => {
         </div>
       </BaseModal>
 
+      {/* Bulk CSV Import Modal */}
+      <BaseModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        title="Bulk Onboard Investors via CSV"
+      >
+        <div className="space-y-6">
+          {/* Step 1: Template Download Banner */}
+          <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <h4 className="text-sm font-bold text-emerald-900 flex items-center gap-1.5">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Download Official CSV Template
+              </h4>
+              <p className="text-xs text-emerald-700 mt-1">
+                First download our standard CSV template with pre-filled column headers and sample data.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleDownloadCsvTemplate}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm cursor-pointer transition-all flex-shrink-0"
+            >
+              <Download className="w-4 h-4" /> Download Template
+            </button>
+          </div>
 
+          {/* Step 2: File Selector */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Upload Filled CSV File
+            </label>
+            <div className="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-2xl p-6 text-center bg-slate-50/50 transition-colors">
+              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleBulkFileChange}
+                className="hidden"
+                id="bulk-csv-input"
+              />
+              <label
+                htmlFor="bulk-csv-input"
+                className="cursor-pointer text-xs font-bold text-blue-600 hover:text-blue-700 underline"
+              >
+                Browse CSV file
+              </label>
+              {bulkFileName && (
+                <p className="text-xs font-semibold text-slate-700 mt-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 inline-block shadow-sm">
+                  📄 Selected: {bulkFileName}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Step 3: Validation Error List */}
+          {bulkValidationErrors.length > 0 && (
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl space-y-2 max-h-48 overflow-y-auto">
+              <h5 className="text-xs font-bold text-rose-800 flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                Validation Errors Found ({bulkValidationErrors.length})
+              </h5>
+              <p className="text-[11px] text-rose-700">
+                Please make the exact corrections in your CSV file and upload again:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-xs text-rose-700 font-mono">
+                {bulkValidationErrors.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Step 4: Validation Success Banner */}
+          {bulkParsedData.length > 0 && bulkValidationErrors.length === 0 && (
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <div>
+                <h5 className="text-xs font-bold text-emerald-900">CSV Validated Successfully</h5>
+                <p className="text-xs text-emerald-700 mt-0.5">
+                  Ready to onboard {bulkParsedData.length} new investors with complete payment schedules.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Action Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsBulkModalOpen(false)}
+              className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-800 border border-slate-200 rounded-xl transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkSubmit}
+              disabled={isBulkSubmitting || bulkValidationErrors.length > 0 || bulkParsedData.length === 0}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md cursor-pointer transition-all disabled:cursor-not-allowed"
+            >
+              {isBulkSubmitting ? "Importing Investors..." : `Import ${bulkParsedData.length} Investors`}
+            </button>
+          </div>
+        </div>
+      </BaseModal>
 
     </div>
   );

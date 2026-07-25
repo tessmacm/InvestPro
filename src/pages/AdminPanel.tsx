@@ -452,6 +452,7 @@ export const AdminPanel = () => {
   ];
 
   const filteredUsers = users.filter(user => 
+    user.email !== "admin@investpro.com" &&
     user.role !== "investor" && user.role !== "client" && (
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -459,7 +460,7 @@ export const AdminPanel = () => {
   );
 
   // Derived stats
-  const displayUsers = users.filter(u => u.role !== "investor" && u.role !== "client");
+  const displayUsers = users.filter(u => u.email !== "admin@investpro.com" && u.role !== "investor" && u.role !== "client");
   const totalUsersCount = displayUsers.length;
   const activeUsersCount = displayUsers.filter(u => u.status === "active").length;
   const adminUsersCount = displayUsers.filter(u => u.role === "admin" || u.role === "superadmin").length;

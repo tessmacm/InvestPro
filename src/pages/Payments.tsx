@@ -85,9 +85,36 @@ export const Payments = () => {
     fetchPayments();
   }, []);
 
-  const uniqueInvestors = Array.from(new Set(payments.map(p => p.investorName)));
+  // Filter to include ONLY the next upcoming payment for each investor
+  const upcomingPayments = React.useMemo(() => {
+    const map = new Map<number | string, Payment>();
+    
+    // Sort payments by payment date ascending
+    const sorted = [...payments].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
 
-  const filteredPayments = payments.filter(p => {
+    for (const p of sorted) {
+      const key = p.investorId || p.investorName;
+      if (!map.has(key)) {
+        if (!p.isReceived && p.status !== "Received") {
+          map.set(key, p);
+        }
+      }
+    }
+
+    // Fallback: if an investor has no unreceived payment, keep their single latest entry
+    for (const p of sorted) {
+      const key = p.investorId || p.investorName;
+      if (!map.has(key)) {
+        map.set(key, p);
+      }
+    }
+
+    return Array.from(map.values());
+  }, [payments]);
+
+  const uniqueInvestors = Array.from(new Set(upcomingPayments.map(p => p.investorName)));
+
+  const filteredPayments = upcomingPayments.filter(p => {
     const matchesSearch = `PayId#${p.paymentId}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.investorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.amount.toString().includes(searchTerm);
@@ -100,8 +127,8 @@ export const Payments = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Portal &gt; Payments</span>
-          <h2 className="text-2xl font-display font-bold text-slate-900 mt-0.5">Investor Payments</h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Track and manage financial deposits and transaction payments.</p>
+          <h2 className="text-2xl font-display font-bold text-slate-900 mt-0.5">Upcoming Investor Payouts</h2>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Displaying the single next upcoming scheduled payment for each investor.</p>
         </div>
       </div>
 

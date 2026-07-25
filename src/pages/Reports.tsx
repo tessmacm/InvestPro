@@ -1,436 +1,449 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
-import { SystemReport, Investor } from "../types";
-import { BaseModal } from "../components/BaseModal";
+import { Investor, Payment, Project } from "../types";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Search, Plus, Download, Trash2, FileText, CheckSquare, Square, RefreshCw } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { Search, Download, Calendar, Filter, FileSpreadsheet, Users, Folder, Landmark, RefreshCw, CheckCircle2 } from "lucide-react";
+import { motion } from "motion/react";
+import { cn } from "../lib/utils";
+
+type ReportType = "investors" | "investments" | "payments";
+type DateFilterType = "all" | "week" | "month" | "year" | "custom";
 
 export const Reports = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const isAdmin = user?.role === "admin" || user?.role === "manager" || user?.role === "superadmin";
 
-  const [reports, setReports] = useState<SystemReport[]>([]);
+  const [activeTab, setActiveTab] = useState<ReportType>("investors");
+  const [datePreset, setDatePreset] = useState<DateFilterType>("all");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
+  // Data States
   const [investors, setInvestors] = useState<Investor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Form State
-  const [formData, setFormData] = useState({
-    title: "",
-    type: "PDF"
-  });
-  const [selectedInvestorIds, setSelectedInvestorIds] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(true);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const fetchReports = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/reports`, {
-        headers: authHeaders()
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setReports(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch reports", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchInvestors = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/investors`, {
-        headers: authHeaders()
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setInvestors(data);
-        // Default target all
-        setSelectedInvestorIds(data.map((i: Investor) => String(i.id)));
-      }
-    } catch (err) {
-      console.warn("Could not load investors list", err);
-    }
-  };
-
+  // Fetch Data on Mount
   useEffect(() => {
-    fetchReports();
-    if (isAdmin) {
-      fetchInvestors();
-    }
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [invRes, projRes, payRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() }),
+          fetch(`${API_BASE_URL}/api/admin/projects`, { headers: authHeaders() }),
+          fetch(`${API_BASE_URL}/api/admin/payments`, { headers: authHeaders() })
+        ]);
+
+        if (invRes.ok) setInvestors(await invRes.json());
+        if (projRes.ok) setProjects(await projRes.json());
+        if (payRes.ok) setPayments(await payRes.json());
+      } catch (err) {
+        console.error("Failed to load reports data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const titleWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-      const ext = file.name.substring(file.name.lastIndexOf('.') + 1).toUpperCase();
-      
-      let typeOption = "PDF";
-      if (ext === "XLS" || ext === "XLSX" || ext === "CSV") typeOption = "EXCEL";
+  // Helper Date Filter Evaluator
+  const isDateInRange = (dateStr?: string) => {
+    if (!dateStr) return true;
+    const itemDate = new Date(dateStr).getTime();
+    const now = new Date().getTime();
 
-      setFormData({
-        title: titleWithoutExt,
-        type: typeOption
-      });
+    if (datePreset === "week") {
+      const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+      return itemDate >= oneWeekAgo && itemDate <= now;
     }
+    if (datePreset === "month") {
+      const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000;
+      return itemDate >= oneMonthAgo && itemDate <= now;
+    }
+    if (datePreset === "year") {
+      const oneYearAgo = now - 365 * 24 * 60 * 60 * 1000;
+      return itemDate >= oneYearAgo && itemDate <= now;
+    }
+    if (datePreset === "custom") {
+      let valid = true;
+      if (startDate) valid = valid && itemDate >= new Date(startDate).getTime();
+      if (endDate) valid = valid && itemDate <= new Date(endDate).setHours(23, 59, 59, 999);
+      return valid;
+    }
+
+    return true;
   };
 
-  const toggleSelectAll = () => {
-    if (selectAll) {
-      setSelectedInvestorIds([]);
-      setSelectAll(false);
-    } else {
-      setSelectedInvestorIds(investors.map(i => String(i.id)));
-      setSelectAll(true);
+  // Filtered Investors Data
+  const filteredInvestors = useMemo(() => {
+    return investors.filter(i => {
+      const matchesSearch =
+        i.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        i.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (i.organization && i.organization.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesDate = isDateInRange(i.date_of_onboarding);
+      return matchesSearch && matchesDate;
+    });
+  }, [investors, searchTerm, datePreset, startDate, endDate]);
+
+  // Filtered Projects Data
+  const filteredProjects = useMemo(() => {
+    return projects.filter(p => {
+      const matchesSearch =
+        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesDate = isDateInRange(p.start_date);
+      return matchesSearch && matchesDate;
+    });
+  }, [projects, searchTerm, datePreset, startDate, endDate]);
+
+  // Filtered Payments Data
+  const filteredPayments = useMemo(() => {
+    return payments.filter(p => {
+      const matchesSearch =
+        p.investorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `PayId#${p.paymentId}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.amount.toString().includes(searchTerm);
+      const matchesDate = isDateInRange(p.paymentDate);
+      return matchesSearch && matchesDate;
+    });
+  }, [payments, searchTerm, datePreset, startDate, endDate]);
+
+  // Excel / CSV Export Utility
+  const handleExportExcel = () => {
+    let exportRows: any[] = [];
+    let filename = `InvestPro_${activeTab.toUpperCase()}_Report_${new Date().toISOString().split("T")[0]}.csv`;
+
+    if (activeTab === "investors") {
+      exportRows = filteredInvestors.map(i => ({
+        "Investor ID": i.id,
+        "Full Name": i.name,
+        "Email Address": i.email,
+        "Mobile": i.mobile || "N/A",
+        "Organization": i.organization || "N/A",
+        "Investor Type": i.type,
+        "Committed Amount (£)": i.amount,
+        "Accreditation": i.accreditation || "Accredited",
+        "Bank Name": i.bank || "N/A",
+        "Account Number": i.acNumber || "N/A",
+        "Sort Code": i.sortCode || "N/A",
+        "Onboarding Date": i.date_of_onboarding ? new Date(i.date_of_onboarding).toLocaleDateString() : "N/A",
+        "Status": i.status
+      }));
+    } else if (activeTab === "investments") {
+      exportRows = filteredProjects.map(p => ({
+        "Project ID": p.id,
+        "Title": p.title,
+        "Description": p.description,
+        "Target Funding (£)": p.budget,
+        "Duration": p.duration,
+        "Start Date": new Date(p.start_date).toLocaleDateString(),
+        "End Date": new Date(p.end_date).toLocaleDateString(),
+        "Status": p.status
+      }));
+    } else if (activeTab === "payments") {
+      exportRows = filteredPayments.map(p => ({
+        "Payment ID": `PayId#${p.paymentId}`,
+        "Investor Name": p.investorName,
+        "Amount (£)": p.amount,
+        "Cycle": p.paymentCycle || "Monthly",
+        "Payment Date": new Date(p.paymentDate).toLocaleDateString(),
+        "Status": p.status,
+        "Is Sent": p.isSent ? "Yes" : "No",
+        "Is Received": p.isReceived ? "Yes" : "No"
+      }));
     }
-  };
 
-  const toggleInvestor = (id: string) => {
-    let updated = [...selectedInvestorIds];
-    if (updated.includes(id)) {
-      updated = updated.filter(item => item !== id);
-      setSelectAll(false);
-    } else {
-      updated.push(id);
-      if (updated.length === investors.length) {
-        setSelectAll(true);
-      }
-    }
-    setSelectedInvestorIds(updated);
-  };
+    if (!exportRows.length) return;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title || !selectedFile) return;
+    const headers = Object.keys(exportRows[0]);
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [
+        headers.join(","),
+        ...exportRows.map(row =>
+          headers
+            .map(fieldName => {
+              const val = row[fieldName] ?? "";
+              return `"${String(val).replace(/"/g, '""')}"`;
+            })
+            .join(",")
+        )
+      ].join("\n");
 
-    setUploading(true);
-    try {
-      const targets = selectAll ? "all" : selectedInvestorIds.join(",");
-
-      const uploadData = new FormData();
-      uploadData.append("title", formData.title);
-      uploadData.append("type", formData.type);
-      uploadData.append("targetInvestorIds", targets);
-      uploadData.append("file", selectedFile);
-
-      const headers = authHeaders();
-      delete headers["Content-Type"]; // Allow browser to set correct boundary
-
-      const response = await fetch(`${API_BASE_URL}/api/admin/reports`, {
-        method: "POST",
-        headers: headers,
-        body: uploadData
-      });
-
-      if (response.ok) {
-        setIsModalOpen(false);
-        setFormData({ title: "", type: "PDF" });
-        setSelectedFile(null);
-        fetchReports();
-      } else {
-        const errorText = await response.text();
-        console.error("Failed to upload report on server", errorText);
-      }
-    } catch (err) {
-      console.error("Failed to upload report", err);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this report?")) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/reports/${id}`, {
-        method: "DELETE",
-        headers: authHeaders()
-      });
-      if (response.ok) {
-        fetchReports();
-      }
-    } catch (err) {
-      console.error("Failed to delete report", err);
-    }
-  };
-
-  const handleDownload = (r: SystemReport) => {
-    // Generate text/file download representation
-    const text = `InvestPro Report - ${r.title}\nFormat: ${r.type}\nSize: ${r.size}\nUploaded: ${new Date(r.createdAt).toLocaleDateString()}\nURL Ref: ${r.url}`;
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
+    const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    link.href = url;
-    link.download = `${r.title.replace(/\s+/g, "_")}.${r.type.toLowerCase() === "pdf" ? "pdf" : "xlsx"}`;
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const filteredReports = reports.filter(r => {
-    return r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.investorName.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-7xl mx-auto space-y-6">
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto space-y-6">
+      
+      {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">System &gt; Reports</span>
-          <h2 className="text-2xl font-display font-bold text-slate-900 mt-0.5">System Reports</h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Generate, upload, and export performance and compliance summaries.</p>
+          <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Portal &gt; Reports</span>
+          <h2 className="text-2xl font-display font-bold text-slate-900 mt-0.5">Financial & Operations Analytics</h2>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Generate customized reports with date filters and export directly to Excel spreadsheets.</p>
         </div>
-        {isAdmin && (
-          <button
-            onClick={() => {
-              setSelectAll(true);
-              setSelectedInvestorIds(investors.map(i => String(i.id)));
-              setIsModalOpen(true);
-            }}
-            className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/10 cursor-pointer active:scale-95 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Upload Report
-          </button>
-        )}
+
+        <button
+          onClick={handleExportExcel}
+          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-500/10 active:scale-95 transition-all cursor-pointer self-start md:self-auto"
+        >
+          <FileSpreadsheet className="w-4 h-4" /> Download Excel Sheet
+        </button>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search reports..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-          />
+      {/* Category Tabs */}
+      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+        <button
+          onClick={() => setActiveTab("investors")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+            activeTab === "investors"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-500/10"
+              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+          )}
+        >
+          <Users className="w-4 h-4" /> Investors Report ({filteredInvestors.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab("investments")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+            activeTab === "investments"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-500/10"
+              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+          )}
+        >
+          <Folder className="w-4 h-4" /> Investments / Projects ({filteredProjects.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab("payments")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+            activeTab === "payments"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-500/10"
+              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+          )}
+        >
+          <Landmark className="w-4 h-4" /> Payments & Payouts ({filteredPayments.length})
+        </button>
+      </div>
+
+      {/* Filter Control Bar */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          
+          {/* Keyword Search */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search report records..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Quick Date Preset */}
+          <div className="relative">
+            <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <select
+              value={datePreset}
+              onChange={(e) => setDatePreset(e.target.value as DateFilterType)}
+              className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer font-semibold"
+            >
+              <option value="all">Date Filter: All Time</option>
+              <option value="week">Last Week</option>
+              <option value="month">Last Month</option>
+              <option value="year">Last Year</option>
+              <option value="custom">Custom Date Range</option>
+            </select>
+          </div>
+
+          {/* Custom Start Date */}
+          <div className="space-y-1">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Start Date</label>
+            <input
+              type="date"
+              disabled={datePreset !== "custom"}
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full px-3 py-2 text-xs bg-slate-50 disabled:bg-slate-100 disabled:opacity-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          {/* Custom End Date */}
+          <div className="space-y-1">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">End Date</label>
+            <input
+              type="date"
+              disabled={datePreset !== "custom"}
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full px-3 py-2 text-xs bg-slate-50 disabled:bg-slate-100 disabled:opacity-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
         </div>
       </div>
 
+      {/* Reports Spreadsheet Table View */}
       {loading ? (
-        <TableSkeleton columns={isAdmin ? 6 : 5} rows={3} />
+        <TableSkeleton columns={5} rows={5} />
       ) : (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Title</th>
-                  <th className="px-6 py-4">Format</th>
-                  <th className="px-6 py-4">Size</th>
-                  <th className="px-6 py-4">Date</th>
-                  {isAdmin && <th className="px-6 py-4">To</th>}
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 text-sm">
-                <AnimatePresence mode="popLayout">
-                  {filteredReports.map(r => (
-                    <motion.tr
-                      key={r.id}
-                      layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="hover:bg-slate-50/50 transition-colors"
-                    >
-                      <td className="px-6 py-4 font-semibold text-slate-900 flex items-center gap-3">
-                        <FileText className="w-4 h-4 text-rose-500" />
-                        {r.title}
+            
+            {/* TAB 1: INVESTORS REPORT */}
+            {activeTab === "investors" && (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <th className="px-6 py-4">Investor</th>
+                    <th className="px-6 py-4">Type</th>
+                    <th className="px-6 py-4">Organization</th>
+                    <th className="px-6 py-4">Committed Capital</th>
+                    <th className="px-6 py-4">Onboarding Date</th>
+                    <th className="px-6 py-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
+                  {filteredInvestors.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-12 text-slate-400 font-semibold">
+                        No investor records match the selected date filters.
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
-                          r.type === "PDF" ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"
-                        }`}>
-                          {r.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-slate-500 font-mono text-xs">{r.size}</td>
-                      <td className="px-6 py-4 text-slate-500">
-                        {new Date(r.createdAt).toLocaleDateString(undefined, {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric"
-                        })}
-                      </td>
-                      {isAdmin && (
-                        <td className="px-6 py-4 text-slate-600 font-medium max-w-[200px] truncate">
-                          {r.investorName}
+                    </tr>
+                  ) : (
+                    filteredInvestors.map(i => (
+                      <tr key={i.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-slate-900">
+                          {i.name}
+                          <span className="block text-[11px] text-slate-400 font-normal">{i.email}</span>
                         </td>
-                      )}
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <button
-                          onClick={() => handleDownload(r)}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          Download
-                        </button>
-                        {isAdmin && (
-                          <button
-                            onClick={() => handleDelete(r.id)}
-                            className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Delete
-                          </button>
-                        )}
+                        <td className="px-6 py-4">
+                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-100">
+                            {i.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-medium text-slate-600">{i.organization || "—"}</td>
+                        <td className="px-6 py-4 font-bold text-emerald-600">£{Number(i.amount).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-slate-500">
+                          {i.date_of_onboarding ? new Date(i.date_of_onboarding).toLocaleDateString() : "N/A"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {i.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
+
+            {/* TAB 2: INVESTMENTS / PROJECTS REPORT */}
+            {activeTab === "investments" && (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <th className="px-6 py-4">Project Title</th>
+                    <th className="px-6 py-4">Target Funding</th>
+                    <th className="px-6 py-4">Duration</th>
+                    <th className="px-6 py-4">Start Date</th>
+                    <th className="px-6 py-4">End Date</th>
+                    <th className="px-6 py-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
+                  {filteredProjects.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-12 text-slate-400 font-semibold">
+                        No project investment records match the selected date filters.
                       </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+                    </tr>
+                  ) : (
+                    filteredProjects.map(p => (
+                      <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-slate-900">{p.title}</td>
+                        <td className="px-6 py-4 font-bold text-emerald-600">£{Number(p.budget).toLocaleString()}</td>
+                        <td className="px-6 py-4 font-medium text-slate-600">{p.duration}</td>
+                        <td className="px-6 py-4 text-slate-500">{new Date(p.start_date).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 text-slate-500">{new Date(p.end_date).toLocaleDateString()}</td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {p.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
+
+            {/* TAB 3: PAYMENTS & PAYOUTS REPORT */}
+            {activeTab === "payments" && (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <th className="px-6 py-4">Payment ID</th>
+                    <th className="px-6 py-4">Investor</th>
+                    <th className="px-6 py-4">Amount</th>
+                    <th className="px-6 py-4">Payment Cycle</th>
+                    <th className="px-6 py-4">Payment Date</th>
+                    <th className="px-6 py-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
+                  {filteredPayments.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-12 text-slate-400 font-semibold">
+                        No payment payout records match the selected date filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPayments.map(p => (
+                      <tr key={p.paymentId} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 font-mono font-bold text-slate-500">PayId#{p.paymentId}</td>
+                        <td className="px-6 py-4 font-bold text-slate-900">{p.investorName}</td>
+                        <td className="px-6 py-4 font-bold text-emerald-600">£{Number(p.amount).toLocaleString()}</td>
+                        <td className="px-6 py-4 font-medium text-slate-600">{p.paymentCycle || "Monthly"}</td>
+                        <td className="px-6 py-4 text-slate-500">{new Date(p.paymentDate).toLocaleDateString()}</td>
+                        <td className="px-6 py-4">
+                          <span className={cn(
+                            "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border",
+                            p.status === "Received" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"
+                          )}>
+                            {p.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
+
           </div>
         </div>
       )}
 
-      {/* Upload Report Modal */}
-      <BaseModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Upload System Report">
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-
-          {/* Section: Details */}
-          <div className="bg-slate-50/40 p-5 rounded-2xl border border-slate-100 space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-              1. Report Details
-            </h3>
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Report Title <strong className="text-rose-500">*</strong></label>
-              <input 
-                required
-                type="text" 
-                value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
-                placeholder="e.g. Q3 Growth and Compliance Audit"
-                className="w-full px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">File Format</label>
-              <select 
-                value={formData.type}
-                onChange={(e) => setFormData({...formData, type: e.target.value})}
-                className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 cursor-pointer focus:ring-4 focus:ring-blue-100/50"
-              >
-                <option value="PDF">PDF Report Document</option>
-                <option value="EXCEL">Excel Sheet Summary</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Section: Targeted Recipients */}
-          <div className="bg-slate-50/40 p-5 rounded-2xl border border-slate-100 space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-              2. Targeted Recipients
-            </h3>
-            <div className="border border-slate-200 rounded-xl p-3 bg-white max-h-44 overflow-y-auto space-y-2">
-              <button
-                type="button"
-                onClick={toggleSelectAll}
-                className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 cursor-pointer w-full text-left"
-              >
-                {selectAll ? <CheckSquare className="w-4 h-4 text-blue-600 flex-shrink-0" /> : <Square className="w-4 h-4 text-slate-400 flex-shrink-0" />}
-                Select All Investors
-              </button>
-              <hr className="border-slate-100" />
-              {investors.map(inv => {
-                const isSelected = selectedInvestorIds.includes(String(inv.id));
-                return (
-                  <button
-                    key={inv.id}
-                    type="button"
-                    onClick={() => toggleInvestor(String(inv.id))}
-                    disabled={selectAll}
-                    className={`flex items-center gap-2 text-sm font-medium w-full text-left transition-colors ${
-                      selectAll ? "text-slate-400 cursor-not-allowed" : "text-slate-700 hover:text-blue-600 cursor-pointer"
-                    }`}
-                  >
-                    {selectAll || isSelected ? (
-                      <CheckSquare className={`w-4 h-4 flex-shrink-0 ${selectAll ? "text-blue-400" : "text-blue-600"}`} />
-                    ) : (
-                      <Square className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                    )}
-                    {inv.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Section: File Upload */}
-          <div className="bg-slate-50/40 p-5 rounded-2xl border border-slate-100 space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-              3. Attach File
-            </h3>
-            <input 
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept=".pdf,.xls,.xlsx,.csv"
-            />
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="p-8 border-2 border-dashed border-slate-200 rounded-2xl bg-white text-center group hover:border-blue-400 hover:bg-blue-50/20 transition-all cursor-pointer"
-            >
-              <div className="bg-slate-50 w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform group-hover:bg-blue-100">
-                <Plus className="w-5 h-5 text-blue-600" />
-              </div>
-              {selectedFile ? (
-                <div>
-                  <p className="text-sm font-bold text-blue-600 truncate max-w-[250px] mx-auto">{selectedFile.name}</p>
-                  <p className="text-xs text-slate-400 mt-1">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-sm font-bold text-slate-700">Select Report File</p>
-                  <p className="text-xs text-slate-400 mt-1">Drop your file here or click to browse</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-1">
-            <button 
-              type="button"
-              disabled={uploading}
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit"
-              disabled={uploading}
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center gap-2"
-            >
-              {uploading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                "Upload Report"
-              )}
-            </button>
-          </div>
-        </form>
-      </BaseModal>
     </motion.div>
   );
 };
