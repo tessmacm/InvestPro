@@ -484,10 +484,12 @@ export const Projects = () => {
         <div className="space-y-6">
           
           {/* Header Title Space */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">Project Management</h1>
-              <p className="text-sm text-slate-500 mt-1 font-medium">Create, manage and track all your projects in one place.</p>
+              <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">Projects Portfolio</h1>
+              <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
+                Monitor active investment projects, funding goals, timelines, and status.
+              </p>
             </div>
             {!isGuest && (
               <button

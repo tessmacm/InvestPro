@@ -208,10 +208,12 @@ export const Reports = () => {
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto space-y-6">
       
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-display font-bold text-slate-900">Financial & Operations Analytics</h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Generate customized reports with date filters and export directly to Excel spreadsheets.</p>
+          <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">Reports & Analytics</h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
+            Generate and export comprehensive operational and financial analytics.
+          </p>
         </div>
 
         <button

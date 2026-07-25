@@ -475,8 +475,10 @@ export const AdminPanel = () => {
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <motion.div variants={item}>
-          <h1 className="text-3xl font-display font-extrabold text-slate-900">User Management</h1>
-          <p className="text-slate-500 mt-1 font-medium">Manage platform roles, permissions and account statuses.</p>
+          <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">User Management</h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
+            Manage platform user accounts, roles, permissions, and statuses.
+          </p>
         </motion.div>
         {isAdminUser && (
           <motion.button

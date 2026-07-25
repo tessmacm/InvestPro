@@ -222,6 +222,15 @@ export const Dashboard = () => {
       animate="show"
       className="max-w-7xl mx-auto space-y-8"
     >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <motion.div variants={item}>
+          <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">Dashboard Overview</h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
+            Welcome back, {user?.name || "User"}. Monitor key metrics, capital growth, and recent activities.
+          </p>
+        </motion.div>
+      </div>
+
       <motion.div variants={container} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {loading ? (
           <>

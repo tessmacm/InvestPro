@@ -751,11 +751,11 @@ export const Investors = () => {
             exit={{ opacity: 0, x: -15 }}
             className="space-y-6"
           >
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <motion.div variants={itemVariants}>
-                <h1 className="text-3xl font-display font-extrabold text-slate-900">Investors</h1>
-                <p className="text-sm text-slate-500 mt-1 font-medium">
-                  Manage your verified legal entities and individual investment accounts.
+                <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">Investor Directory</h1>
+                <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
+                  Manage verified legal entities and individual investor profiles.
                 </p>
               </motion.div>
               {!isClient && (

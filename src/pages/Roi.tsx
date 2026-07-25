@@ -61,10 +61,12 @@ export const Roi = () => {
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-display font-bold text-slate-900">Return On Investment (ROI)</h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium">View active ROI contracts, yields, and payout timelines.</p>
+          <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">ROI Management</h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
+            Manage return interest rates, payout tiers, and calculation rules.
+          </p>
         </div>
       </div>
 
