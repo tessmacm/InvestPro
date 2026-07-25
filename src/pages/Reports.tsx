@@ -4,7 +4,7 @@ import { RootState } from "../store";
 import { Investor, Payment, Project } from "../types";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Search, Download, Calendar, Filter, FileSpreadsheet, Users, Folder, Landmark, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Search, Download, Calendar, Filter, FileSpreadsheet, Users, Folder, Landmark, RefreshCw, CheckCircle2, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
 
@@ -113,6 +113,20 @@ export const Reports = () => {
     });
   }, [payments, searchTerm, datePreset, startDate, endDate]);
 
+  // Summary Metrics
+  const summaryMetrics = useMemo(() => {
+    if (activeTab === "investors") {
+      const totalAmount = filteredInvestors.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+      return { count: filteredInvestors.length, label: "Total Capital", amount: totalAmount };
+    }
+    if (activeTab === "investments") {
+      const totalAmount = filteredProjects.reduce((sum, p) => sum + (Number(p.budget) || 0), 0);
+      return { count: filteredProjects.length, label: "Target Funding", amount: totalAmount };
+    }
+    const totalAmount = filteredPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    return { count: filteredPayments.length, label: "Payout Volume", amount: totalAmount };
+  }, [activeTab, filteredInvestors, filteredProjects, filteredPayments]);
+
   // Excel / CSV Export Utility
   const handleExportExcel = () => {
     let exportRows: any[] = [];
@@ -126,7 +140,7 @@ export const Reports = () => {
         "Mobile": i.mobile || "N/A",
         "Organization": i.organization || "N/A",
         "Investor Type": i.type,
-        "Committed Amount (£)": i.amount,
+        "Committed Capital (£)": i.amount,
         "Accreditation": i.accreditation || "Accredited",
         "Bank Name": i.bank || "N/A",
         "Account Number": i.acNumber || "N/A",
@@ -242,62 +256,109 @@ export const Reports = () => {
         </button>
       </div>
 
-      {/* Filter Control Bar */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Filter Control Bar - Perfectly Aligned 4-Column Grid */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           
-          {/* Keyword Search */}
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search report records..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            />
-          </div>
-
-          {/* Quick Date Preset */}
-          <div className="relative">
-            <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <select
-              value={datePreset}
-              onChange={(e) => setDatePreset(e.target.value as DateFilterType)}
-              className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer font-semibold"
-            >
-              <option value="all">Date Filter: All Time</option>
-              <option value="week">Last Week</option>
-              <option value="month">Last Month</option>
-              <option value="year">Last Year</option>
-              <option value="custom">Custom Date Range</option>
-            </select>
-          </div>
-
-          {/* Custom Start Date */}
+          {/* Field 1: Keyword Search */}
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Start Date</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Search Records
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by name, ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 h-10"
+              />
+            </div>
+          </div>
+
+          {/* Field 2: Quick Date Preset */}
+          <div className="space-y-1">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Date Filter Preset
+            </label>
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <select
+                value={datePreset}
+                onChange={(e) => setDatePreset(e.target.value as DateFilterType)}
+                className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer font-semibold h-10"
+              >
+                <option value="all">Date Filter: All Time</option>
+                <option value="week">Last Week</option>
+                <option value="month">Last Month</option>
+                <option value="year">Last Year</option>
+                <option value="custom">Custom Date Range</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Field 3: Custom Start Date */}
+          <div className="space-y-1">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Start Date
+            </label>
             <input
               type="date"
               disabled={datePreset !== "custom"}
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-slate-50 disabled:bg-slate-100 disabled:opacity-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2.5 text-xs bg-slate-50 disabled:bg-slate-100 disabled:opacity-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 h-10"
             />
           </div>
 
-          {/* Custom End Date */}
+          {/* Field 4: Custom End Date */}
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">End Date</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              End Date
+            </label>
             <input
               type="date"
               disabled={datePreset !== "custom"}
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-slate-50 disabled:bg-slate-100 disabled:opacity-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2.5 text-xs bg-slate-50 disabled:bg-slate-100 disabled:opacity-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 h-10"
             />
           </div>
 
+        </div>
+      </div>
+
+      {/* Analytics Metric Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Matched Records</span>
+            <h4 className="text-xl font-bold text-slate-900 mt-0.5">{summaryMetrics.count}</h4>
+          </div>
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <FileSpreadsheet className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{summaryMetrics.label}</span>
+            <h4 className="text-xl font-bold text-emerald-600 mt-0.5">£{summaryMetrics.amount.toLocaleString()}</h4>
+          </div>
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Preset Filter</span>
+            <h4 className="text-sm font-bold text-slate-800 mt-1 capitalize">{datePreset === "all" ? "All Historical Data" : datePreset === "custom" ? "Custom Date Range" : `Last ${datePreset}`}</h4>
+          </div>
+          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
+            <Calendar className="w-5 h-5" />
+          </div>
         </div>
       </div>
 
@@ -316,9 +377,9 @@ export const Reports = () => {
                     <th className="px-6 py-4">Investor</th>
                     <th className="px-6 py-4">Type</th>
                     <th className="px-6 py-4">Organization</th>
-                    <th className="px-6 py-4">Committed Capital</th>
-                    <th className="px-6 py-4">Onboarding Date</th>
-                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Committed Capital</th>
+                    <th className="px-6 py-4 text-center">Onboarding Date</th>
+                    <th className="px-6 py-4 text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
@@ -331,21 +392,21 @@ export const Reports = () => {
                   ) : (
                     filteredInvestors.map(i => (
                       <tr key={i.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 font-bold text-slate-900">
+                        <td className="px-6 py-4 font-bold text-slate-900 align-middle">
                           {i.name}
                           <span className="block text-[11px] text-slate-400 font-normal">{i.email}</span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 align-middle">
                           <span className="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-100">
                             {i.type}
                           </span>
                         </td>
-                        <td className="px-6 py-4 font-medium text-slate-600">{i.organization || "—"}</td>
-                        <td className="px-6 py-4 font-bold text-emerald-600">£{Number(i.amount).toLocaleString()}</td>
-                        <td className="px-6 py-4 text-slate-500">
+                        <td className="px-6 py-4 font-medium text-slate-600 align-middle">{i.organization || "—"}</td>
+                        <td className="px-6 py-4 font-bold text-emerald-600 text-right align-middle">£{Number(i.amount).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-slate-500 text-center align-middle">
                           {i.date_of_onboarding ? new Date(i.date_of_onboarding).toLocaleDateString() : "N/A"}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-right align-middle">
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
                             {i.status}
                           </span>
@@ -363,11 +424,11 @@ export const Reports = () => {
                 <thead>
                   <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
                     <th className="px-6 py-4">Project Title</th>
-                    <th className="px-6 py-4">Target Funding</th>
-                    <th className="px-6 py-4">Duration</th>
-                    <th className="px-6 py-4">Start Date</th>
-                    <th className="px-6 py-4">End Date</th>
-                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Target Funding</th>
+                    <th className="px-6 py-4 text-center">Duration</th>
+                    <th className="px-6 py-4 text-center">Start Date</th>
+                    <th className="px-6 py-4 text-center">End Date</th>
+                    <th className="px-6 py-4 text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
@@ -380,12 +441,12 @@ export const Reports = () => {
                   ) : (
                     filteredProjects.map(p => (
                       <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 font-bold text-slate-900">{p.title}</td>
-                        <td className="px-6 py-4 font-bold text-emerald-600">£{Number(p.budget).toLocaleString()}</td>
-                        <td className="px-6 py-4 font-medium text-slate-600">{p.duration}</td>
-                        <td className="px-6 py-4 text-slate-500">{new Date(p.start_date).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 text-slate-500">{new Date(p.end_date).toLocaleDateString()}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 font-bold text-slate-900 align-middle">{p.title}</td>
+                        <td className="px-6 py-4 font-bold text-emerald-600 text-right align-middle">£{Number(p.budget).toLocaleString()}</td>
+                        <td className="px-6 py-4 font-medium text-slate-600 text-center align-middle">{p.duration}</td>
+                        <td className="px-6 py-4 text-slate-500 text-center align-middle">{new Date(p.start_date).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 text-slate-500 text-center align-middle">{new Date(p.end_date).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 text-right align-middle">
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
                             {p.status}
                           </span>
@@ -404,10 +465,10 @@ export const Reports = () => {
                   <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
                     <th className="px-6 py-4">Payment ID</th>
                     <th className="px-6 py-4">Investor</th>
-                    <th className="px-6 py-4">Amount</th>
-                    <th className="px-6 py-4">Payment Cycle</th>
-                    <th className="px-6 py-4">Payment Date</th>
-                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Amount</th>
+                    <th className="px-6 py-4 text-center">Payment Cycle</th>
+                    <th className="px-6 py-4 text-center">Payment Date</th>
+                    <th className="px-6 py-4 text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
@@ -420,12 +481,12 @@ export const Reports = () => {
                   ) : (
                     filteredPayments.map(p => (
                       <tr key={p.paymentId} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 font-mono font-bold text-slate-500">PayId#{p.paymentId}</td>
-                        <td className="px-6 py-4 font-bold text-slate-900">{p.investorName}</td>
-                        <td className="px-6 py-4 font-bold text-emerald-600">£{Number(p.amount).toLocaleString()}</td>
-                        <td className="px-6 py-4 font-medium text-slate-600">{p.paymentCycle || "Monthly"}</td>
-                        <td className="px-6 py-4 text-slate-500">{new Date(p.paymentDate).toLocaleDateString()}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 font-mono font-bold text-slate-500 align-middle">PayId#{p.paymentId}</td>
+                        <td className="px-6 py-4 font-bold text-slate-900 align-middle">{p.investorName}</td>
+                        <td className="px-6 py-4 font-bold text-emerald-600 text-right align-middle">£{Number(p.amount).toLocaleString()}</td>
+                        <td className="px-6 py-4 font-medium text-slate-600 text-center align-middle">{p.paymentCycle || "Monthly"}</td>
+                        <td className="px-6 py-4 text-slate-500 text-center align-middle">{new Date(p.paymentDate).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 text-right align-middle">
                           <span className={cn(
                             "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border",
                             p.status === "Received" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"

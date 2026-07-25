@@ -1144,15 +1144,15 @@ export const Investors = () => {
                 {/* Rearranged structured grid sections */}
                 <div className="space-y-8">
 
-                  {/* Section 1: Account & Profile */}
+                  {/* Section 1: Personal & Contact Profile */}
                   <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                      1. Account & Profile
+                      1. Personal & Contact Profile
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {/* Full Name */}
-                      <div className="space-y-1.5 text-left">
+                      <div className="space-y-1.5 text-left md:col-span-1">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                           Full Name <span className="text-rose-500">*</span>
                         </label>
@@ -1168,7 +1168,7 @@ export const Investors = () => {
                       </div>
 
                       {/* Email */}
-                      <div className="space-y-1.5 text-left">
+                      <div className="space-y-1.5 text-left md:col-span-1">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                           Email ID <span className="text-rose-500">*</span>
                         </label>
@@ -1184,9 +1184,9 @@ export const Investors = () => {
                       </div>
 
                       {/* Mobile */}
-                      <div className="space-y-1.5 text-left">
+                      <div className="space-y-1.5 text-left md:col-span-1">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          Mobile
+                          Mobile Number
                         </label>
                         <input
                           disabled={isViewDetailsMode}
@@ -1198,10 +1198,41 @@ export const Investors = () => {
                         />
                       </div>
 
-                      {/* Status Toggle */}
-                      <div className="space-y-1.5 text-left">
+                      {/* Investor Address */}
+                      <div className="space-y-1.5 text-left md:col-span-2">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          Investor Address
+                        </label>
+                        <input
+                          disabled={isViewDetailsMode}
+                          type="text"
+                          placeholder="Enter full street address"
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
+
+                      {/* Witness */}
+                      <div className="space-y-1.5 text-left md:col-span-1">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          Status
+                          Witness Name
+                        </label>
+                        <input
+                          disabled={isViewDetailsMode}
+                          type="text"
+                          placeholder="Enter witness name"
+                          value={formData.witness}
+                          onChange={(e) => setFormData({ ...formData, witness: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
+
+                      {/* Status Toggle */}
+                      <div className="space-y-1.5 text-left md:col-span-1">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Account Status
                         </label>
                         <div className="flex items-center gap-3 pt-2">
                           <button
@@ -1229,11 +1260,11 @@ export const Investors = () => {
                     </div>
                   </div>
 
-                  {/* Section 2: Entity Details */}
+                  {/* Section 2: Entity & Business Details */}
                   <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                      2. Entity Details
+                      2. Entity & Business Details
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                       {/* Investor Type */}
@@ -1301,278 +1332,236 @@ export const Investors = () => {
                     </div>
                   </div>
 
-                  {/* Section 3: Financial & Onboarding & settlement */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Investment Terms */}
-                    <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                        3. Investment Terms
-                      </h3>
-                      <div className="space-y-4">
-                        {/* Investment Amount */}
-                        <div className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            Investment Amount ($) <span className="text-rose-500">*</span>
-                          </label>
-                          <input
-                            required
-                            disabled={isViewDetailsMode}
-                            type="number"
-                            placeholder="e.g. 50000"
-                            value={formData.amount}
-                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                          />
-                        </div>
+                  {/* Section 3: Investment Terms & Payout Schedule */}
+                  <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                      3. Investment Terms & Payout Schedule
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Investment Amount */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Investment Capital (£) <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          required
+                          disabled={isViewDetailsMode}
+                          type="number"
+                          placeholder="e.g. 50000"
+                          value={formData.amount}
+                          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
 
-                        {/* Min and Max ROI Dropdowns */}
-                        <div className="grid grid-cols-2 gap-3 text-left">
-                          <div className="space-y-1.5">
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                              Min ROI (%) <span className="text-rose-500">*</span>
-                            </label>
-                            <select
-                              required
-                              disabled={isViewDetailsMode}
-                              value={formData.minRoi}
-                              onChange={(e) => setFormData({ ...formData, minRoi: e.target.value })}
-                              className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                            >
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                                <option key={num} value={String(num)}>{num}%</option>
-                              ))}
-                            </select>
-                          </div>
+                      {/* Select Project Dropdown */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                          <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                          Assigned Project <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          disabled={isViewDetailsMode}
+                          value={formData.projectId}
+                          onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                        >
+                          {projectsList.map((p) => (
+                            <option key={p.id} value={String(p.id)}>{p.title}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                          <div className="space-y-1.5">
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                              Max ROI (%) <span className="text-rose-500">*</span>
-                            </label>
-                            <select
-                              required
-                              disabled={isViewDetailsMode}
-                              value={formData.maxRoi}
-                              onChange={(e) => setFormData({ ...formData, maxRoi: e.target.value })}
-                              className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                            >
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                                <option key={num} value={String(num)}>{num}%</option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
+                      {/* Date of Boarding */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          Date of Boarding <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          required
+                          disabled={isViewDetailsMode}
+                          type="date"
+                          value={formData.date_of_onboarding}
+                          onChange={(e) => setFormData({ ...formData, date_of_onboarding: e.target.value })}
+                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
 
-                        {/* Calculated Payout Average Display */}
-                        <div className="p-3 bg-blue-50/60 border border-blue-100/80 rounded-xl text-left flex items-center justify-between">
-                          <span className="text-xs font-bold text-blue-700">Calculated Average ROI:</span>
+                      {/* Min ROI */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Min ROI (%) <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          disabled={isViewDetailsMode}
+                          value={formData.minRoi}
+                          onChange={(e) => setFormData({ ...formData, minRoi: e.target.value })}
+                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                        >
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                            <option key={num} value={String(num)}>{num}%</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Max ROI */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Max ROI (%) <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          disabled={isViewDetailsMode}
+                          value={formData.maxRoi}
+                          onChange={(e) => setFormData({ ...formData, maxRoi: e.target.value })}
+                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                        >
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                            <option key={num} value={String(num)}>{num}%</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Calculated Payout Average Display */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Avg ROI Calculation
+                        </label>
+                        <div className="px-4 py-3 bg-blue-50/70 border border-blue-200/80 rounded-xl text-left flex items-center justify-between h-[46px]">
+                          <span className="text-xs font-bold text-blue-700">Calculated Average:</span>
                           <span className="text-sm font-extrabold text-blue-900 font-mono">
                             {Math.round(((parseInt(formData.minRoi) || 1) + (parseInt(formData.maxRoi) || 1)) / 2)}%
                           </span>
                         </div>
-
-                        {/* Payment Cycle */}
-                        <div className="space-y-3 text-left">
-                          <div className="space-y-1.5">
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                              Payment Cycle Category <span className="text-rose-500">*</span>
-                            </label>
-                            <select
-                              required
-                              disabled={isViewDetailsMode}
-                              value={formData.payoutCategory}
-                              onChange={(e) => {
-                                const category = e.target.value;
-                                setFormData({
-                                  ...formData,
-                                  payoutCategory: category,
-                                  payoutCycle: category === "Fixed" ? "Constant" : "Monthly"
-                                });
-                              }}
-                              className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                            >
-                              <option value="Fixed">Fixed</option>
-                              <option value="Variant">Variant</option>
-                            </select>
-                          </div>
-
-                          {formData.payoutCategory === "Fixed" ? (
-                            <div className="space-y-1.5">
-                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Payment Frequency
-                              </label>
-                              <input
-                                disabled
-                                type="text"
-                                value="Constant"
-                                className="w-full px-4 py-3 bg-slate-100/70 border border-slate-200 rounded-xl text-sm font-bold text-slate-600"
-                              />
-                            </div>
-                          ) : (
-                            <div className="space-y-1.5">
-                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Variant Frequency <span className="text-rose-500">*</span>
-                              </label>
-                              <select
-                                required
-                                disabled={isViewDetailsMode}
-                                value={formData.payoutCycle}
-                                onChange={(e) => setFormData({ ...formData, payoutCycle: e.target.value })}
-                                className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                              >
-                                <option value="Weekly">Weekly</option>
-                                <option value="Monthly">Monthly</option>
-                                <option value="Quarterly">Quarterly</option>
-                                <option value="Yearly">Yearly</option>
-                              </select>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Select Project Dropdown */}
-                        <div className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                            <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                            Assigned Project <span className="text-rose-500">*</span>
-                          </label>
-                          <select
-                            required
-                            disabled={isViewDetailsMode}
-                            value={formData.projectId}
-                            onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
-                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                          >
-                            {projectsList.map((p) => (
-                              <option key={p.id} value={String(p.id)}>{p.title}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Witness */}
-                        <div className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            Witness
-                          </label>
-                          <input
-                            disabled={isViewDetailsMode}
-                            type="text"
-                            placeholder="Enter witness name"
-                            value={formData.witness}
-                            onChange={(e) => setFormData({ ...formData, witness: e.target.value })}
-                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                          />
-                        </div>
-
-                        {/* Investor Address */}
-                        <div className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                            Investor Address
-                          </label>
-                          <textarea
-                            disabled={isViewDetailsMode}
-                            rows={2}
-                            placeholder="Enter full address"
-                            value={formData.address}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none"
-                          />
-                        </div>
-
-                        {/* Date of Boarding */}
-                        <div className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                            Date of Boarding <span className="text-rose-500">*</span>
-                          </label>
-                          <input
-                            required
-                            disabled={isViewDetailsMode}
-                            type="date"
-                            value={formData.date_of_onboarding}
-                            onChange={(e) => setFormData({ ...formData, date_of_onboarding: e.target.value })}
-                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                          />
-                        </div>
                       </div>
-                    </div>
 
-                    {/* Settlement Settlement */}
-                    <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                        4. Bank Settlement
-                      </h3>
-                      <div className="space-y-4">
-                        {/* Bank */}
-                        <div className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            Bank Name
-                          </label>
+                      {/* Payment Cycle Category */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Payment Cycle Category <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          disabled={isViewDetailsMode}
+                          value={formData.payoutCategory}
+                          onChange={(e) => {
+                            const category = e.target.value;
+                            setFormData({
+                              ...formData,
+                              payoutCategory: category,
+                              payoutCycle: category === "Fixed" ? "Constant" : "Monthly"
+                            });
+                          }}
+                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                        >
+                          <option value="Fixed">Fixed</option>
+                          <option value="Variant">Variant</option>
+                        </select>
+                      </div>
+
+                      {/* Payment Frequency */}
+                      <div className="space-y-1.5 text-left md:col-span-2">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Payment Frequency {formData.payoutCategory === "Variant" && <span className="text-rose-500">*</span>}
+                        </label>
+                        {formData.payoutCategory === "Fixed" ? (
+                          <input
+                            disabled
+                            type="text"
+                            value="Constant"
+                            className="w-full px-4 py-3 bg-slate-100/70 border border-slate-200 rounded-xl text-sm font-bold text-slate-600"
+                          />
+                        ) : (
                           <select
+                            required
                             disabled={isViewDetailsMode}
-                            value={formData.bank}
-                            onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
+                            value={formData.payoutCycle}
+                            onChange={(e) => setFormData({ ...formData, payoutCycle: e.target.value })}
                             className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
                           >
-                            <option value="">Select bank</option>
-                            {banks.map(b => (
-                              <option key={b.value} value={String(b.value)}>{b.text}</option>
-                            ))}
+                            <option value="Weekly">Weekly</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Quarterly">Quarterly</option>
+                            <option value="Yearly">Yearly</option>
                           </select>
-                        </div>
-
-                        {/* AC No */}
-                        <div className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            AC No
-                          </label>
-                          <input
-                            disabled={isViewDetailsMode}
-                            type="text"
-                            placeholder="Bank account number"
-                            value={formData.acNumber}
-                            onChange={(e) => setFormData({ ...formData, acNumber: e.target.value })}
-                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                          />
-                        </div>
-
-                        {/* Sort Code */}
-                        <div className="space-y-1.5 text-left">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            Sort Code
-                          </label>
-                          <input
-                            disabled={isViewDetailsMode}
-                            type="text"
-                            placeholder="Bank sort code"
-                            value={formData.sortCode}
-                            onChange={(e) => setFormData({ ...formData, sortCode: e.target.value })}
-                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
-                          />
-                        </div>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Section 5: Additional Info (Notes) */}
+                  {/* Section 4: Bank Settlement & Additional Notes */}
                   <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                      5. Additional Notes
+                      4. Bank Settlement & Remarks
                     </h3>
-                    <div className="space-y-1.5 text-left">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Internal Notes
-                      </label>
-                      <textarea
-                        disabled={isViewDetailsMode}
-                        rows={3}
-                        placeholder="Add private annotations, remarks or historical onboarding notes..."
-                        value={formData.notes}
-                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Bank Name */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Bank Name
+                        </label>
+                        <select
+                          disabled={isViewDetailsMode}
+                          value={formData.bank}
+                          onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
+                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                        >
+                          <option value="">Select bank</option>
+                          {banks.map(b => (
+                            <option key={b.value} value={String(b.value)}>{b.text}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Account Number */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Account Number
+                        </label>
+                        <input
+                          disabled={isViewDetailsMode}
+                          type="text"
+                          placeholder="Bank account number"
+                          value={formData.acNumber}
+                          onChange={(e) => setFormData({ ...formData, acNumber: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
+
+                      {/* Sort Code */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Sort Code
+                        </label>
+                        <input
+                          disabled={isViewDetailsMode}
+                          type="text"
+                          placeholder="Bank sort code"
+                          value={formData.sortCode}
+                          onChange={(e) => setFormData({ ...formData, sortCode: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                        />
+                      </div>
+
+                      {/* Internal Notes */}
+                      <div className="space-y-1.5 text-left md:col-span-3">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Internal Notes & Annotations
+                        </label>
+                        <textarea
+                          disabled={isViewDetailsMode}
+                          rows={2}
+                          placeholder="Add private annotations, remarks or historical onboarding notes..."
+                          value={formData.notes}
+                          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none"
+                        />
+                      </div>
                     </div>
                   </div>
 
