@@ -474,8 +474,7 @@ export const Projects = () => {
           {/* Header Title Space */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Portal &gt; Projects</span>
-              <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight mt-0.5">Project Management</h1>
+              <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">Project Management</h1>
               <p className="text-sm text-slate-500 mt-1 font-medium">Create, manage and track all your projects in one place.</p>
             </div>
             {!isGuest && (

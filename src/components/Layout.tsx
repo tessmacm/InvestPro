@@ -16,7 +16,8 @@ import {
   Landmark,
   TrendingUp,
   Bell,
-  Loader2
+  Loader2,
+  ChevronRight
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -265,9 +266,15 @@ export const Layout = () => {
             >
               {isSidebarOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5 text-slate-600" />}
             </button>
-            <h2 className="text-xl font-display font-bold text-slate-800 hidden sm:block">
-              {menuItems.find(m => m.path === location.pathname)?.name || "Dashboard"}
-            </h2>
+            <div className="hidden sm:flex items-center gap-2 text-sm font-medium">
+              <Link to="/dashboard" className="text-slate-400 hover:text-slate-600 font-semibold transition-colors">
+                Portal
+              </Link>
+              <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+              <span className="text-slate-900 font-bold font-display text-base">
+                {menuItems.find(m => m.path === location.pathname)?.name || "Dashboard"}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-4 relative">

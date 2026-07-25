@@ -740,8 +740,7 @@ export const Investors = () => {
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <motion.div variants={itemVariants}>
-                <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Portal &gt; Investors</span>
-                <h1 className="text-3xl font-display font-extrabold text-slate-900 mt-0.5">Investors</h1>
+                <h1 className="text-3xl font-display font-extrabold text-slate-900">Investors</h1>
                 <p className="text-sm text-slate-500 mt-1 font-medium">
                   Manage your verified legal entities and individual investment accounts.
                 </p>
