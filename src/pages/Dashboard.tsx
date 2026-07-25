@@ -98,118 +98,210 @@ export const Dashboard = () => {
     documents: 0,
     projects: 0,
     totalRoi: 0,
-    paymentsCount: 0
+    avgPayout: 0
   });
 
-  const [capitalFlowView, setCapitalFlowView] = useState<"chart" | "list">("chart");
   const [rawInvestors, setRawInvestors] = useState<any[]>([]);
 
   const [chartData, setChartData] = useState<any[]>([
-    { name: "Mon", value: 340000, payout: 28900 },
-    { name: "Tue", value: 300000, payout: 25500 },
-    { name: "Wed", value: 450000, payout: 38250 },
-    { name: "Thu", value: 390000, payout: 33150 },
-    { name: "Fri", value: 520000, payout: 44200 },
-    { name: "Sat", value: 480000, payout: 40800 },
-    { name: "Sun", value: 650000, payout: 55250 },
+    { name: "Month 1", value: 50000, payout: 2500, avgPayout: 2500 },
+    { name: "Month 2", value: 100000, payout: 5000, avgPayout: 2500 },
+    { name: "Month 3", value: 150000, payout: 7500, avgPayout: 2500 },
+    { name: "Current", value: 200000, payout: 10000, avgPayout: 2500 },
   ]);
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [user]);
 
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/stats`, {
-        headers: authHeaders()
-      });
-      const data = await response.json();
+      const isInvestorUser = user?.role === "investor" || user?.role === "client";
 
-      let paymentsCount = 0;
-      let documentsCount = data.documents !== undefined ? data.documents : (data.documentCount ?? 0);
-      let totalRoiVal = data.totalRoi ?? 0;
-
-      const payResponse = await fetch(`${API_BASE_URL}/api/payments`, {
+      // 1. Fetch Investors List
+      let allInvestors: any[] = [];
+      const invResponse = await fetch(`${API_BASE_URL}/api/admin/investors`, {
         headers: authHeaders()
-      });
-      if (payResponse.ok) {
-        const payData = await payResponse.json();
-        if (Array.isArray(payData)) {
-          paymentsCount = payData.length;
-        }
+      }).catch(() => null);
+      if (invResponse && invResponse.ok) {
+        allInvestors = await invResponse.json();
       }
 
-      const roiResponse = await fetch(`${API_BASE_URL}/api/roi`, {
+      // 2. Fetch Payments List
+      let allPayments: any[] = [];
+      const payResponse = await fetch(`${API_BASE_URL}/api/admin/payments`, {
         headers: authHeaders()
-      });
-      if (roiResponse.ok) {
-        const roiData = await roiResponse.json();
-        if (Array.isArray(roiData)) {
-          totalRoiVal = roiData.reduce((sum: number, r: any) => sum + (Number(r.monthlyPayment) || 0), 0);
-        }
+      }).catch(() => null);
+      if (payResponse && payResponse.ok) {
+        allPayments = await payResponse.json();
       }
 
+      // 3. Fetch Documents List
+      let allDocuments: any[] = [];
       const docResponse = await fetch(`${API_BASE_URL}/api/documents`, {
         headers: authHeaders()
-      });
-      if (docResponse.ok) {
-        const docData = await docResponse.json();
-        if (Array.isArray(docData)) {
-          documentsCount = docData.length;
+      }).catch(() => null);
+      if (docResponse && docResponse.ok) {
+        allDocuments = await docResponse.json();
+      }
+
+      // 4. Fetch ROI Contracts List
+      let allRoiContracts: any[] = [];
+      const roiResponse = await fetch(`${API_BASE_URL}/api/roi`, {
+        headers: authHeaders()
+      }).catch(() => null);
+      if (roiResponse && roiResponse.ok) {
+        allRoiContracts = await roiResponse.json();
+      }
+
+      // 5. Fetch Projects List
+      let allProjects: any[] = [];
+      const projResponse = await fetch(`${API_BASE_URL}/api/projects`, {
+        headers: authHeaders()
+      }).catch(() => null);
+      if (projResponse && projResponse.ok) {
+        allProjects = await projResponse.json();
+      }
+
+      let investmentVal = 0;
+      let payoutsTillDateVal = 0;
+      let avgPayoutVal = 0;
+      let investorsCountVal = 0;
+      let documentsCountVal = 0;
+
+      if (isInvestorUser) {
+        // Investor Dashboard: FILTER BY CURRENT INVESTOR USER
+        const myInvestor = allInvestors.find(i => 
+          i.email?.toLowerCase() === user?.email?.toLowerCase() ||
+          i.name?.toLowerCase() === user?.name?.toLowerCase()
+        ) || allInvestors[0];
+
+        const myInvestorId = myInvestor?.id;
+
+        // 1. My Investment
+        investmentVal = myInvestor ? Number(myInvestor.amount) || 0 : 0;
+
+        // 2. My Payments / Payouts
+        const myPayments = allPayments.filter(p => 
+          (myInvestorId && p.investorId === myInvestorId) || 
+          (myInvestor?.name && p.investorName === myInvestor.name)
+        );
+
+        // Completed payments (sent or received)
+        const completedPayments = myPayments.filter(p => p.isSent || p.isReceived);
+        
+        if (completedPayments.length > 0) {
+          payoutsTillDateVal = completedPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+          avgPayoutVal = payoutsTillDateVal / completedPayments.length;
+        } else if (myPayments.length > 0) {
+          payoutsTillDateVal = myPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+          avgPayoutVal = payoutsTillDateVal / myPayments.length;
+        } else {
+          // Fallback to active ROI contract for investor
+          const myRoiContracts = allRoiContracts.filter(r => r.investorId === myInvestorId || r.investorName === myInvestor?.name);
+          payoutsTillDateVal = myRoiContracts.reduce((sum, r) => sum + (Number(r.monthlyPayment) || 0), 0);
+          avgPayoutVal = payoutsTillDateVal;
+        }
+
+        // 3. My Documents
+        documentsCountVal = allDocuments.filter(d => 
+          (myInvestorId && d.investorId === myInvestorId) || 
+          d.uploadedById === user?.id
+        ).length;
+
+        // 4. Investor Chart Points (Investment, Payouts Done, Average Payout)
+        let chartPoints: any[] = [];
+        if (myPayments.length > 0) {
+          chartPoints = myPayments.map((p, idx) => {
+            let label = `Pay #${idx + 1}`;
+            if (p.paymentDate) {
+              const d = new Date(p.paymentDate);
+              if (!isNaN(d.getTime())) {
+                label = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+              }
+            }
+            const amt = Number(p.amount) || 0;
+            const pDone = (p.isSent || p.isReceived) ? amt : 0;
+            return {
+              name: label,
+              value: investmentVal,
+              payout: pDone,
+              avgPayout: Math.round(avgPayoutVal)
+            };
+          });
+        } else {
+          chartPoints = [
+            { name: "Month 1", value: investmentVal, payout: Math.round(payoutsTillDateVal * 0.25), avgPayout: Math.round(avgPayoutVal) },
+            { name: "Month 2", value: investmentVal, payout: Math.round(payoutsTillDateVal * 0.50), avgPayout: Math.round(avgPayoutVal) },
+            { name: "Month 3", value: investmentVal, payout: Math.round(payoutsTillDateVal * 0.75), avgPayout: Math.round(avgPayoutVal) },
+            { name: "Current", value: investmentVal, payout: Math.round(payoutsTillDateVal), avgPayout: Math.round(avgPayoutVal) },
+          ];
+        }
+        setChartData(chartPoints);
+
+      } else {
+        // Admin / Manager Dashboard: SYSTEM-WIDE METRICS
+        investmentVal = allInvestors.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+        investorsCountVal = allInvestors.length;
+        documentsCountVal = allDocuments.length;
+
+        const completedPayments = allPayments.filter(p => p.isSent || p.isReceived);
+        if (completedPayments.length > 0) {
+          payoutsTillDateVal = completedPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+          avgPayoutVal = payoutsTillDateVal / completedPayments.length;
+        } else if (allPayments.length > 0) {
+          payoutsTillDateVal = allPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+          avgPayoutVal = payoutsTillDateVal / allPayments.length;
+        } else {
+          payoutsTillDateVal = allRoiContracts.reduce((sum, r) => sum + (Number(r.monthlyPayment) || 0), 0);
+          avgPayoutVal = investorsCountVal > 0 ? payoutsTillDateVal / investorsCountVal : payoutsTillDateVal;
+        }
+
+        // Admin Chart Points (Investment, Payouts Done, Average Payout)
+        if (allInvestors.length > 0) {
+          const sortedInvestors = [...allInvestors].sort((a, b) => {
+            const dateA = a.date_of_onboarding ? new Date(a.date_of_onboarding) : new Date(0);
+            const dateB = b.date_of_onboarding ? new Date(b.date_of_onboarding) : new Date(0);
+            return dateA.getTime() - dateB.getTime();
+          });
+
+          const chartPoints = sortedInvestors.map(inv => {
+            let label = inv.name;
+            if (inv.date_of_onboarding) {
+              const d = new Date(inv.date_of_onboarding);
+              if (!isNaN(d.getTime())) {
+                label = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+              }
+            }
+            const invCap = Number(inv.amount) || 0;
+            const invPayments = allPayments.filter(p => p.investorName === inv.name || p.investorId === inv.id);
+            const invPaid = invPayments.filter(p => p.isSent || p.isReceived).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+            return {
+              name: label,
+              value: invCap,
+              payout: invPaid > 0 ? invPaid : Math.round(invCap * 0.05),
+              avgPayout: Math.round(avgPayoutVal)
+            };
+          });
+          setChartData(chartPoints);
         }
       }
 
       setStats({
-        users: data.users !== undefined ? data.users : (data.userCount ?? 0),
-        investors: data.investors !== undefined ? data.investors : (data.investorCount ?? 0),
-        investment: data.investment !== undefined ? data.investment : (data.totalInvestment ?? 0),
-        documents: documentsCount,
-        projects: data.projects !== undefined ? data.projects : (data.projectCount ?? 0),
-        totalRoi: totalRoiVal,
-        paymentsCount
+        users: 0,
+        investors: investorsCountVal,
+        investment: investmentVal,
+        documents: documentsCountVal,
+        projects: allProjects.length,
+        totalRoi: payoutsTillDateVal,
+        avgPayout: avgPayoutVal
       });
 
-      // Fetch real investments from API
-      const invResponse = await fetch(`${API_BASE_URL}/api/investors`, {
-        headers: authHeaders()
-      });
-      if (invResponse.ok) {
-        const invData = await invResponse.json();
-        if (Array.isArray(invData)) {
-          setRawInvestors(invData);
-          if (invData.length > 0) {
-            // Sort chronologically by date_of_onboarding
-            const sortedInvestors = [...invData].sort((a, b) => {
-              const dateA = a.date_of_onboarding ? new Date(a.date_of_onboarding) : new Date(0);
-              const dateB = b.date_of_onboarding ? new Date(b.date_of_onboarding) : new Date(0);
-              return dateA.getTime() - dateB.getTime();
-            });
-            
-            const avgPayout = invData.length > 0 ? totalRoiVal / invData.length : 0;
-            const chartPoints = sortedInvestors.map(inv => {
-              let displayName = inv.name;
-              if (inv.date_of_onboarding) {
-                const date = new Date(inv.date_of_onboarding);
-                if (!isNaN(date.getTime())) {
-                  const day = date.getDate();
-                  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                  displayName = `${day} ${months[date.getMonth()]}`;
-                }
-              }
-              const invAmt = Number(inv.amount) || 0;
-              return {
-                name: displayName,
-                value: invAmt,
-                payout: Math.round(avgPayout > 0 ? avgPayout : invAmt * 0.08)
-              };
-            });
-            setChartData(chartPoints);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch stats", error);
+      setRawInvestors(allInvestors);
+    } catch (err) {
+      console.error("Failed to fetch dashboard stats", err);
     } finally {
       setLoading(false);
     }
@@ -245,7 +337,7 @@ export const Dashboard = () => {
               <>
                 <StatCard 
                   title="My Investment" 
-                  value={`£${stats.investment.toLocaleString()}`} 
+                  value={`£${stats.investment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={Landmark} 
                   trend="4.2" 
                   color="bg-blue-50 text-blue-600" 
@@ -259,7 +351,7 @@ export const Dashboard = () => {
                 />
                 <StatCard 
                   title="Average Payouts Till Date" 
-                  value={`£${(stats.paymentsCount > 0 ? stats.totalRoi / stats.paymentsCount : stats.totalRoi).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                  value={`£${stats.avgPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={PoundSterling} 
                   trend="8.5" 
                   color="bg-violet-50 text-violet-600" 
@@ -276,7 +368,7 @@ export const Dashboard = () => {
               <>
                 <StatCard 
                   title="Total Investment" 
-                  value={`£${stats.investment.toLocaleString()}`} 
+                  value={`£${stats.investment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={Landmark} 
                   trend="4.2" 
                   color="bg-blue-50 text-blue-600" 
@@ -290,7 +382,7 @@ export const Dashboard = () => {
                 />
                 <StatCard 
                   title="Average Payouts Till Date" 
-                  value={`£${(stats.investors > 0 ? stats.totalRoi / stats.investors : (stats.paymentsCount > 0 ? stats.totalRoi / stats.paymentsCount : stats.totalRoi)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                  value={`£${stats.avgPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={PoundSterling} 
                   trend="8.5" 
                   color="bg-violet-50 text-violet-600" 
@@ -338,16 +430,21 @@ export const Dashboard = () => {
                       <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                     </linearGradient>
+                    <linearGradient id="colorAvgPayout" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                    </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v/1000}k` : v}`} />
                   <Tooltip 
                     contentStyle={{ backgroundColor: "#0f172a", borderRadius: "16px", color: "#fff", border: "none", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)" }}
-                    formatter={(val: any) => [`£${Number(val).toLocaleString()}`, "Amount"]}
+                    formatter={(val: any, name: any) => [`£${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name]}
                   />
                   <Area type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" name="Capital Investment" />
-                  <Area type="monotone" dataKey="payout" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorPayout)" name="Total Payout" />
+                  <Area type="monotone" dataKey="payout" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorPayout)" name="Payouts Done" />
+                  <Area type="monotone" dataKey="avgPayout" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorAvgPayout)" name="Average Payout" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
