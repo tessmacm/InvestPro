@@ -337,39 +337,6 @@ export const Reports = () => {
         </div>
       </div>
 
-      {/* Analytics Metric Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Matched Records</span>
-            <h4 className="text-xl font-bold text-slate-900 mt-0.5">{summaryMetrics.count}</h4>
-          </div>
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-            <FileSpreadsheet className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{summaryMetrics.label}</span>
-            <h4 className="text-xl font-bold text-emerald-600 mt-0.5">£{summaryMetrics.amount.toLocaleString()}</h4>
-          </div>
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-            <TrendingUp className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Preset Filter</span>
-            <h4 className="text-sm font-bold text-slate-800 mt-1 capitalize">{datePreset === "all" ? "All Historical Data" : datePreset === "custom" ? "Custom Date Range" : `Last ${datePreset}`}</h4>
-          </div>
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-            <Calendar className="w-5 h-5" />
-          </div>
-        </div>
-      </div>
-
       {/* Reports Spreadsheet Table View */}
       {loading ? (
         <TableSkeleton columns={5} rows={5} />
