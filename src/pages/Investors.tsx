@@ -157,14 +157,14 @@ export const Investors = () => {
 
         // Strict validation of required fields BEFORE creating DTOs
         if (!name || !name.trim()) {
-          errors.push(`Row ${lineNum}: Investor Name is required.`);
+          errors.push(`Row ${lineNum}: Investor Name is missing. (Correction: Fill in the full name in Column 1)`);
         }
         if (!email || !email.trim() || !emailRegex.test(email.trim())) {
-          errors.push(`Row ${lineNum}: Valid Email Address is required ('${email || ''}').`);
+          errors.push(`Row ${lineNum}: Email address '${email || "empty"}' is invalid. (Correction: Enter a valid email format, e.g., user@domain.com in Column 2)`);
         }
         const capAmtNum = parseFloat(capitalAmount);
         if (isNaN(capAmtNum) || capAmtNum <= 0) {
-          errors.push(`Row ${lineNum}: Capital Amount '${capitalAmount || ''}' must be a valid positive number.`);
+          errors.push(`Row ${lineNum}: Capital Amount '${capitalAmount || "empty"}' is invalid. (Correction: Enter a positive numeric value greater than 0 in Column 8)`);
         }
 
         const isBusiness = (investorType || '').toLowerCase() === 'business' || investorType === '2';
@@ -209,7 +209,7 @@ export const Investors = () => {
   const handleBulkSubmit = async () => {
     if (bulkValidationErrors.length > 0) return;
     if (!bulkParsedData.length) {
-      setBulkValidationErrors(["Please select a valid CSV file with investor rows."]);
+      setBulkValidationErrors(["Please select a file containing valid investor records."]);
       return;
     }
 
@@ -229,7 +229,15 @@ export const Investors = () => {
         fetchInvestors();
       } else {
         const errJson = await res.json().catch(() => ({}));
-        setBulkValidationErrors([errJson.message || "Failed to create investors from CSV."]);
+        let backendErrors: string[] = [];
+        if (Array.isArray(errJson.errors) && errJson.errors.length > 0) {
+          backendErrors = errJson.errors;
+        } else if (errJson.message) {
+          backendErrors = [errJson.message];
+        } else {
+          backendErrors = ["Bulk import failed. Please verify required fields and try again."];
+        }
+        setBulkValidationErrors(backendErrors);
       }
     } catch (err) {
       console.error(err);
@@ -758,7 +766,7 @@ export const Investors = () => {
                     className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-sm px-5 py-3 rounded-2xl border border-emerald-200 shadow-sm cursor-pointer active:scale-[0.98] transition-all"
                   >
                     <Upload className="w-4 h-4" />
-                    Bulk Import CSV
+                    Bulk Import
                   </motion.button>
 
                   <motion.button
@@ -1779,39 +1787,46 @@ export const Investors = () => {
         </div>
       </BaseModal>
 
-      {/* Bulk CSV Import Modal */}
+      {/* Bulk Import Modal */}
       <BaseModal
         isOpen={isBulkModalOpen}
         onClose={() => setIsBulkModalOpen(false)}
-        title="Bulk Onboard Investors via CSV"
+        title="Bulk Onboard Investors"
+        description="Download the template, fill investor records, and upload to create multiple accounts."
+        className="max-w-xl"
       >
-        <div className="space-y-6">
+        <div className="p-6 space-y-6">
           {/* Step 1: Template Download Banner */}
-          <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <h4 className="text-sm font-bold text-emerald-900 flex items-center gap-1.5">
-                <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Download Official CSV Template
-              </h4>
-              <p className="text-xs text-emerald-700 mt-1">
-                First download our standard CSV template with pre-filled column headers and sample data.
-              </p>
+          <div className="p-5 bg-gradient-to-r from-emerald-50/90 to-teal-50/70 border border-emerald-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 bg-emerald-100/80 text-emerald-700 rounded-xl flex-shrink-0 mt-0.5 shadow-2xs">
+                <FileSpreadsheet className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="text-sm font-bold text-slate-900">1. Download Template</h4>
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  Pre-formatted file with all required & optional headers.
+                </p>
+              </div>
             </div>
             <button
               type="button"
               onClick={handleDownloadCsvTemplate}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm cursor-pointer transition-all flex-shrink-0"
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm cursor-pointer transition-all flex-shrink-0 self-stretch sm:self-auto justify-center"
             >
               <Download className="w-4 h-4" /> Download Template
             </button>
           </div>
 
-          {/* Step 2: File Selector */}
+          {/* Step 2: File Selector Dropzone */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Upload Filled CSV File
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider pl-1">
+              2. Upload File
             </label>
-            <div className="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-2xl p-6 text-center bg-slate-50/50 transition-colors">
-              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+            <div className="border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-2xl p-7 text-center bg-slate-50/60 hover:bg-blue-50/20 transition-all flex flex-col items-center justify-center space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-2xs">
+                <Upload className="w-6 h-6" />
+              </div>
               <input
                 type="file"
                 accept=".csv"
@@ -1823,40 +1838,47 @@ export const Investors = () => {
                 htmlFor="bulk-csv-input"
                 className="cursor-pointer text-xs font-bold text-blue-600 hover:text-blue-700 underline"
               >
-                Browse CSV file
+                Browse and select file
               </label>
+              <p className="text-[11px] text-slate-400 font-medium">Supports .csv file format with header row</p>
               {bulkFileName && (
-                <p className="text-xs font-semibold text-slate-700 mt-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 inline-block shadow-sm">
-                  📄 Selected: {bulkFileName}
-                </p>
+                <div className="pt-2 flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm text-xs font-semibold text-slate-700">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span className="truncate max-w-[260px]">{bulkFileName}</span>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Step 3: Validation Error List */}
+          {/* Step 3: Exact Line-by-Line Validation Errors Box */}
           {bulkValidationErrors.length > 0 && (
-            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl space-y-2 max-h-48 overflow-y-auto">
-              <h5 className="text-xs font-bold text-rose-800 flex items-center gap-1.5">
+            <div className="p-5 bg-rose-50/90 border border-rose-200/90 rounded-2xl space-y-3 max-h-56 overflow-y-auto">
+              <div className="flex items-center gap-2 text-rose-900 font-bold text-xs uppercase tracking-wider">
                 <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-                Validation Errors Found ({bulkValidationErrors.length})
-              </h5>
-              <p className="text-[11px] text-rose-700">
-                Please make the exact corrections in your CSV file and upload again:
+                <span>Validation Errors ({bulkValidationErrors.length})</span>
+              </div>
+              <p className="text-xs font-medium text-rose-800">
+                Please make the exact corrections in your file and upload again:
               </p>
-              <ul className="list-disc list-inside space-y-1 text-xs text-rose-700 font-mono">
+              <div className="space-y-2">
                 {bulkValidationErrors.map((err, idx) => (
-                  <li key={idx}>{err}</li>
+                  <div key={idx} className="p-2.5 bg-white border border-rose-200/80 rounded-xl text-xs text-rose-800 font-mono flex items-start gap-2 shadow-2xs">
+                    <span className="text-rose-500 font-bold flex-shrink-0">•</span>
+                    <span className="leading-snug">{err}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
           {/* Step 4: Validation Success Banner */}
           {bulkParsedData.length > 0 && bulkValidationErrors.length === 0 && (
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 shadow-2xs">
+              <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl flex-shrink-0">
+                <CheckCircle className="w-5 h-5" />
+              </div>
               <div>
-                <h5 className="text-xs font-bold text-emerald-900">CSV Validated Successfully</h5>
+                <h5 className="text-xs font-bold text-emerald-900">Data Validated Successfully</h5>
                 <p className="text-xs text-emerald-700 mt-0.5">
                   Ready to onboard {bulkParsedData.length} new investors with complete payment schedules.
                 </p>
@@ -1865,11 +1887,11 @@ export const Investors = () => {
           )}
 
           {/* Modal Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"
               onClick={() => setIsBulkModalOpen(false)}
-              className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-800 border border-slate-200 rounded-xl transition-all cursor-pointer"
+              className="px-5 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-800 border border-slate-200 hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
             >
               Cancel
             </button>
@@ -1877,7 +1899,7 @@ export const Investors = () => {
               type="button"
               onClick={handleBulkSubmit}
               disabled={isBulkSubmitting || bulkValidationErrors.length > 0 || bulkParsedData.length === 0}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md cursor-pointer transition-all disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-md cursor-pointer transition-all disabled:cursor-not-allowed"
             >
               {isBulkSubmitting ? "Importing Investors..." : `Import ${bulkParsedData.length} Investors`}
             </button>
