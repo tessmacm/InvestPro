@@ -86,6 +86,7 @@ export const Investors = () => {
   const [bulkValidationErrors, setBulkValidationErrors] = useState<string[]>([]);
   const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
   const [bulkFileName, setBulkFileName] = useState("");
+  const [isSaveConfirmModalOpen, setIsSaveConfirmModalOpen] = useState(false);
 
   const handleDownloadCsvTemplate = () => {
     const templateHeader = "Name,Email,Mobile,InvestorType,Organization,CompanyRegistrationNo,AccreditationStatus,CapitalAmount,DateOfOnboarding,AssignedProject,MinRoi,MaxRoi,PayoutCategory,PayoutCycle,BankName,BankAccountNo,SortCode,Address,Witness,Notes\n";
@@ -515,8 +516,8 @@ export const Investors = () => {
     setIsDeleteModalOpen(true);
   };
 
-  // Form Submitter
-  const handleSaveInvestor = async (e: React.FormEvent) => {
+  // Form Submitter Prompt
+  const handleSaveInvestor = (e: React.FormEvent) => {
     e.preventDefault();
     if (isClient) {
       showToast("error", "Access Denied. Clients are not authorized to write/edit/delete data.");
@@ -526,10 +527,15 @@ export const Investors = () => {
       showToast("error", "Name and email are required fields.");
       return;
     }
+    setIsSaveConfirmModalOpen(true);
+  };
+
+  // Form Submitter Execution
+  const executeSaveInvestor = async () => {
+    setIsSaveConfirmModalOpen(false);
 
     const minRoiVal = parseInt(formData.minRoi) || 1;
     const maxRoiVal = parseInt(formData.maxRoi) || 1;
-    const calculatedAvgRoi = Math.round((minRoiVal + maxRoiVal) / 2);
 
     const isEdit = !!selectedInvestor;
     const payload = isEdit ? {
@@ -591,7 +597,6 @@ export const Investors = () => {
       });
 
       if (!response.ok) {
-        // Safely parse error — body may be empty on auth/network failures
         let errMsg = "Operation failed";
         try {
           const ct = response.headers.get("content-type") || "";
@@ -601,11 +606,11 @@ export const Investors = () => {
           } else {
             errMsg = (await response.text()) || `HTTP ${response.status}`;
           }
-        } catch { /* ignore parse error, use default message */ }
+        } catch { /* ignore parse error */ }
         throw new Error(errMsg);
       }
 
-      showToast("success", isEdit ? "Investor details updated successfully!" : "New Investor register created successfully!");
+      showToast("success", isEdit ? "Investor details updated successfully!" : "New Investor registered successfully!");
       fetchInvestors();
       resetFormAndGoHome();
     } catch (err: any) {
@@ -1782,6 +1787,36 @@ export const Investors = () => {
               className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl transition-all cursor-pointer shadow-md shadow-rose-200/50"
             >
               Delete
+            </button>
+          </div>
+        </div>
+      </BaseModal>
+
+      {/* Save / Update Confirmation Modal */}
+      <BaseModal
+        isOpen={isSaveConfirmModalOpen}
+        onClose={() => setIsSaveConfirmModalOpen(false)}
+        title={selectedInvestor ? "Confirm Update Investor Profile" : "Confirm Register New Investor"}
+        description={selectedInvestor ? `Are you sure you want to save updates for ${formData.name}?` : `Are you sure you want to register ${formData.name}?`}
+      >
+        <div className="p-6 space-y-4">
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+            <p className="text-sm font-bold text-slate-900">{formData.name}</p>
+            <p className="text-xs text-slate-600 font-medium">{formData.email} • {formData.mobile || "No Mobile"}</p>
+            <p className="text-xs text-slate-500 font-mono">Capital Amount: ${parseFloat(formData.amount || "0").toLocaleString()} • ROI: {formData.payoutCategory}</p>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={() => setIsSaveConfirmModalOpen(false)}
+              className="px-5 py-2.5 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={executeSaveInvestor}
+              className="px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md cursor-pointer active:scale-95 transition-all"
+            >
+              Confirm & Save
             </button>
           </div>
         </div>

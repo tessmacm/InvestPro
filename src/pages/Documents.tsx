@@ -150,11 +150,19 @@ export const Documents = () => {
     }
   };
 
-  const handleDelete = async (id: number | string) => {
-    if (!window.confirm("Are you sure you want to delete this document?")) return;
+  const [docToDelete, setDocToDelete] = useState<Document | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const handleOpenDelete = (doc: Document) => {
+    setDocToDelete(doc);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteDocument = async () => {
+    if (!docToDelete) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/documents/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/documents/${docToDelete.id}`, {
         method: "DELETE",
         headers: authHeaders()
       });
@@ -163,6 +171,9 @@ export const Documents = () => {
       }
     } catch (error) {
       console.error("Failed to delete document", error);
+    } finally {
+      setIsDeleteModalOpen(false);
+      setDocToDelete(null);
     }
   };
 
@@ -234,7 +245,7 @@ export const Documents = () => {
           </button>
           {!isReadOnly && (
             <button 
-              onClick={() => handleDelete(d.id)}
+              onClick={() => handleOpenDelete(d)}
               className="p-2 hover:bg-red-50 text-red-500 rounded-xl transition-colors cursor-pointer"
               title="Delete Document"
             >
@@ -474,6 +485,37 @@ export const Documents = () => {
             </button>
           </div>
         </form>
+      </BaseModal>
+
+      {/* Delete Confirmation Modal */}
+      <BaseModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirm Delete Document"
+        description="Are you sure you want to permanently delete this document? This action cannot be undone."
+      >
+        <div className="p-6 space-y-4">
+          {docToDelete && (
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+              <p className="text-sm font-bold text-slate-900">{docToDelete.title}</p>
+              <p className="text-xs text-slate-500">{docToDelete.type} • Uploaded {docToDelete.upload_date}</p>
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-5 py-2.5 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeleteDocument}
+              className="px-6 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm cursor-pointer active:scale-95 transition-all"
+            >
+              Confirm Delete
+            </button>
+          </div>
+        </div>
       </BaseModal>
 
       <AgreementViewerModal

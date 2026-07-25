@@ -287,8 +287,7 @@ export const Notifications = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">System &gt; Notifications</span>
-          <h2 className="text-2xl font-display font-bold text-slate-900 mt-0.5">System Notifications</h2>
+          <h2 className="text-2xl font-display font-bold text-slate-900">System Notifications</h2>
           <p className="text-sm text-slate-500 mt-1 font-medium">Configure and monitor event-triggered communications.</p>
         </div>
         <div className="flex items-center gap-2">

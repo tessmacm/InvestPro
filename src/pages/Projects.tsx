@@ -95,6 +95,8 @@ export const Projects = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  const [isSaveConfirmModalOpen, setIsSaveConfirmModalOpen] = useState(false);
+  const [pendingActionType, setPendingActionType] = useState<"create" | "update">("create");
 
   const searchBoxRef = useRef<HTMLDivElement>(null);
 
@@ -173,8 +175,8 @@ export const Projects = () => {
     setCurrentPage(1);
   };
 
-  // Submit Add Project
-  const handleAddProject = async (e: React.FormEvent) => {
+  // Submit Add Project Prompt
+  const handleAddProject = (e: React.FormEvent) => {
     e.preventDefault();
     if (isGuest) {
       showToast("Access Denied", "Guests are not authorized to create projects.", "error");
@@ -186,6 +188,11 @@ export const Projects = () => {
       return;
     }
 
+    setPendingActionType("create");
+    setIsSaveConfirmModalOpen(true);
+  };
+
+  const executeAddProject = async () => {
     try {
       const response = await fetch("/api/projects", {
         method: "POST",
@@ -211,7 +218,6 @@ export const Projects = () => {
       setProjects(prev => [newProject, ...prev]);
       showToast("Project Created Successfully!", `The project "${newProject.title}" is now added.`);
       
-      // Reset form and back to list
       resetForm();
       setViewState("list");
     } catch (err: any) {
@@ -219,8 +225,8 @@ export const Projects = () => {
     }
   };
 
-  // Submit Update Project
-  const handleUpdateProject = async (e: React.FormEvent) => {
+  // Submit Update Project Prompt
+  const handleUpdateProject = (e: React.FormEvent) => {
     e.preventDefault();
     if (isGuest) {
       showToast("Access Denied", "Guests are not authorized to edit projects.", "error");
@@ -232,6 +238,13 @@ export const Projects = () => {
       showToast("Validation Error", "Please fill in all mandatory fields.", "error");
       return;
     }
+
+    setPendingActionType("update");
+    setIsSaveConfirmModalOpen(true);
+  };
+
+  const executeUpdateProject = async () => {
+    if (!selectedProject) return;
 
     try {
       const response = await fetch(`/api/projects/${selectedProject.id}`, {
@@ -253,7 +266,6 @@ export const Projects = () => {
         throw new Error("Failed to update project database info");
       }
 
-      // Update locally
       const updatedProj: Project = {
         ...selectedProject,
         title: formData.title,
@@ -1763,13 +1775,51 @@ export const Projects = () => {
                 onClick={handleDeleteConfirm}
                 className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl cursor-pointer"
               >
-                Yes, Delete Record
+                Delete Project
               </button>
             </div>
-
           </div>
         </BaseModal>
       )}
+
+      {/* MODAL 3: SAVE/UPDATE CONFIRMATION */}
+      <BaseModal
+        isOpen={isSaveConfirmModalOpen}
+        onClose={() => setIsSaveConfirmModalOpen(false)}
+        title={pendingActionType === "update" ? "Confirm Update Project" : "Confirm Create Project"}
+        description={pendingActionType === "update" ? `Are you sure you want to save updates for project "${formData.title}"?` : `Are you sure you want to create project "${formData.title}"?`}
+      >
+        <div className="p-6 space-y-4">
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+            <p className="text-sm font-bold text-slate-900">{formData.title}</p>
+            <p className="text-xs text-slate-600 font-medium">Budget: ${parseFloat(formData.budget || "0").toLocaleString()} • Duration: {formData.duration}</p>
+            <p className="text-xs text-slate-500 font-mono">Status: {formData.status}</p>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsSaveConfirmModalOpen(false)}
+              className="px-5 py-2.5 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSaveConfirmModalOpen(false);
+                if (pendingActionType === "create") {
+                  executeAddProject();
+                } else {
+                  executeUpdateProject();
+                }
+              }}
+              className="px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md cursor-pointer active:scale-95 transition-all"
+            >
+              Confirm & Save
+            </button>
+          </div>
+        </div>
+      </BaseModal>
 
     </div>
   );
