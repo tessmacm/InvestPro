@@ -69,16 +69,39 @@ export const AdminPanel = () => {
     fetchUsers();
   }, []);
 
+  const parseError = async (response: Response, defaultMsg: string) => {
+    try {
+      const text = await response.text();
+      if (!text) return defaultMsg;
+      try {
+        const data = JSON.parse(text);
+        let msg = data.message || data.Message || defaultMsg;
+        if (data.errors && Array.isArray(data.errors)) {
+          msg += ": " + data.errors.join(", ");
+        } else if (data.Errors && Array.isArray(data.Errors)) {
+          msg += ": " + data.Errors.join(", ");
+        }
+        return msg;
+      } catch {
+        return text;
+      }
+    } catch {
+      return defaultMsg;
+    }
+  };
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: authHeaders()
       });
-      const data = await response.json();
-      setUsers(data);
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data);
+      }
     } catch (error) {
-      console.error("Failed to fetch users");
+      console.error("Failed to fetch users", error);
     } finally {
       setLoading(false);
     }
@@ -109,7 +132,7 @@ export const AdminPanel = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
         method: "PATCH",
         headers: authHeaders(),
         body: JSON.stringify({ role: newRole }),
@@ -118,9 +141,8 @@ export const AdminPanel = () => {
         setUsers(users.map(u => String(u.id) === String(userId) ? { ...u, role: newRole } : u));
         showToast("success", "User role updated successfully!");
       } else {
-        const text = await response.text();
-        const data = text ? JSON.parse(text) : {};
-        showToast("error", data.message || data.Message || "Failed to update role");
+        const msg = await parseError(response, "Failed to update role");
+        showToast("error", msg);
       }
     } catch (error) {
       console.error("Failed to update role", error);
@@ -141,7 +163,7 @@ export const AdminPanel = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/${userId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/status`, {
         method: "PATCH",
         headers: authHeaders(),
         body: JSON.stringify({ status: newStatus }),
@@ -150,9 +172,8 @@ export const AdminPanel = () => {
         setUsers(users.map(u => String(u.id) === String(userId) ? { ...u, status: newStatus } : u));
         showToast("success", "User status updated successfully!");
       } else {
-        const text = await response.text();
-        const data = text ? JSON.parse(text) : {};
-        showToast("error", data.message || data.Message || "Failed to update status");
+        const msg = await parseError(response, "Failed to update status");
+        showToast("error", msg);
       }
     } catch (error) {
       console.error("Failed to update status", error);
@@ -173,7 +194,7 @@ export const AdminPanel = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
         method: "DELETE",
         headers: authHeaders()
       });
@@ -182,9 +203,8 @@ export const AdminPanel = () => {
         setDeleteConfirmId(null);
         showToast("success", "User deleted successfully.");
       } else {
-        const text = await response.text();
-        const data = text ? JSON.parse(text) : {};
-        showToast("error", data.message || data.Message || "Failed to delete user");
+        const msg = await parseError(response, "Failed to delete user");
+        showToast("error", msg);
       }
     } catch (error) {
       console.error("Failed to delete user", error);
@@ -208,21 +228,14 @@ export const AdminPanel = () => {
         role: "manager" // default manager role
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/users`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        const errData = text ? JSON.parse(text) : {};
-        let errMsg = errData.message || errData.Message || "API error occurred";
-        if (errData.errors && Array.isArray(errData.errors)) {
-          errMsg += ": " + errData.errors.join(", ");
-        } else if (errData.Errors && Array.isArray(errData.Errors)) {
-          errMsg += ": " + errData.Errors.join(", ");
-        }
+        const errMsg = await parseError(response, "Failed to create user");
         throw new Error(errMsg);
       }
 
