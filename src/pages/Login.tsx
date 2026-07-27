@@ -74,8 +74,9 @@ export const Login = () => {
       const result = await response.json();
       if (response.ok) {
         setLoginEmail(data.email);
-        if (result.otp) {
-          setSandboxOtp(String(result.otp));
+        const code = result.otp || result.debugOtp || result.DebugOtp;
+        if (code) {
+          setSandboxOtp(String(code));
         }
         setStep("otp");
         dispatch(loginFailure("")); // clear state errors
@@ -126,8 +127,9 @@ export const Login = () => {
       });
       const result = await response.json();
       if (response.ok) {
-        if (result.otp) {
-          setSandboxOtp(String(result.otp));
+        const code = result.otp || result.debugOtp || result.DebugOtp;
+        if (code) {
+          setSandboxOtp(String(code));
         }
         setVerificationError("A new 6-digit login code has been sent to your email!");
       } else {
