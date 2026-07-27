@@ -158,39 +158,39 @@ export const Payments = () => {
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{pendingTotal.toLocaleString()}
             </h3>
-            <p className="text-xs text-slate-400 font-semibold">{pendingCount} payments awaiting dispatch</p>
+            <p className="text-xs text-slate-400 font-semibold">{pendingCount} payments pending</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
             <Clock className="w-6 h-6" />
           </div>
         </div>
 
-        {/* Card 2: Acknowledge Sent */}
+        {/* Card 2: Send Acknowledge */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Acknowledge Sent
+              Send Acknowledge
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{sentTotal.toLocaleString()}
             </h3>
-            <p className="text-xs text-slate-400 font-semibold">{sentCount} payments acknowledged sent</p>
+            <p className="text-xs text-slate-400 font-semibold">{sentCount} payments sent</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
             <Send className="w-6 h-6" />
           </div>
         </div>
 
-        {/* Card 3: Done */}
+        {/* Card 3: Acknowledged */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Done (Completed)
+              Acknowledged
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{doneTotal.toLocaleString()}
             </h3>
-            <p className="text-xs text-slate-400 font-semibold">{doneCount} payments completed</p>
+            <p className="text-xs text-slate-400 font-semibold">{doneCount} payments acknowledged</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <CheckCircle2 className="w-6 h-6" />
@@ -288,7 +288,7 @@ export const Payments = () => {
                           p.isSent ? "bg-blue-50 text-blue-700" :
                           "bg-amber-50 text-amber-700"
                         }`}>
-                          {p.isReceived ? "Done" : p.isSent ? (isAdmin ? "Sent" : "Received") : (isAdmin ? "Pending" : "Upcoming")}
+                          {p.isReceived ? "Acknowledged" : p.isSent ? "Sent" : "Pending"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
@@ -297,7 +297,7 @@ export const Payments = () => {
                             onClick={() => handleAcknowledgeSent(p.paymentId)}
                             className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                           >
-                            Acknowledge Sent
+                            Send Acknowledge
                           </button>
                         )}
                         {!isAdmin && p.isSent && !p.isReceived && (
@@ -370,7 +370,7 @@ export const Payments = () => {
                 selectedPayment.isSent ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" :
                 "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
               }`}>
-                {selectedPayment.isReceived ? "✓ Done" : selectedPayment.isSent ? "→ Sent" : "⏳ Pending"}
+                {selectedPayment.isReceived ? "✓ Acknowledged" : selectedPayment.isSent ? "→ Sent" : "⏳ Pending"}
               </span>
             </div>
 
