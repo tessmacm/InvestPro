@@ -22,13 +22,39 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
 
   // Derive investor dynamic values
   const investorName = investorData?.name || (document as any)?.investor_name || "Fareed Chunara";
-  const investorAddress = investorData?.address || "71B Ayres Road, Old Trafford, Manchester – M16 7GS";
+  const investorAddress = investorData?.address && investorData.address !== "—" ? investorData.address : "71B Ayres Road, Old Trafford, Manchester – M16 7GS";
   const amountNumber = Number(investorData?.amount) || 10000;
   const amountFormatted = amountNumber.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   
-  const agreementDate = investorData?.date_of_onboarding || "30th of December 2025";
-  const investmentDate = investorData?.date_of_onboarding || "6th of March 2026";
+  const formatDateStr = (dateStr?: string) => {
+    if (!dateStr) return "30th of December 2025";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = d.getDate();
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    return `${day}th of ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  const computeReturnPeriod = (dateStr?: string) => {
+    let d = new Date();
+    if (dateStr) {
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) d = parsed;
+    }
+    // Return payment is 1 month after onboarding/investment date
+    const returnDate = new Date(d.getFullYear(), d.getMonth() + 1, 15);
+    const dayStart = 15;
+    const dayEnd = 25;
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthStr = months[returnDate.getMonth()];
+    const yearStr = returnDate.getFullYear();
+    return `First payment – ${monthStr} ${dayStart}th to ${dayEnd}th of ${monthStr} ${yearStr} then after recurring payments will follow`;
+  };
+
+  const agreementDate = formatDateStr(investorData?.date_of_onboarding);
+  const investmentDate = formatDateStr(investorData?.date_of_onboarding);
   const witnessName = investorData?.witness || "Accredited Witness";
+  const firstPaymentPeriodText = computeReturnPeriod(investorData?.date_of_onboarding);
 
   const minRoi = Math.round(amountNumber * 0.06);
   const maxRoi = Math.round(amountNumber * 0.07);
@@ -249,7 +275,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                       <strong>Date of Profit Payment:</strong> The monthly profit shall be paid to the Investor with-in 30 days of completion of the previous investment month. Any Delays will be notified in advance.
                     </p>
                     <p className="italic text-slate-600 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100">
-                      First payment – April 15th to 25th of April 2026 then after recurring payments will follow
+                      {firstPaymentPeriodText}
                     </p>
                   </div>
 

@@ -33,6 +33,11 @@ export interface Investor {
   witness?: string;
   address?: string;
   projectId?: number | string;
+  min_roi_id?: number | string;
+  max_roi_id?: number | string;
+  min_RoiRangeId?: number | string;
+  max_RoiRangeId?: number | string;
+  roiTypeId?: number | string;
 }
 
 export interface Document {

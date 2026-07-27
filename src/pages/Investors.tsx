@@ -429,7 +429,7 @@ export const Investors = () => {
     setSelectedInvestor(investor);
     const matchedType = investorTypes.find(t => t.text === investor.type || String(t.value) === String(investor.type))?.value || 1;
     const matchedInterest = investmentInterests.find(i => String(i.value) === String(investor.interest) || i.text === investor.interest)?.value || "";
-    const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.value || "";
+    const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.value || investor.bank || "";
 
     setFormData({
       name: investor.name,
@@ -438,8 +438,8 @@ export const Investors = () => {
       organization: investor.organization || "",
       reg_number: investor.reg_number || "",
       interest: String(matchedInterest),
-      minRoi: "1",
-      maxRoi: "5",
+      minRoi: String(investor.min_roi_id || 1),
+      maxRoi: String(investor.max_roi_id || 5),
       payoutCategory: investor.payoutType === "Variant" ? "Variant" : "Fixed",
       payoutCycle: investor.payoutType === "Variant" ? (investor.roiType || "Monthly") : "Constant",
       bank: String(matchedBank),
@@ -494,7 +494,7 @@ export const Investors = () => {
     setSelectedInvestor(investor);
     const matchedType = investorTypes.find(t => t.text === investor.type || String(t.value) === String(investor.type))?.value || 1;
     const matchedInterest = investmentInterests.find(i => String(i.value) === String(investor.interest) || i.text === investor.interest)?.value || "";
-    const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.value || "";
+    const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.value || investor.bank || "";
 
     setFormData({
       name: investor.name,
@@ -503,8 +503,8 @@ export const Investors = () => {
       organization: investor.organization || "",
       reg_number: investor.reg_number || "",
       interest: String(matchedInterest),
-      minRoi: "1",
-      maxRoi: "5",
+      minRoi: String(investor.min_roi_id || 1),
+      maxRoi: String(investor.max_roi_id || 5),
       payoutCategory: investor.payoutType === "Variant" ? "Variant" : "Fixed",
       payoutCycle: investor.payoutType === "Variant" ? (investor.roiType || "Monthly") : "Constant",
       bank: String(matchedBank),
