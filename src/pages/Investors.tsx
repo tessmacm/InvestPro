@@ -429,7 +429,7 @@ export const Investors = () => {
     setSelectedInvestor(investor);
     const matchedType = investorTypes.find(t => t.text === investor.type || String(t.value) === String(investor.type))?.value || 1;
     const matchedInterest = investmentInterests.find(i => String(i.value) === String(investor.interest) || i.text === investor.interest)?.value || "";
-    const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.value || investor.bank || "";
+    const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.text || investor.bank || "";
 
     setFormData({
       name: investor.name,
@@ -442,7 +442,7 @@ export const Investors = () => {
       maxRoi: String(investor.max_roi_id || 5),
       payoutCategory: investor.payoutType === "Variant" ? "Variant" : "Fixed",
       payoutCycle: investor.payoutType === "Variant" ? (investor.roiType || "Monthly") : "Constant",
-      bank: String(matchedBank),
+      bank: matchedBank,
       acNumber: investor.acNumber || "",
       sortCode: investor.sortCode || "",
       witness: investor.witness || "",
@@ -494,7 +494,7 @@ export const Investors = () => {
     setSelectedInvestor(investor);
     const matchedType = investorTypes.find(t => t.text === investor.type || String(t.value) === String(investor.type))?.value || 1;
     const matchedInterest = investmentInterests.find(i => String(i.value) === String(investor.interest) || i.text === investor.interest)?.value || "";
-    const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.value || investor.bank || "";
+    const matchedBank = banks.find(b => b.text === investor.bank || String(b.value) === String(investor.bank))?.text || investor.bank || "";
 
     setFormData({
       name: investor.name,
@@ -507,7 +507,7 @@ export const Investors = () => {
       maxRoi: String(investor.max_roi_id || 5),
       payoutCategory: investor.payoutType === "Variant" ? "Variant" : "Fixed",
       payoutCycle: investor.payoutType === "Variant" ? (investor.roiType || "Monthly") : "Constant",
-      bank: String(matchedBank),
+      bank: matchedBank,
       acNumber: investor.acNumber || "",
       sortCode: investor.sortCode || "",
       witness: investor.witness || "",
@@ -1536,22 +1536,39 @@ export const Investors = () => {
                       4. Bank Settlement & Remarks
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {/* Bank Name */}
+                      {/* Bank Name (Dropdown + Editable Text Input) */}
                       <div className="space-y-1.5 text-left">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                           Bank Name
                         </label>
-                        <select
-                          disabled={isViewDetailsMode}
-                          value={formData.bank}
-                          onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
-                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                        >
-                          <option value="">Select bank</option>
-                          {banks.map(b => (
-                            <option key={b.value} value={String(b.value)}>{b.text}</option>
-                          ))}
-                        </select>
+                        <div className="space-y-2">
+                          {!isViewDetailsMode && (
+                            <select
+                              value={banks.some(b => b.text === formData.bank) ? formData.bank : (formData.bank ? "custom" : "")}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val !== "custom") {
+                                  setFormData({ ...formData, bank: val });
+                                }
+                              }}
+                              className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-xs font-semibold transition-all cursor-pointer text-slate-700"
+                            >
+                              <option value="">Select bank from list</option>
+                              {banks.map(b => (
+                                <option key={b.value} value={b.text}>{b.text}</option>
+                              ))}
+                              <option value="custom">Other / Type Custom Bank below...</option>
+                            </select>
+                          )}
+                          <input
+                            disabled={isViewDetailsMode}
+                            type="text"
+                            placeholder="Type bank name or pick from dropdown above"
+                            value={formData.bank}
+                            onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
+                            className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          />
+                        </div>
                       </div>
 
                       {/* Account Number */}
