@@ -30,7 +30,6 @@ export const Login = () => {
   const [otpValue, setOtpValue] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verificationError, setVerificationError] = useState("");
-  const [sandboxOtp, setSandboxOtp] = useState("");
 
   const {
     register,
@@ -74,10 +73,6 @@ export const Login = () => {
       const result = await response.json();
       if (response.ok) {
         setLoginEmail(data.email);
-        const code = result.otp || result.debugOtp || result.DebugOtp;
-        if (code) {
-          setSandboxOtp(String(code));
-        }
         setStep("otp");
         dispatch(loginFailure("")); // clear state errors
       } else {
@@ -127,10 +122,6 @@ export const Login = () => {
       });
       const result = await response.json();
       if (response.ok) {
-        const code = result.otp || result.debugOtp || result.DebugOtp;
-        if (code) {
-          setSandboxOtp(String(code));
-        }
         setVerificationError("A new 6-digit login code has been sent to your email!");
       } else {
         setVerificationError(result.message || "Failed to resend code");
@@ -235,25 +226,6 @@ export const Login = () => {
             </form>
           ) : (
             <form className="space-y-6" onSubmit={handleVerifyOtp}>
-              {sandboxOtp && (
-                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-sm text-left text-blue-800 flex flex-col gap-2 shadow-sm animate-pulse">
-                  <div className="flex items-start gap-2">
-                    <span className="text-base">💡</span>
-                    <div>
-                      <p className="font-extrabold text-blue-900 leading-tight">Sandbox Tester Mode</p>
-                      <p className="text-xs text-blue-700 mt-0.5">Verification code is <strong className="font-mono text-blue-900 bg-blue-100 px-1.5 py-0.5 rounded">{sandboxOtp}</strong>.</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setOtpValue(sandboxOtp)}
-                    className="mt-1 w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl active:scale-[0.98] transition-all cursor-pointer text-center flex items-center justify-center gap-1.5"
-                  >
-                    ⚡ Auto-fill Code
-                  </button>
-                </div>
-              )}
-
               {verificationError && (
                 <div className={`p-4 rounded-2xl text-sm text-left ${verificationError.includes("sent") ? "bg-emerald-50 border border-emerald-100 text-emerald-700" : "bg-red-50 border border-red-100 text-red-600"}`}>
                   {verificationError}
