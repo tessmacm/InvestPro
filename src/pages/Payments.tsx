@@ -5,7 +5,7 @@ import { Payment } from "../types";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Search, Filter, Eye, DollarSign, Calendar, Landmark } from "lucide-react";
+import { Search, Filter, Eye, DollarSign, Calendar, Landmark, Clock, Send, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 const container = {
@@ -112,6 +112,20 @@ export const Payments = () => {
     return Array.from(map.values());
   }, [payments]);
 
+  // Card Calculations
+  const pendingPaymentsList = payments.filter(p => !p.isSent && !p.isReceived && p.status !== "Received");
+  const sentPaymentsList = payments.filter(p => p.isSent && !p.isReceived && p.status !== "Received");
+  const donePaymentsList = payments.filter(p => p.isReceived || p.status === "Received");
+
+  const pendingCount = pendingPaymentsList.length;
+  const pendingTotal = pendingPaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+  const sentCount = sentPaymentsList.length;
+  const sentTotal = sentPaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+  const doneCount = donePaymentsList.length;
+  const doneTotal = donePaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
   const uniqueInvestors = Array.from(new Set(upcomingPayments.map(p => p.investorName)));
 
   const filteredPayments = upcomingPayments.filter(p => {
@@ -130,6 +144,57 @@ export const Payments = () => {
           <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
             Track payout disbursements, payment schedules, and investor transactions.
           </p>
+        </div>
+      </div>
+
+      {/* Summary Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {/* Card 1: Pending */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+              Pending Payouts
+            </span>
+            <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+              £{pendingTotal.toLocaleString()}
+            </h3>
+            <p className="text-xs text-slate-400 font-semibold">{pendingCount} payments awaiting dispatch</p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <Clock className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Card 2: Acknowledge Sent */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+              Acknowledge Sent
+            </span>
+            <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+              £{sentTotal.toLocaleString()}
+            </h3>
+            <p className="text-xs text-slate-400 font-semibold">{sentCount} payments acknowledged sent</p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <Send className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Card 3: Done */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+              Done (Completed)
+            </span>
+            <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+              £{doneTotal.toLocaleString()}
+            </h3>
+            <p className="text-xs text-slate-400 font-semibold">{doneCount} payments completed</p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
         </div>
       </div>
 

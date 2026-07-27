@@ -961,21 +961,6 @@ export const Investors = () => {
                     <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
                       <thead>
                         <tr className="bg-slate-50/50 border-b border-slate-100">
-                          {/* Master selector row */}
-                          <th className="w-16 px-6 py-4 text-center">
-                            <button 
-                              onClick={toggleSelectAll} 
-                              className="w-5 h-5 rounded border border-slate-300 flex items-center justify-center bg-white hover:border-blue-500 transition-all mx-auto"
-                            >
-                              {checkedInvestors.size > 0 && checkedInvestors.size === currentRows.length && (
-                                <Check className="w-3.5 h-3.5 text-blue-600 stroke-[3]" />
-                              )}
-                              {checkedInvestors.size > 0 && checkedInvestors.size < currentRows.length && (
-                                <div className="w-2.5 h-[2px] bg-slate-400" />
-                              )}
-                            </button>
-                          </th>
-                          <th className="w-24 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">ID</th>
                           <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Name</th>
                           <th className="w-32 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type</th>
                           <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</th>
@@ -987,35 +972,11 @@ export const Investors = () => {
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {currentRows.map((row) => {
-                          const isChecked = checkedInvestors.has(String(row.id));
-                          const displayId = `INV-${String(row.id).padStart(3, "0")}`;
-                          
                           return (
                             <tr 
                               key={row.id} 
-                              className={cn(
-                                "group transition-colors align-middle",
-                                isChecked ? "bg-blue-50/20" : "hover:bg-slate-50/50"
-                              )}
+                              className="group hover:bg-slate-50/50 transition-colors align-middle"
                             >
-                              {/* Checkbox */}
-                              <td className="px-6 py-4.5 text-center">
-                                <button 
-                                  onClick={() => toggleSelectRow(String(row.id))} 
-                                  className={cn(
-                                    "w-5 h-5 rounded border flex items-center justify-center bg-white hover:border-blue-500 transition-all mx-auto",
-                                    isChecked ? "border-blue-500 bg-blue-50" : "border-slate-300"
-                                  )}
-                                >
-                                  {isChecked && <Check className="w-3 h-3 text-blue-600 stroke-[3]" />}
-                                </button>
-                              </td>
-
-                              {/* Formatted ID */}
-                              <td className="px-4 py-4.5 font-mono text-xs text-slate-400 font-bold">
-                                {displayId}
-                              </td>
-
                               {/* Name with initials bubble */}
                               <td className="px-6 py-4.5">
                                 <div className="flex items-center gap-3">

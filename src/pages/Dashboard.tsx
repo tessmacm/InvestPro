@@ -56,7 +56,7 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
-const StatCard = ({ title, value, icon: Icon, trend, color }: any) => (
+const StatCard = ({ title, value, icon: Icon, color }: any) => (
   <motion.div 
     variants={item}
     whileHover={{ y: -5, transition: { duration: 0.2 } }}
@@ -65,10 +65,6 @@ const StatCard = ({ title, value, icon: Icon, trend, color }: any) => (
     <div className="flex items-center justify-between mb-4">
       <div className={`p-3 rounded-2xl ${color}`}>
         <Icon className="w-6 h-6" />
-      </div>
-      <div className="flex items-center text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg text-xs font-bold">
-        <TrendingUp className="w-3 h-3 mr-1" />
-        +{trend}%
       </div>
     </div>
     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">{title}</p>

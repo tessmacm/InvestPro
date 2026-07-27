@@ -529,12 +529,6 @@ export const Projects = () => {
                 </div>
                 <div className="flex items-baseline gap-2 pt-2">
                   <span className="text-3xl font-extrabold text-slate-900">{totalProjectsCount}</span>
-                  <div className="flex flex-col gap-0.5 ml-2">
-                    <span className="inline-flex items-center text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">
-                      <TrendingUp className="w-3 h-3 mr-0.5" /> +12%
-                    </span>
-                    <span className="text-[9px] text-slate-400 font-semibold font-mono">vs last month</span>
-                  </div>
                 </div>
                 {/* Pills Inside */}
                 <div className="flex gap-2 pt-2 text-[10px] font-bold">
@@ -555,12 +549,6 @@ export const Projects = () => {
                 </div>
                 <div className="flex items-baseline gap-2 pt-2">
                   <span className="text-3xl font-extrabold text-slate-900">{activeProjectsCount}</span>
-                  <div className="flex flex-col gap-0.5 ml-2">
-                    <span className="inline-flex items-center text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">
-                      <TrendingUp className="w-3 h-3 mr-0.5" /> +8%
-                    </span>
-                    <span className="text-[9px] text-slate-400 font-semibold font-mono">vs last month</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -576,12 +564,6 @@ export const Projects = () => {
                 </div>
                 <div className="flex items-baseline gap-2 pt-2">
                   <span className="text-3xl font-extrabold text-slate-900">{inactiveProjectsCount}</span>
-                  <div className="flex flex-col gap-0.5 ml-2">
-                    <span className="inline-flex items-center text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">
-                      <TrendingUp className="w-3 h-3 mr-0.5" /> +4%
-                    </span>
-                    <span className="text-[9px] text-slate-400 font-semibold font-mono">vs last month</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -597,12 +579,6 @@ export const Projects = () => {
                 </div>
                 <div className="flex items-baseline gap-2 pt-2 justify-between w-full">
                   <span className="text-2xl font-extrabold text-slate-900 tracking-tight">${totalCombinedBudget.toLocaleString()}</span>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="inline-flex items-center text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">
-                      <TrendingUp className="w-3 h-3 mr-0.5" /> +15%
-                    </span>
-                    <span className="text-[9px] text-slate-400 font-semibold font-mono text-right">vs last month</span>
-                  </div>
                 </div>
               </div>
             </div>
