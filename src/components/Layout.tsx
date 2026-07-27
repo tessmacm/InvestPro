@@ -3,11 +3,11 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import { logout } from "../store/authSlice";
-import { 
-  LayoutDashboard, 
-  ShieldCheck, 
-  LogOut, 
-  Menu, 
+import {
+  LayoutDashboard,
+  ShieldCheck,
+  LogOut,
+  Menu,
   X,
   Users,
   FileText,
@@ -122,7 +122,7 @@ export const Layout = () => {
       <div className="min-h-screen relative flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center bg-no-repeat overflow-hidden font-sans w-full">
         <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[2px]"></div>
         <div className="relative z-10 w-full max-w-[460px] mx-auto text-center">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white/95 backdrop-blur-md py-12 px-10 shadow-2xl rounded-[32px] border border-white/20 flex flex-col items-center space-y-6"
@@ -143,7 +143,7 @@ export const Layout = () => {
       {/* Mobile Overlay */}
       <AnimatePresence>
         {isMobile && isSidebarOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -154,9 +154,9 @@ export const Layout = () => {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <motion.aside 
+      <motion.aside
         initial={false}
-        animate={{ 
+        animate={{
           width: sidebarWidth,
           x: isMobile && !isSidebarOpen ? -280 : 0
         }}
@@ -174,7 +174,7 @@ export const Layout = () => {
             </div>
             <AnimatePresence mode="wait">
               {isSidebarOpen && (
-                <motion.span 
+                <motion.span
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
@@ -197,18 +197,18 @@ export const Layout = () => {
                 to={item.path}
                 className={cn(
                   "group flex items-center h-12 rounded-xl transition-all relative overflow-hidden",
-                  isActive 
-                    ? "bg-blue-600/10 text-blue-400" 
+                  isActive
+                    ? "bg-blue-600/10 text-blue-400"
                     : "hover:bg-white/5 hover:text-white"
                 )}
               >
                 <div className="w-14 h-12 flex-shrink-0 flex items-center justify-center">
                   <item.icon className={cn("w-5 h-5 transition-transform duration-300", isActive ? "text-blue-400" : "text-slate-400 group-hover:scale-110")} />
                 </div>
-                
+
                 <AnimatePresence>
                   {isSidebarOpen && (
-                    <motion.span 
+                    <motion.span
                       initial={{ opacity: 0, x: -5 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -5 }}
@@ -220,7 +220,7 @@ export const Layout = () => {
                 </AnimatePresence>
 
                 {isActive && (
-                  <motion.div 
+                  <motion.div
                     layoutId="active-indicator"
                     className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
                   />
@@ -231,10 +231,10 @@ export const Layout = () => {
         </nav>
 
         {/* Sidebar Footer Copyright */}
-        <div className="px-6 py-4 flex-shrink-0 border-t border-white/5 text-center">
+        <div className="px-6 py-4 flex-shrink-0 border-t border-white/5 text-left">
           <AnimatePresence mode="wait">
             {isSidebarOpen ? (
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -261,14 +261,14 @@ export const Layout = () => {
         {/* Header */}
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 flex-shrink-0">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
             >
               {isSidebarOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5 text-slate-600" />}
             </button>
             <div className="hidden sm:flex items-center gap-2">
-              <button 
+              <button
                 onClick={() => navigate(-1)}
                 title="Go Back"
                 className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
@@ -283,7 +283,7 @@ export const Layout = () => {
 
           <div className="flex items-center gap-4 relative">
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center gap-3 p-1.5 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
               >
@@ -292,8 +292,8 @@ export const Layout = () => {
                   <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">{user?.role}</p>
                 </div>
                 <div className="w-11 h-11 rounded-2xl bg-white border-2 border-slate-100 shadow-sm overflow-hidden p-0.5">
-                  <img 
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} 
+                  <img
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`}
                     alt="Avatar"
                     className="rounded-xl w-full h-full object-cover"
                     referrerPolicy="no-referrer"
@@ -305,11 +305,11 @@ export const Layout = () => {
               <AnimatePresence>
                 {isProfileMenuOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setIsProfileMenuOpen(false)} 
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsProfileMenuOpen(false)}
                     />
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -324,7 +324,7 @@ export const Layout = () => {
                       </div>
 
                       <div className="pt-2">
-                        <button 
+                        <button
                           onClick={() => {
                             setIsProfileMenuOpen(false);
                             handleLogout();

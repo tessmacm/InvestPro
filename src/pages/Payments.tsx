@@ -247,7 +247,6 @@ export const Payments = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Payment ID</th>
                   <th className="px-6 py-4">Investor</th>
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Cycle</th>
@@ -267,7 +266,6 @@ export const Payments = () => {
                       exit={{ opacity: 0 }}
                       className="hover:bg-slate-50/50 transition-colors"
                     >
-                      <td className="px-6 py-4 font-mono font-bold text-slate-500">PayId#{p.paymentId}</td>
                       <td className="px-6 py-4 font-semibold text-slate-900">{p.investorName}</td>
                       <td className="px-6 py-4 font-bold text-emerald-600">${p.amount.toLocaleString()}</td>
                       <td className="px-6 py-4">
@@ -288,7 +286,7 @@ export const Payments = () => {
                           p.isSent ? "bg-blue-50 text-blue-700" :
                           "bg-amber-50 text-amber-700"
                         }`}>
-                          {p.isReceived ? "Acknowledged" : p.isSent ? "Sent" : "Pending"}
+                          {p.isReceived ? "Acknowledged" : p.isSent ? "Send Acknowledge" : "Pending"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
@@ -370,7 +368,7 @@ export const Payments = () => {
                 selectedPayment.isSent ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" :
                 "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
               }`}>
-                {selectedPayment.isReceived ? "✓ Acknowledged" : selectedPayment.isSent ? "→ Sent" : "⏳ Pending"}
+                {selectedPayment.isReceived ? "✓ Acknowledged" : selectedPayment.isSent ? "→ Send Acknowledge" : "⏳ Pending"}
               </span>
             </div>
 
