@@ -344,13 +344,8 @@ export const Layout = () => {
         </header>
 
         {/* Viewport Content */}
-        <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 flex flex-col justify-between">
-          <div>
-            <Outlet />
-          </div>
-          <footer className="mt-8 pt-4 border-t border-slate-200/60 text-left text-xs text-slate-400 font-medium">
-            © {new Date().getFullYear()} Tessma Group | InvestPro Platform. All rights reserved.
-          </footer>
+        <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8">
+          <Outlet />
         </div>
       </div>
 
