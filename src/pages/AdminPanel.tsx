@@ -98,7 +98,14 @@ export const AdminPanel = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setUsers(data);
+        const mappedUsers = Array.isArray(data) ? data.map((u: any) => ({
+          id: String(u.id || u.Id || ""),
+          email: u.email || u.Email || "",
+          name: u.name || `${u.firstName || u.FirstName || ""} ${u.lastName || u.LastName || ""}`.trim() || u.email || u.Email || "User",
+          role: (u.role || u.Role || "manager").toLowerCase() as Role,
+          status: u.status || (u.isActive !== undefined ? (u.isActive ? "active" : "inactive") : (u.IsActive !== undefined ? (u.IsActive ? "active" : "inactive") : "active"))
+        })) : [];
+        setUsers(mappedUsers);
       }
     } catch (error) {
       console.error("Failed to fetch users", error);
