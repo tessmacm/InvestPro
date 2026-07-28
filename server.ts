@@ -17,7 +17,7 @@ const db = {
   users: [
     {
       id: "1",
-      email: "admin@investpro.com",
+      email: "tessma.cm@gmail.com",
       password: "password",
       name: "System Admin",
       role: "admin",

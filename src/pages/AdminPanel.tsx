@@ -291,7 +291,7 @@ export const AdminPanel = () => {
       header: "Status Switcher",
       align: "center" as const,
       render: (u: User) => {
-        const isSystemAdmin = u.email === "admin@investpro.com" || u.name === "System Admin";
+        const isSystemAdmin = u.email === "tessma.cm@gmail.com" || u.name === "System Admin";
         if (isSystemAdmin) {
           return (
             <div className="flex justify-center select-none">
@@ -359,7 +359,7 @@ export const AdminPanel = () => {
     {
       header: "Role Switcher",
       render: (u: User) => {
-        const isSystemAdmin = u.email === "admin@investpro.com" || u.name === "System Admin";
+        const isSystemAdmin = u.email === "tessma.cm@gmail.com" || u.name === "System Admin";
         if (isSystemAdmin) {
           return (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold ring-1 ring-inset capitalize text-amber-700 bg-amber-50 ring-amber-600/20 select-none">
