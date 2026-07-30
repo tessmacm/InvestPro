@@ -98,6 +98,7 @@ export const Dashboard = () => {
   });
 
   const [rawInvestors, setRawInvestors] = useState<any[]>([]);
+  const [myDocuments, setMyDocuments] = useState<any[]>([]);
 
   const [chartData, setChartData] = useState<any[]>([
     { name: "Month 1", value: 50000, payout: 2500, avgPayout: 2500 },
@@ -135,12 +136,13 @@ export const Dashboard = () => {
 
       // 3. Fetch Documents List
       let allDocuments: any[] = [];
-      const docResponse = await fetch(`${API_BASE_URL}/api/documents`, {
+      const docResponse = await fetch(`${API_BASE_URL}/api/admin/documents`, {
         headers: authHeaders()
       }).catch(() => null);
       if (docResponse && docResponse.ok) {
         allDocuments = await docResponse.json();
       }
+      setMyDocuments(Array.isArray(allDocuments) ? allDocuments : []);
 
       // 4. Fetch ROI Contracts List
       let allRoiContracts: any[] = [];
@@ -201,10 +203,7 @@ export const Dashboard = () => {
         }
 
         // 3. My Documents
-        documentsCountVal = allDocuments.filter(d => 
-          (myInvestorId && d.investorId === myInvestorId) || 
-          d.uploadedById === user?.id
-        ).length;
+        documentsCountVal = Array.isArray(allDocuments) ? allDocuments.length : 0;
 
         // 4. Investor Chart Points (Investment, Payouts Done, Average Payout)
         let chartPoints: any[] = [];
@@ -446,43 +445,104 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          {/* Recent Activity List */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-display font-bold text-slate-900">Recent Onboarding Activity</h3>
-              <Link to="/investors" className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                View All <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
-            
-            {loading ? (
-              <div className="py-8 text-center text-sm text-slate-400">Loading activity...</div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {rawInvestors.length === 0 ? (
-                  <p className="text-sm text-slate-400 py-4">No recent investor activity recorded.</p>
-                ) : (
-                  rawInvestors.slice(0, 4).map((inv: any, idx: number) => (
-                    <div key={idx} className="py-3 flex items-center justify-between hover:bg-slate-50/80 px-2 rounded-xl transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-sm">
-                          {inv.name ? inv.name.substring(0, 2).toUpperCase() : "IN"}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">{inv.name}</p>
-                          <p className="text-xs text-slate-500">{inv.email} • {inv.date_of_onboarding || "Active"}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-extrabold text-slate-950">£{(Number(inv.amount) || 0).toLocaleString()}</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{inv.type}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
+          {isReadOnly ? (
+            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-lg font-display font-bold text-slate-900">My Documents</h3>
+                </div>
+                <Link to="/documents" className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                  View All <ArrowRight className="w-3 h-3" />
+                </Link>
               </div>
-            )}
-          </div>
+              
+              {loading ? (
+                <div className="py-8 text-center text-sm text-slate-400">Loading documents...</div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {myDocuments.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm font-bold text-slate-600">No documents found</p>
+                      <p className="text-xs text-slate-400 mt-1">Your investment agreements and reports will appear here.</p>
+                    </div>
+                  ) : (
+                    myDocuments.slice(0, 5).map((doc: any, idx: number) => (
+                      <div key={idx} className="py-3 flex items-center justify-between hover:bg-slate-50/80 px-2 rounded-xl transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm border border-blue-100 flex-shrink-0">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-slate-900 truncate max-w-[220px] sm:max-w-xs">{doc.title || "Document"}</p>
+                            <p className="text-xs text-slate-500 font-medium">
+                              {doc.type || "PDF"} • {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : "Recent"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={cn(
+                            "px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wide",
+                            doc.status === "Signed" 
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+                              : doc.status === "Pending Signature"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : "bg-slate-100 text-slate-600 border border-slate-200"
+                          )}>
+                            {doc.status || "Approved"}
+                          </span>
+                          <Link 
+                            to="/documents"
+                            className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            View
+                          </Link>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-display font-bold text-slate-900">Recent Onboarding Activity</h3>
+                <Link to="/investors" className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                  View All <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+              
+              {loading ? (
+                <div className="py-8 text-center text-sm text-slate-400">Loading activity...</div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {rawInvestors.length === 0 ? (
+                    <p className="text-sm text-slate-400 py-4">No recent investor activity recorded.</p>
+                  ) : (
+                    rawInvestors.slice(0, 4).map((inv: any, idx: number) => (
+                      <div key={idx} className="py-3 flex items-center justify-between hover:bg-slate-50/80 px-2 rounded-xl transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-sm">
+                            {inv.name ? inv.name.substring(0, 2).toUpperCase() : "IN"}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">{inv.name}</p>
+                            <p className="text-xs text-slate-500">{inv.email} • {inv.date_of_onboarding || "Active"}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-extrabold text-slate-950">£{(Number(inv.amount) || 0).toLocaleString()}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{inv.type}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
 
         {/* Right Info Card */}
