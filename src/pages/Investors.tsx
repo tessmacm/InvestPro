@@ -1155,7 +1155,7 @@ export const Investors = () => {
                     {isViewDetailsMode ? "Legal and financial particulars of the selected investor." : "Enter legal organization or individual credentials below."}
                   </p>
                 </div>
-                {/* Edit and Delete Buttons top right */}
+                {/* Edit Button top right */}
                 {isViewDetailsMode && !isClient && (
                   <div className="flex gap-2">
                     <button
@@ -1163,14 +1163,7 @@ export const Investors = () => {
                       onClick={() => setIsViewDetailsMode(false)}
                       className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-transparent hover:border-blue-200"
                     >
-                      <Edit className="w-3.5 h-3.5" /> Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenDelete(selectedInvestor!)}
-                      className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-transparent hover:border-rose-200"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                      <Edit className="w-3.5 h-3.5" /> Edit Profile
                     </button>
                   </div>
                 )}

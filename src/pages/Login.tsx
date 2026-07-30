@@ -76,7 +76,7 @@ export const Login = () => {
         setStep("otp");
         dispatch(loginFailure("")); // clear state errors
       } else {
-        dispatch(loginFailure(result.message || "Failed to send verification code"));
+        dispatch(loginFailure(result.message || result.Message || "Failed to send verification code"));
       }
     } catch (err) {
       dispatch(loginFailure("Network error occurred"));
@@ -103,7 +103,7 @@ export const Login = () => {
         dispatch(loginSuccess(result));
         navigate("/dashboard");
       } else {
-        setVerificationError(result.message || "Invalid or expired OTP");
+        setVerificationError(result.message || result.Message || "Invalid or expired OTP");
       }
     } catch (err) {
       setVerificationError("Network error occurred during verification");
@@ -124,7 +124,7 @@ export const Login = () => {
       if (response.ok) {
         setVerificationError("A new 6-digit login code has been sent to your email!");
       } else {
-        setVerificationError(result.message || "Failed to resend code");
+        setVerificationError(result.message || result.Message || "Failed to resend code");
       }
     } catch (err) {
       setVerificationError("Network error. Unable to resend OTP code.");
