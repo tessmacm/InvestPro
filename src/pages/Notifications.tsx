@@ -711,10 +711,10 @@ export const Notifications = () => {
                   onChange={() => setFormData({ ...formData, investorId: "", targetInvestorIds: "" })}
                   className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
                 />
-                <span>All Investors</span>
+                <span>All Active Investors</span>
               </label>
               <div className="border-t border-slate-200 my-1"></div>
-              {investors.map(i => {
+              {investors.filter(i => !i.status || i.status.toLowerCase() === "active").map(i => {
                 const isChecked = formData.investorId === String(i.id) || formData.targetInvestorIds.split(",").includes(String(i.id));
                 return (
                   <label key={i.id} className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">

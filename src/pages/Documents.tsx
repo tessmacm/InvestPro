@@ -53,6 +53,10 @@ export const Documents = () => {
     type: "PDF",
     investorId: ""
   });
+  const [isAllInvestors, setIsAllInvestors] = useState(true);
+  const [selectedInvestorIds, setSelectedInvestorIds] = useState<string[]>([]);
+
+  const activeInvestors = investors.filter(i => !i.status || i.status.toLowerCase() === "active");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -129,7 +133,11 @@ export const Documents = () => {
       const headers = authHeaders();
       delete headers["Content-Type"]; // Allow browser to set the multipart boundary boundary automatically
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/documents?id=${formData.investorId || 0}`, {
+      const targetParam = isAllInvestors || selectedInvestorIds.length === 0
+        ? (formData.investorId ? `id=${formData.investorId}` : "id=0")
+        : `targetIds=${selectedInvestorIds.join(",")}`;
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/documents?${targetParam}`, {
         method: "POST",
         headers: headers,
         body: uploadData
@@ -137,6 +145,8 @@ export const Documents = () => {
       if (response.ok) {
         setIsModalOpen(false);
         setFormData({ title: "", type: "PDF", investorId: "" });
+        setIsAllInvestors(true);
+        setSelectedInvestorIds([]);
         setSelectedFile(null);
         fetchDocuments();
       } else {
@@ -446,19 +456,49 @@ export const Documents = () => {
           </div>
 
           {!isReadOnly && (
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Investor Target *</label>
-              <select
-                required
-                value={formData.investorId}
-                onChange={(e) => setFormData({...formData, investorId: e.target.value})}
-                className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
-              >
-                <option value="">Select Investor</option>
-                {investors.map(i => (
-                  <option key={i.id} value={i.id}>{i.name}</option>
-                ))}
-              </select>
+            <div className="space-y-2 text-left">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Target Recipients *</label>
+              <div className="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isAllInvestors}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setIsAllInvestors(true);
+                        setSelectedInvestorIds([]);
+                        setFormData({ ...formData, investorId: "" });
+                      } else {
+                        setIsAllInvestors(false);
+                      }
+                    }}
+                    className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                  />
+                  <span>All Active Investors</span>
+                </label>
+                <div className="border-t border-slate-200 my-1"></div>
+                {activeInvestors.map(i => {
+                  const isChecked = !isAllInvestors && selectedInvestorIds.includes(String(i.id));
+                  return (
+                    <label key={i.id} className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          setIsAllInvestors(false);
+                          if (e.target.checked) {
+                            setSelectedInvestorIds(prev => [...prev, String(i.id)]);
+                          } else {
+                            setSelectedInvestorIds(prev => prev.filter(id => id !== String(i.id)));
+                          }
+                        }}
+                        className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                      />
+                      <span>{i.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
           )}
 
