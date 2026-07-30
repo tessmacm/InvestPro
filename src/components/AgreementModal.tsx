@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { FileText, CheckCircle2, ShieldCheck, PenTool, Lock, AlertCircle, RefreshCw } from "lucide-react";
+import { FileText, CheckCircle2, ShieldCheck, PenTool, Lock, AlertCircle, RefreshCw, ArrowLeft, LogOut } from "lucide-react";
 import { API_BASE_URL, authHeaders } from "../config/api";
 
 interface AgreementModalProps {
@@ -11,6 +11,7 @@ interface AgreementModalProps {
   amount?: number | string;
   projectName?: string;
   onSignedSuccessfully: () => void;
+  onSignLater?: () => void;
 }
 
 export const AgreementModal: React.FC<AgreementModalProps> = ({
@@ -21,6 +22,7 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
   amount = 500000,
   projectName = "Current Operations",
   onSignedSuccessfully,
+  onSignLater,
 }) => {
   const [typedName, setTypedName] = useState("");
   const [agreed, setAgreed] = useState(false);
@@ -154,9 +156,22 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
                 </h2>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300">
-              <Lock className="w-3.5 h-3.5 text-emerald-400" />
-              <span>256-Bit Encrypted Lock</span>
+            <div className="flex items-center gap-3">
+              {onSignLater && (
+                <button
+                  type="button"
+                  onClick={onSignLater}
+                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border border-white/20 active:scale-95"
+                  title="Sign later and return to login page"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back to Login</span>
+                </button>
+              )}
+              <div className="hidden sm:flex items-center gap-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300">
+                <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                <span>256-Bit Encrypted Lock</span>
+              </div>
             </div>
           </div>
 
@@ -302,23 +317,35 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
               <span>Identity Verified • IP & Timestamp Logged</span>
             </div>
 
-            <button
-              onClick={handleSignAgreement}
-              disabled={isSigning || !agreed || !typedName.trim()}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-sm px-7 py-3 rounded-2xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all cursor-pointer"
-            >
-              {isSigning ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  Processing Signature...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  Sign & Accept Agreement
-                </>
+            <div className="flex items-center gap-3">
+              {onSignLater && (
+                <button
+                  type="button"
+                  onClick={onSignLater}
+                  className="flex items-center gap-1.5 border border-slate-300 hover:bg-slate-200/60 text-slate-700 font-bold text-xs px-5 py-3 rounded-2xl cursor-pointer transition-all active:scale-95"
+                >
+                  <ArrowLeft className="w-4 h-4 text-slate-500" />
+                  <span>Sign Later</span>
+                </button>
               )}
-            </button>
+              <button
+                onClick={handleSignAgreement}
+                disabled={isSigning || !agreed || !typedName.trim()}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-sm px-7 py-3 rounded-2xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all cursor-pointer"
+              >
+                {isSigning ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Processing Signature...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    Sign & Accept Agreement
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>

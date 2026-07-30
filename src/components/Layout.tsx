@@ -360,6 +360,7 @@ export const Layout = () => {
             setPendingAgreementDoc(null);
             checkInvestorAgreement();
           }}
+          onSignLater={handleLogout}
         />
       )}
     </div>
