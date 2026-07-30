@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import { 
@@ -13,7 +13,9 @@ import {
   CheckCircle,
   Search,
   RefreshCw,
-  Eye
+  Eye,
+  Filter,
+  X
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Document, Investor } from "../types";
@@ -46,6 +48,10 @@ export const Documents = () => {
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedInvestorFilter, setSelectedInvestorFilter] = useState("all");
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState("all");
+  const [selectedDateFilter, setSelectedDateFilter] = useState("");
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -269,14 +275,6 @@ export const Documents = () => {
       align: "right" as const,
       render: (d: Document) => (
         <div className="flex items-center justify-end gap-2">
-          <button 
-            onClick={() => setSelectedViewerDoc(d)}
-            className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold"
-            title="View & Print Document"
-          >
-            <Eye className="w-4 h-4" />
-            <span>View</span>
-          </button>
           {!isReadOnly && (
             <button 
               onClick={() => handleOpenDelete(d)}
@@ -291,13 +289,60 @@ export const Documents = () => {
     }
   ];
 
-  const filteredDocs = documents.filter(d => 
-    (d.title && d.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (d.type && d.type.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (d.investor_name && d.investor_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (d.investor_email && d.investor_email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (d.uploaded_by && d.uploaded_by.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredDocs = useMemo(() => {
+    return documents.filter(d => {
+      // 1. Text Search Filter
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase();
+        const matchesText =
+          (d.title && d.title.toLowerCase().includes(term)) ||
+          (d.type && d.type.toLowerCase().includes(term)) ||
+          (d.investor_name && d.investor_name.toLowerCase().includes(term)) ||
+          (d.investor_email && d.investor_email.toLowerCase().includes(term)) ||
+          (d.uploaded_by && d.uploaded_by.toLowerCase().includes(term));
+        if (!matchesText) return false;
+      }
+
+      // 2. Filter by Investor
+      if (selectedInvestorFilter !== "all") {
+        const invIdNum = parseInt(selectedInvestorFilter);
+        if (d.investor_id && d.investor_id > 0) {
+          if (d.investor_id !== invIdNum) return false;
+        } else {
+          const selInv = activeInvestors.find(i => String(i.id) === selectedInvestorFilter);
+          if (selInv && d.investor_name && !d.investor_name.toLowerCase().includes(selInv.name.toLowerCase())) {
+            return false;
+          }
+        }
+      }
+
+      // 3. Filter by Document Type
+      if (selectedTypeFilter !== "all") {
+        const typeLower = (d.type || "").toLowerCase();
+        const filterLower = selectedTypeFilter.toLowerCase();
+        if (!typeLower.includes(filterLower)) return false;
+      }
+
+      // 4. Filter by Date
+      if (selectedDateFilter) {
+        try {
+          const docDateStr = new Date(d.created_at).toISOString().split("T")[0];
+          if (docDateStr !== selectedDateFilter) return false;
+        } catch {
+          // ignore date parse issues
+        }
+      }
+
+      // 5. Filter by Status
+      if (selectedStatusFilter !== "all") {
+        const docStatus = (d.status || "Approved").toLowerCase();
+        const filterStatus = selectedStatusFilter.toLowerCase();
+        if (!docStatus.includes(filterStatus)) return false;
+      }
+
+      return true;
+    });
+  }, [documents, searchTerm, selectedInvestorFilter, selectedTypeFilter, selectedDateFilter, selectedStatusFilter, activeInvestors]);
 
   // Derived stats
   const totalDocsCount = documents.length;
@@ -408,17 +453,99 @@ export const Documents = () => {
           </div>
 
           {/* Search/Filter Panel */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="relative w-full md:max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search documents by title or type..."
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-transparent focus:border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 rounded-xl transition-all text-sm font-semibold"
-              />
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="relative w-full md:max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search documents by investor, title, type..."
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-transparent focus:border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 rounded-xl transition-all text-sm font-semibold"
+                />
+              </div>
+
+              {(searchTerm || selectedInvestorFilter !== "all" || selectedTypeFilter !== "all" || selectedDateFilter || selectedStatusFilter !== "all") && (
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedInvestorFilter("all");
+                    setSelectedTypeFilter("all");
+                    setSelectedDateFilter("");
+                    setSelectedStatusFilter("all");
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold transition-all cursor-pointer border border-rose-100 self-end md:self-auto"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Reset Filters
+                </button>
+              )}
             </div>
+
+            {/* Filter Controls Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-100">
+              
+              {/* Filter 1: By Investor */}
+              <div className="space-y-1 text-left">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Investor</label>
+                <select
+                  value={selectedInvestorFilter}
+                  onChange={(e) => setSelectedInvestorFilter(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
+                >
+                  <option value="all">All Investors</option>
+                  {activeInvestors.map(i => (
+                    <option key={i.id} value={i.id}>{i.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter 2: By Document Type */}
+              <div className="space-y-1 text-left">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Document Type</label>
+                <select
+                  value={selectedTypeFilter}
+                  onChange={(e) => setSelectedTypeFilter(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
+                >
+                  <option value="all">All Document Types</option>
+                  <option value="pdf">PDF Documents</option>
+                  <option value="docx">Word (DOCX)</option>
+                  <option value="xlsx">Excel / CSV (XLSX)</option>
+                  <option value="jpg">Image (JPG / PNG)</option>
+                </select>
+              </div>
+
+              {/* Filter 3: By Date */}
+              <div className="space-y-1 text-left">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Date</label>
+                <input
+                  type="date"
+                  value={selectedDateFilter}
+                  onChange={(e) => setSelectedDateFilter(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
+                />
+              </div>
+
+              {/* Filter 4: By Status */}
+              <div className="space-y-1 text-left">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Status</label>
+                <select
+                  value={selectedStatusFilter}
+                  onChange={(e) => setSelectedStatusFilter(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="signed">Signed</option>
+                  <option value="pending signature">Pending Signature</option>
+                  <option value="approved">Approved</option>
+                </select>
+              </div>
+
+            </div>
+
           </div>
 
           <DataTable 
