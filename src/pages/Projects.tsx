@@ -867,25 +867,13 @@ export const Projects = () => {
                               </button>
                               
                               {!isGuest && (
-                                <>
-                                  <button
-                                    onClick={() => handleEditClick(p)}
-                                    title="Edit details"
-                                    className="p-2 hover:bg-amber-50 text-amber-600 hover:text-amber-800 rounded-xl transition-colors cursor-pointer"
-                                  >
-                                    <Edit2 className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setProjectToDelete(p);
-                                      setIsDeleteModalOpen(true);
-                                    }}
-                                    title="Delete project"
-                                    className="p-2 hover:bg-rose-50 text-rose-600 hover:text-rose-800 rounded-xl transition-colors cursor-pointer"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </>
+                                <button
+                                  onClick={() => handleEditClick(p)}
+                                  title="Edit details"
+                                  className="p-2 hover:bg-amber-50 text-amber-600 hover:text-amber-800 rounded-xl transition-colors cursor-pointer"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
                               )}
 
                             </div>
@@ -1171,23 +1159,12 @@ export const Projects = () => {
 
             <div className="flex items-center gap-2 self-start sm:self-auto">
               {!isGuest && (
-                <>
-                  <button
-                    onClick={() => handleEditClick(selectedProject)}
-                    className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-all border border-blue-100"
-                  >
-                    <Edit2 className="w-4 h-4" /> Edit Project
-                  </button>
-                  <button
-                    onClick={() => {
-                      setProjectToDelete(selectedProject);
-                      setIsDeleteModalOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-all border border-rose-100"
-                  >
-                    <Trash2 className="w-4 h-4" /> Delete Project
-                  </button>
-                </>
+                <button
+                  onClick={() => handleEditClick(selectedProject)}
+                  className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-all border border-blue-100"
+                >
+                  <Edit2 className="w-4 h-4" /> Edit Project
+                </button>
               )}
             </div>
           </div>
@@ -1659,16 +1636,6 @@ export const Projects = () => {
             </button>
             <div className="flex items-center gap-3">
               <button
-                type="button"
-                onClick={() => {
-                  setProjectToDelete(selectedProject);
-                  setIsDeleteModalOpen(true);
-                }}
-                className="px-6 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-sm rounded-xl cursor-pointer transition-colors active:scale-95"
-              >
-                Delete Project
-              </button>
-              <button
                 type="submit"
                 className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg cursor-pointer transition-colors active:scale-95"
               >
@@ -1739,49 +1706,7 @@ export const Projects = () => {
       )}
 
 
-      {/* MODAL 2: DELETE CONFIRMATION */}
-      {(projectToDelete || isDeleteModalOpen) && (
-        <BaseModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => {
-            setIsDeleteModalOpen(false);
-            setProjectToDelete(null);
-          }}
-          title="Delete Project?"
-          description="Are you absolutely sure you want to delete this project? This action is permanent and cannot be undone."
-          className="max-w-md border-rose-100"
-        >
-          <div className="p-6 text-left space-y-4 font-sans font-semibold">
-            
-            <div className="bg-rose-50/50 p-4 border border-rose-100 rounded-2xl flex gap-3 text-slate-700 text-xs">
-              <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
-              <p className="leading-relaxed">
-                Deleting this project record will permanently clear budget allocations, timeline logs, and status states from the SQLite database catalog.
-              </p>
-            </div>
 
-            <div className="flex items-center gap-3 justify-end pt-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDeleteModalOpen(false);
-                  setProjectToDelete(null);
-                }}
-                className="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteConfirm}
-                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl cursor-pointer"
-              >
-                Delete Project
-              </button>
-            </div>
-          </div>
-        </BaseModal>
-      )}
 
       {/* MODAL 3: SAVE/UPDATE CONFIRMATION */}
       <BaseModal
