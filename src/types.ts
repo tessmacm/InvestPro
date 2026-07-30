@@ -41,13 +41,17 @@ export interface Investor {
 }
 
 export interface Document {
-  id: string;
+  id: string | number;
+  investor_id?: number;
+  investor_name?: string;
+  investor_email?: string;
   title: string;
   type: string;
   size: string;
   url: string;
   uploaded_by: string;
   created_at: string;
+  status?: string;
 }
 
 export interface Project {

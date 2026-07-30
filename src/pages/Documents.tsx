@@ -177,29 +177,53 @@ export const Documents = () => {
     }
   };
 
-  const getFileIcon = (type: string) => {
+  const getFileIcon = (type: string, iconClass = "w-8 h-8") => {
     const t = type.toLowerCase();
-    if (t.includes("pdf")) return <FileText className="w-8 h-8 text-rose-500" />;
-    if (t.includes("image") || t.includes("png") || t.includes("jpg")) return <FileImage className="w-8 h-8 text-blue-500" />;
-    if (t.includes("excel") || t.includes("csv") || t.includes("sheet")) return <FileCode className="w-8 h-8 text-emerald-500" />;
-    return <File className="w-8 h-8 text-slate-500" />;
+    if (t.includes("pdf")) return <FileText className={cn(iconClass, "text-rose-500")} />;
+    if (t.includes("image") || t.includes("png") || t.includes("jpg")) return <FileImage className={cn(iconClass, "text-blue-500")} />;
+    if (t.includes("excel") || t.includes("csv") || t.includes("sheet")) return <FileCode className={cn(iconClass, "text-emerald-500")} />;
+    return <File className={cn(iconClass, "text-slate-500")} />;
   };
 
   const [selectedViewerDoc, setSelectedViewerDoc] = useState<Document | null>(null);
 
   const columns = [
     {
+      header: "Investor",
+      render: (d: Document) => {
+        const name = d.investor_name || d.uploaded_by || "Investor Profile";
+        const email = d.investor_email;
+        return (
+          <div className="flex flex-col text-left py-1">
+            <h4 className="font-extrabold text-slate-900 text-sm">
+              {name}
+            </h4>
+            {email ? (
+              <a
+                href={`mailto:${email}`}
+                className="text-xs text-slate-500 hover:text-blue-600 hover:underline font-medium block truncate max-w-[220px] mt-0.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {email}
+              </a>
+            ) : (
+              <span className="text-xs text-slate-400 font-medium">—</span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
       header: "Document",
       render: (d: Document) => (
-        <div className="flex items-center gap-4 cursor-pointer" onClick={() => setSelectedViewerDoc(d)}>
-          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center">
-            {getFileIcon(d.type)}
-          </div>
-          <div>
-            <h4 className="font-extrabold text-slate-900 text-sm hover:text-blue-600 cursor-pointer">{d.title}</h4>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 inline-block">{d.type}</span>
-          </div>
-        </div>
+        <button
+          onClick={() => setSelectedViewerDoc(d)}
+          className="inline-flex items-center gap-2.5 px-3.5 py-2 bg-slate-50 hover:bg-blue-50/80 border border-slate-200/80 hover:border-blue-200 rounded-xl text-xs font-bold text-slate-700 hover:text-blue-600 transition-all cursor-pointer shadow-xs active:scale-95 group"
+          title={`View Document (${d.type})`}
+        >
+          {getFileIcon(d.type, "w-4 h-4 transition-transform group-hover:scale-110")}
+          <span className="font-semibold text-slate-700 group-hover:text-blue-700">View Document</span>
+        </button>
       )
     },
     {
@@ -224,7 +248,7 @@ export const Documents = () => {
     {
       header: "Date",
       render: (d: Document) => (
-        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
           <Calendar className="w-3.5 h-3.5" />
           {new Date(d.created_at).toLocaleDateString()}
         </div>
@@ -258,8 +282,11 @@ export const Documents = () => {
   ];
 
   const filteredDocs = documents.filter(d => 
-    d.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.type.toLowerCase().includes(searchTerm.toLowerCase())
+    (d.title && d.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (d.type && d.type.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (d.investor_name && d.investor_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (d.investor_email && d.investor_email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (d.uploaded_by && d.uploaded_by.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Derived stats
