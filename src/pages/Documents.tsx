@@ -50,7 +50,8 @@ export const Documents = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedInvestorFilter, setSelectedInvestorFilter] = useState("all");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("all");
-  const [selectedDateFilter, setSelectedDateFilter] = useState("");
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -323,11 +324,12 @@ export const Documents = () => {
         if (!typeLower.includes(filterLower)) return false;
       }
 
-      // 4. Filter by Date
-      if (selectedDateFilter) {
+      // 4. Filter by Date Range
+      if (startDateFilter || endDateFilter) {
         try {
           const docDateStr = new Date(d.created_at).toISOString().split("T")[0];
-          if (docDateStr !== selectedDateFilter) return false;
+          if (startDateFilter && docDateStr < startDateFilter) return false;
+          if (endDateFilter && docDateStr > endDateFilter) return false;
         } catch {
           // ignore date parse issues
         }
@@ -342,7 +344,7 @@ export const Documents = () => {
 
       return true;
     });
-  }, [documents, searchTerm, selectedInvestorFilter, selectedTypeFilter, selectedDateFilter, selectedStatusFilter, activeInvestors]);
+  }, [documents, searchTerm, selectedInvestorFilter, selectedTypeFilter, startDateFilter, endDateFilter, selectedStatusFilter, activeInvestors]);
 
   // Derived stats
   const totalDocsCount = documents.length;
@@ -467,13 +469,14 @@ export const Documents = () => {
                 />
               </div>
 
-              {(searchTerm || selectedInvestorFilter !== "all" || selectedTypeFilter !== "all" || selectedDateFilter || selectedStatusFilter !== "all") && (
+              {(searchTerm || selectedInvestorFilter !== "all" || selectedTypeFilter !== "all" || startDateFilter || endDateFilter || selectedStatusFilter !== "all") && (
                 <button
                   onClick={() => {
                     setSearchTerm("");
                     setSelectedInvestorFilter("all");
                     setSelectedTypeFilter("all");
-                    setSelectedDateFilter("");
+                    setStartDateFilter("");
+                    setEndDateFilter("");
                     setSelectedStatusFilter("all");
                   }}
                   className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold transition-all cursor-pointer border border-rose-100 self-end md:self-auto"
@@ -518,15 +521,25 @@ export const Documents = () => {
                 </select>
               </div>
 
-              {/* Filter 3: By Date */}
+              {/* Filter 3: By Date Range */}
               <div className="space-y-1 text-left">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Date</label>
-                <input
-                  type="date"
-                  value={selectedDateFilter}
-                  onChange={(e) => setSelectedDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
-                />
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Date Range</label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="date"
+                    value={startDateFilter}
+                    onChange={(e) => setStartDateFilter(e.target.value)}
+                    title="From Date"
+                    className="w-full px-2 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
+                  />
+                  <input
+                    type="date"
+                    value={endDateFilter}
+                    onChange={(e) => setEndDateFilter(e.target.value)}
+                    title="To Date"
+                    className="w-full px-2 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
+                  />
+                </div>
               </div>
 
               {/* Filter 4: By Status */}
