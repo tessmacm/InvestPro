@@ -488,22 +488,24 @@ export const Documents = () => {
             </div>
 
             {/* Filter Controls Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-100">
+            <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100", !isReadOnly ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
               
-              {/* Filter 1: By Investor */}
-              <div className="space-y-1 text-left">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Investor</label>
-                <select
-                  value={selectedInvestorFilter}
-                  onChange={(e) => setSelectedInvestorFilter(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
-                >
-                  <option value="all">All Investors</option>
-                  {activeInvestors.map(i => (
-                    <option key={i.id} value={i.id}>{i.name}</option>
-                  ))}
-                </select>
-              </div>
+              {/* Filter 1: By Investor (Admin / Manager only) */}
+              {!isReadOnly && (
+                <div className="space-y-1 text-left">
+                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Investor</label>
+                  <select
+                    value={selectedInvestorFilter}
+                    onChange={(e) => setSelectedInvestorFilter(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
+                  >
+                    <option value="all">All Investors</option>
+                    {activeInvestors.map(i => (
+                      <option key={i.id} value={i.id}>{i.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Filter 2: By Document Type */}
               <div className="space-y-1 text-left">
