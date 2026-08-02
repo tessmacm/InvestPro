@@ -19,13 +19,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (v22)
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Node dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build Web Application
         run: npm run build
@@ -36,11 +36,10 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Make Gradle Wrapper Executable
-        run: chmod +x android/gradlew
-
-      - name: Sync Capacitor Android Assets
-        run: npx cap copy android
+      - name: Make Gradle Wrapper Executable & Sync Capacitor Android
+        run: |
+          chmod +x android/gradlew
+          npx --yes cap copy android || npx --yes cap sync android
 
       - name: Build Debug APK
         run: |

@@ -19,19 +19,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (v22)
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Node dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build Web Application
         run: npm run build
 
       - name: Sync Capacitor iOS Assets
-        run: npx cap copy ios
+        run: |
+          npx --yes cap copy ios || npx --yes cap sync ios
 
       - name: Resolve Swift Package Dependencies
         run: |
