@@ -20,10 +20,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install Node dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Web Application
         run: npm run build
@@ -33,6 +32,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '21'
+          cache: 'gradle'
 
       - name: Sync Capacitor Android
         run: npx cap sync android
