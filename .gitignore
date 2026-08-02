@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+DerivedData/
+ios/App/DerivedData/
+android/app/build/
