@@ -36,13 +36,11 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Sync Capacitor Android
-        run: |
-          npx cap add android || true
-          npx cap sync android
-
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew
+
+      - name: Sync Capacitor Android Assets
+        run: npx cap copy android
 
       - name: Build Debug APK
         run: |
