@@ -9,6 +9,7 @@ import {
   TrendingUp, 
   Plus,
   ArrowRight,
+  ArrowUpRight,
   Shield,
   LayoutGrid,
   Folder,
@@ -56,21 +57,36 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
-const StatCard = ({ title, value, icon: Icon, color }: any) => (
-  <motion.div 
-    variants={item}
-    whileHover={{ y: -5, transition: { duration: 0.2 } }}
-    className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100 flex flex-col"
-  >
-    <div className="flex items-center justify-between mb-4">
-      <div className={`p-3 rounded-2xl ${color}`}>
-        <Icon className="w-6 h-6" />
+const StatCard = ({ title, value, icon: Icon, color, link }: any) => {
+  const CardContent = (
+    <motion.div 
+      variants={item}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+      className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100 flex flex-col justify-between group transition-all duration-300 relative overflow-hidden cursor-pointer hover:border-blue-200 hover:shadow-md h-full"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className={`p-3 rounded-2xl ${color} transition-transform duration-300 group-hover:scale-105`}>
+          <Icon className="w-6 h-6" />
+        </div>
+        {link && (
+          <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 group-hover:bg-blue-600 group-hover:border-blue-600 flex items-center justify-center text-slate-400 group-hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 shadow-sm">
+            <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
+          </div>
+        )}
       </div>
-    </div>
-    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">{title}</p>
-    <h3 className="text-2xl font-display font-extrabold text-slate-900">{value}</h3>
-  </motion.div>
-);
+      <div>
+        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">{title}</p>
+        <h3 className="text-2xl font-display font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">{value}</h3>
+      </div>
+    </motion.div>
+  );
+
+  if (link) {
+    return <Link to={link} className="block h-full">{CardContent}</Link>;
+  }
+
+  return CardContent;
+};
 
 const StatCardSkeleton = () => (
   <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100 flex flex-col animate-pulse">
@@ -336,6 +352,7 @@ export const Dashboard = () => {
                   icon={Landmark} 
                   trend="4.2" 
                   color="bg-blue-50 text-blue-600" 
+                  link="/payments"
                 />
                 <StatCard 
                   title="Payouts Till Date" 
@@ -343,6 +360,7 @@ export const Dashboard = () => {
                   icon={PoundSterling} 
                   trend="12" 
                   color="bg-emerald-50 text-emerald-600" 
+                  link="/payments"
                 />
                 <StatCard 
                   title="Average Payouts Till Date" 
@@ -350,6 +368,7 @@ export const Dashboard = () => {
                   icon={PoundSterling} 
                   trend="8.5" 
                   color="bg-violet-50 text-violet-600" 
+                  link="/payments"
                 />
                 <StatCard 
                   title="My Documents" 
@@ -357,6 +376,7 @@ export const Dashboard = () => {
                   icon={FileText} 
                   trend="2.1" 
                   color="bg-amber-50 text-amber-600" 
+                  link="/documents"
                 />
               </>
             ) : (
@@ -367,6 +387,7 @@ export const Dashboard = () => {
                   icon={Landmark} 
                   trend="4.2" 
                   color="bg-blue-50 text-blue-600" 
+                  link="/payments"
                 />
                 <StatCard 
                   title="Payouts Till Date" 
@@ -374,6 +395,7 @@ export const Dashboard = () => {
                   icon={PoundSterling} 
                   trend="12" 
                   color="bg-emerald-50 text-emerald-600" 
+                  link="/payments"
                 />
                 <StatCard 
                   title="Average Payouts Till Date" 
@@ -381,6 +403,7 @@ export const Dashboard = () => {
                   icon={PoundSterling} 
                   trend="8.5" 
                   color="bg-violet-50 text-violet-600" 
+                  link="/payments"
                 />
                 <StatCard 
                   title="Total Investors" 
@@ -388,6 +411,7 @@ export const Dashboard = () => {
                   icon={Users} 
                   trend="2.1" 
                   color="bg-amber-50 text-amber-600" 
+                  link="/investors"
                 />
               </>
             )}
