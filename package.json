@@ -9,6 +9,8 @@
     "start": "node dist/server.cjs",
     "lint": "tsc --noEmit",
     "cap:sync": "cap sync",
+    "cap:sync:android": "cap sync android",
+    "cap:sync:ios": "cap sync ios",
     "cap:open:android": "cap open android",
     "cap:open:ios": "cap open ios"
   },
