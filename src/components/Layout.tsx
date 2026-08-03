@@ -353,6 +353,7 @@ export const Layout = () => {
         <AgreementModal
           isOpen={!!pendingAgreementDoc}
           documentId={pendingAgreementDoc.id}
+          investorId={(pendingAgreementDoc as any).investor_id || (pendingAgreementDoc as any).investorId}
           investorName={user?.name || "Investor"}
           investorEmail={user?.email || ""}
           projectName="Current Operations"

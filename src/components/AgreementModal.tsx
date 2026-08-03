@@ -7,6 +7,7 @@ import { Investor } from "../types";
 interface AgreementModalProps {
   isOpen: boolean;
   documentId: number;
+  investorId?: number;
   investorName: string;
   investorEmail: string;
   amount?: number | string;
@@ -18,9 +19,10 @@ interface AgreementModalProps {
 export const AgreementModal: React.FC<AgreementModalProps> = ({
   isOpen,
   documentId,
+  investorId,
   investorName,
   investorEmail,
-  amount = 500000,
+  amount = 10000,
   projectName = "Current Operations",
   onSignedSuccessfully,
   onSignLater,
@@ -37,21 +39,33 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
         .then(res => res.ok ? res.json() : [])
         .then((data: any[]) => {
           const matched = data.find(i => 
-            i.email?.toLowerCase() === investorEmail.toLowerCase() || 
-            String(i.id) === String(documentId) ||
-            i.name?.toLowerCase() === investorName.toLowerCase()
+            (investorId && String(i.id) === String(investorId)) ||
+            (investorEmail && i.email?.toLowerCase() === investorEmail.toLowerCase()) || 
+            (investorName && i.name?.toLowerCase() === investorName.toLowerCase())
           );
           if (matched) setInvestorData(matched);
         })
         .catch(err => console.warn("Failed to load investor details for modal", err));
     }
-  }, [isOpen, investorEmail, documentId, investorName]);
+  }, [isOpen, investorId, investorEmail, investorName]);
 
-  const targetName = investorData?.name || investorName || "Investor";
-  const targetAddress = investorData?.address && investorData.address !== "—" ? investorData.address : "71B Ayres Road, Old Trafford, Manchester – M16 7GS";
-  const amountNumber = Number(investorData?.amount) || Number(amount) || 50000;
+  const investorNameText = investorData?.name || investorName || "Investor";
+  const investorAddressText = investorData?.address && investorData.address !== "—" ? investorData.address : "71B Ayres Road, Old Trafford, Manchester – M16 7GS";
+  const amountNumber = Number(investorData?.amount) || Number(amount) || 10000;
   const amountFormatted = amountNumber.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const onboardingDate = investorData?.date_of_onboarding ? new Date(investorData.date_of_onboarding).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  
+  const formatDateStr = (dateStr?: string) => {
+    if (!dateStr) return "30th of December 2025";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = d.getDate();
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    return `${day}th of ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  const agreementDate = formatDateStr(investorData?.date_of_onboarding);
+  const investmentDate = formatDateStr(investorData?.date_of_onboarding);
+  const witnessNameText = investorData?.witness || "Accredited Witness";
 
   const minRoiVal = Number(investorData?.min_roi_id || investorData?.min_RoiRangeId || 1);
   const maxRoiVal = Number(investorData?.max_roi_id || investorData?.max_RoiRangeId || 5);
@@ -95,7 +109,6 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
   };
 
   const firstPaymentPeriodText = computeReturnPeriod(investorData?.date_of_onboarding);
-  const witnessName = investorData?.witness || "Accredited Witness";
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -275,13 +288,13 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
               <div className="space-y-3">
                 <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">1. INVESTMENT AGREEMENT</h3>
                 <p>
-                  This Investment Agreement ("Agreement") is made and entered into on the <strong>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</strong>, by and between:
+                  This Investment Agreement ("Agreement") is made and entered into on the <strong>{agreementDate}</strong>, by and between:
                 </p>
                 <p className="pl-4 border-l-2 border-amber-500/80">
                   <strong>Tessma Group</strong>, represented by <strong>Mushtaq A Mohammed</strong>, with its office address at <strong>701 Chester Road, M32 0RW</strong>, hereinafter referred to as the "Investee"; and
                 </p>
                 <p className="pl-4 border-l-2 border-blue-500/80">
-                  <strong>{investorName}</strong>, residing at <strong>701 Chester Road, M32 0RW</strong>, hereinafter referred to as the "Investor".
+                  <strong>{investorNameText}</strong>, residing at <strong>{investorAddressText}</strong>, hereinafter referred to as the "Investor".
                 </p>
                 <p>
                   The Investee and the Investor are collectively referred to as the "Parties" and individually as a "Party".
@@ -303,7 +316,7 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
                   The Investee shall ensure that the funds are used in a manner that maximizes returns for the Investor.
                 </p>
                 <p>
-                  The purpose of this Agreement is to outline the terms and conditions under which the Investor has invested a sum of <strong>£{Number(amount).toLocaleString()} GBP</strong> into the Investee's business operations.
+                  The purpose of this Agreement is to outline the terms and conditions under which the Investor has invested a sum of <strong>£{amountFormatted} GBP</strong> into the Investee's business operations.
                 </p>
               </div>
 
@@ -313,10 +326,10 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
               <div className="space-y-3">
                 <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">3. INVESTMENT DETAILS</h3>
                 <p>
-                  <strong>Investment Amount:</strong> The Investor invested a total sum of <strong>£{Number(amount).toLocaleString()} GBP</strong> (Pounds Sterling).
+                  <strong>Investment Amount:</strong> The Investor invested a total sum of <strong>£{amountFormatted} GBP</strong> (Pounds Sterling).
                 </p>
                 <p>
-                  <strong>Date of Investment:</strong> <strong>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</strong>
+                  <strong>Date of Investment:</strong> <strong>{investmentDate}</strong>
                 </p>
                 <p>
                   <strong>Duration of Investment:</strong> The investment shall remain active for the period of minimum 6 months, unless otherwise terminated or extended by mutual agreement in writing.
@@ -329,13 +342,13 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
               <div className="space-y-3">
                 <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">4. RETURN ON INVESTMENT</h3>
                 <p>
-                  <strong>Monthly Return:</strong> The Investee agrees to provide the Investor with a monthly return ranging between <strong>£{Math.round(Number(amount) * 0.01).toLocaleString()} GBP</strong> and <strong>£{Math.round(Number(amount) * 0.05).toLocaleString()} GBP</strong>.
+                  <strong>Monthly Return:</strong> The Investee agrees to provide the Investor with a monthly return ranging between <strong>£{minRoi.toLocaleString()} GBP</strong> and <strong>£{maxRoi.toLocaleString()} GBP</strong>.
                 </p>
                 <p>
                   <strong>Date of Profit Payment:</strong> The monthly profit shall be paid to the Investor with-in 30 days of completion of the previous investment month. Any Delays will be notified in advance.
                 </p>
                 <p className="italic text-slate-600 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100">
-                  {`First payment – ${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { month: 'long', day: 'numeric' })}th to ${new Date(Date.now() + 52 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: 'numeric' })}th of ${new Date(Date.now() + 52 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })} then after recurring payments will follow.`}
+                  {firstPaymentPeriodText}
                 </p>
               </div>
 
@@ -347,6 +360,13 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
                 <p>
                   The Agreement may be terminated by either Party upon providing <strong>60 (sixty) days' written notice</strong> to the other Party. In the event of termination, the Investee shall return the remaining principal amount (if any) to the Investor within <strong>14 (fourteen) days of completion of Notice period</strong>.
                 </p>
+              </div>
+
+              <hr className="border-slate-200" />
+
+              {/* Witness Details */}
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700">
+                Witness Name: {witnessNameText}
               </div>
             </div>
 
