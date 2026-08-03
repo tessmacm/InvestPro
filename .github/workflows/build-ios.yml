@@ -30,6 +30,7 @@ jobs:
       - name: Build Web Application (Mobile)
         env:
           GEMINI_API_KEY: ''
+          NODE_OPTIONS: '--max-old-space-size=4096'
         run: npm run build:mobile
 
       - name: Sync Capacitor iOS Assets
