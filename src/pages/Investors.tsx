@@ -1009,7 +1009,7 @@ export const Investors = () => {
                           <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Name</th>
                           <th className="w-32 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type</th>
                           <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</th>
-                          <th className="w-44 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Phone Number</th>
+                          <th className="w-44 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Investment Amount</th>
                           <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Company</th>
                           <th className="w-44 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status & Agreement</th>
                           <th className="w-28 px-6 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Actions</th>
@@ -1067,9 +1067,9 @@ export const Investors = () => {
                                 </a>
                               </td>
 
-                              {/* Phone Number */}
-                              <td className="px-4 py-4.5 font-mono text-xs text-slate-600 font-semibold">
-                                {row.mobile || <span className="text-slate-300 font-normal">-</span>}
+                              {/* Investment Amount */}
+                              <td className="px-4 py-4.5 font-sans text-xs text-slate-900 font-extrabold">
+                                £{Number(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </td>
 
                               {/* Organization Entity Name */}

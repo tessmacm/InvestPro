@@ -36,19 +36,36 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
   };
 
   const computeReturnPeriod = (dateStr?: string) => {
-    let d = new Date();
+    let invDate = new Date();
     if (dateStr) {
       const parsed = new Date(dateStr);
-      if (!isNaN(parsed.getTime())) d = parsed;
+      if (!isNaN(parsed.getTime())) invDate = parsed;
     }
-    // Return payment is 1 month after onboarding/investment date
-    const returnDate = new Date(d.getFullYear(), d.getMonth() + 1, 15);
-    const dayStart = 15;
-    const dayEnd = 25;
+
+    // First payment – [Investment date + 30 days + 15 days = 45 days] to [Investment date + 30 days + 15 days + 7 days = 52 days]
+    const startDate = new Date(invDate.getTime() + 45 * 24 * 60 * 60 * 1000);
+    const endDate = new Date(invDate.getTime() + 52 * 24 * 60 * 60 * 1000);
+
+    const getDaySuffix = (d: number) => {
+      if (d > 3 && d < 21) return `${d}th`;
+      switch (d % 10) {
+        case 1:  return `${d}st`;
+        case 2:  return `${d}nd`;
+        case 3:  return `${d}rd`;
+        default: return `${d}th`;
+      }
+    };
+
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const monthStr = months[returnDate.getMonth()];
-    const yearStr = returnDate.getFullYear();
-    return `First payment – ${monthStr} ${dayStart}th to ${dayEnd}th of ${monthStr} ${yearStr} then after recurring payments will follow`;
+    
+    const startMonth = months[startDate.getMonth()];
+    const startDayStr = getDaySuffix(startDate.getDate());
+    
+    const endMonth = months[endDate.getMonth()];
+    const endDayStr = getDaySuffix(endDate.getDate());
+    const yearStr = endDate.getFullYear();
+
+    return `First payment – ${startMonth} ${startDayStr} to ${endDayStr} of ${endMonth} ${yearStr} then after recurring payments will follow.`;
   };
 
   const agreementDate = formatDateStr(investorData?.date_of_onboarding);
@@ -56,8 +73,11 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
   const witnessName = investorData?.witness || "Accredited Witness";
   const firstPaymentPeriodText = computeReturnPeriod(investorData?.date_of_onboarding);
 
-  const minRoi = Math.round(amountNumber * 0.06);
-  const maxRoi = Math.round(amountNumber * 0.07);
+  const minRoiPct = Number(investorData?.min_roi_id) === 1 ? 0.05 : Number(investorData?.min_roi_id) === 2 ? 0.075 : Number(investorData?.min_roi_id) === 3 ? 0.10 : 0.05;
+  const maxRoiPct = Number(investorData?.max_roi_id) === 4 ? 0.125 : Number(investorData?.max_roi_id) === 3 ? 0.10 : 0.10;
+
+  const minRoi = Math.round(amountNumber * minRoiPct);
+  const maxRoi = Math.round(amountNumber * maxRoiPct);
 
   const isSigned = document.status === "Signed";
   const signatureData = (document as any).signature || investorData?.name;
@@ -354,14 +374,10 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                         </div>
                       </div>
 
-                      {/* Witness Signature */}
-                      <div className="space-y-2 border border-slate-200 p-4 rounded-xl bg-slate-50/50 md:col-span-2">
+                      {/* Witness Details (Name only) */}
+                      <div className="space-y-1 border border-slate-200 p-4 rounded-xl bg-slate-50/50 md:col-span-2">
                         <p className="font-extrabold text-slate-900 text-sm">For Witness:</p>
                         <p className="text-slate-700 font-semibold">Name: {witnessName}</p>
-                        <div className="pt-2">
-                          <span className="text-[10px] text-slate-400 block font-bold uppercase">Signature:</span>
-                          <div className="h-8 border-b border-slate-300 w-64 mt-1"></div>
-                        </div>
                       </div>
                     </div>
                   </div>

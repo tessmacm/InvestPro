@@ -5,8 +5,9 @@ import { Payment } from "../types";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Search, Filter, Eye, DollarSign, Calendar, Landmark, Clock, Send, CheckCircle2 } from "lucide-react";
+import { Search, Filter, Eye, DollarSign, Calendar, Landmark, Clock, Send, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { cn } from "../lib/utils";
 
 const container = {
   hidden: { opacity: 0 },
@@ -138,6 +139,9 @@ export const Payments = () => {
 
   const uniqueInvestors = Array.from(new Set(upcomingPayments.map(p => p.investorName)));
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState(5);
+
   const filteredPayments = upcomingPayments.filter(p => {
     const matchesSearch = `PayId#${p.paymentId}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.investorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -145,6 +149,13 @@ export const Payments = () => {
     const matchesInvestor = investorFilter === "all" || p.investorName === investorFilter;
     return matchesSearch && matchesInvestor;
   });
+
+  const totalEntries = filteredPayments.length;
+  const totalPages = Math.ceil(totalEntries / entriesPerPage) || 1;
+  const paginatedPayments = React.useMemo(() => {
+    const start = (currentPage - 1) * entriesPerPage;
+    return filteredPayments.slice(start, start + entriesPerPage);
+  }, [filteredPayments, currentPage, entriesPerPage]);
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="max-w-7xl mx-auto space-y-6">
@@ -269,7 +280,7 @@ export const Payments = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 text-sm">
                 <AnimatePresence mode="popLayout">
-                  {filteredPayments.map(p => (
+                  {paginatedPayments.map(p => (
                     <motion.tr
                       key={p.paymentId}
                       layout
@@ -279,7 +290,7 @@ export const Payments = () => {
                       className="hover:bg-slate-50/50 transition-colors"
                     >
                       <td className="px-6 py-4 font-semibold text-slate-900">{p.investorName}</td>
-                      <td className="px-6 py-4 font-bold text-emerald-600">${p.amount.toLocaleString()}</td>
+                      <td className="px-6 py-4 font-bold text-emerald-600">£{p.amount.toLocaleString()}</td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
                           {p.paymentCycle || "Monthly"}
@@ -293,12 +304,12 @@ export const Payments = () => {
                         })}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                          p.isReceived ? "bg-emerald-50 text-emerald-700" :
-                          p.isSent ? "bg-blue-50 text-blue-700" :
-                          "bg-amber-50 text-amber-700"
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide ${
+                          p.isReceived ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                          p.isSent ? "bg-blue-50 text-blue-700 border border-blue-200" :
+                          "bg-amber-50 text-amber-700 border border-amber-200"
                         }`}>
-                          {p.isReceived ? "Acknowledged" : p.isSent ? "Send Acknowledge" : "Pending"}
+                          {p.isReceived ? "Acknowledge Recieved" : p.isSent ? "Acknowledge Sent" : "Acknowledge Pending"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
@@ -334,6 +345,50 @@ export const Payments = () => {
                 </AnimatePresence>
               </tbody>
             </table>
+          </div>
+
+          {/* Payments Table Pagination Footer */}
+          <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm font-medium text-slate-500">
+            <div>
+              Showing {totalEntries === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1} to{" "}
+              {Math.min(currentPage * entriesPerPage, totalEntries)} of {totalEntries} entries
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || loading}
+                className="p-2 border border-slate-200 bg-white rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {Array.from({ length: totalPages }).map((_, idx) => {
+                const pageNum = idx + 1;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={cn(
+                      "w-9 h-9 flex items-center justify-center rounded-xl font-bold transition-all",
+                      currentPage === pageNum 
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" 
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+                    )}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages || loading}
+                className="p-2 border border-slate-200 bg-white rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
