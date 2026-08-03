@@ -27,8 +27,10 @@ jobs:
       - name: Install Node dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build Web Application
-        run: npm run build
+      - name: Build Web Application (Mobile)
+        env:
+          GEMINI_API_KEY: ''
+        run: npm run build:mobile
 
       - name: Sync Capacitor iOS Assets
         run: |
