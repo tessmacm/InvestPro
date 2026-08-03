@@ -1353,35 +1353,6 @@ export const Investors = () => {
                           className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                         />
                       </div>
-
-                      {/* Status Toggle */}
-                      <div className="space-y-1.5 text-left md:col-span-1">
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          Account Status
-                        </label>
-                        <div className="flex items-center gap-3 pt-2">
-                          <button
-                            disabled={isViewDetailsMode}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, status: formData.status === "active" ? "inactive" : "active" })}
-                            className={cn(
-                              "relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
-                              formData.status === "active" ? "bg-emerald-500" : "bg-slate-300"
-                            )}
-                          >
-                            <span className={cn(
-                              "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform",
-                              formData.status === "active" ? "translate-x-6" : "translate-x-1"
-                            )} />
-                          </button>
-                          <span className={cn(
-                            "text-sm font-semibold",
-                            formData.status === "active" ? "text-emerald-600" : "text-slate-400"
-                          )}>
-                            {formData.status === "active" ? "Active" : "Inactive"}
-                          </span>
-                        </div>
-                      </div>
                     </div>
                   </div>
 
