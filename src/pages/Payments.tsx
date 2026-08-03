@@ -5,7 +5,7 @@ import { Payment } from "../types";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Search, Filter, Eye, DollarSign, Calendar, Landmark, Clock, Send, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Filter, Eye, DollarSign, Calendar, Landmark, Clock, Send, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 
@@ -27,7 +27,9 @@ export const Payments = () => {
   const isAdmin = user?.role === "admin" || user?.role === "manager" || user?.role === "superadmin";
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
   const [investorFilter, setInvestorFilter] = useState("all");
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -149,11 +151,38 @@ export const Payments = () => {
   const [entriesPerPage, setEntriesPerPage] = useState(5);
 
   const filteredPayments = upcomingPayments.filter(p => {
-    const matchesSearch = `PayId#${p.paymentId}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.investorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.amount.toString().includes(searchTerm);
+    // 1. Investor Filter
     const matchesInvestor = investorFilter === "all" || p.investorName === investorFilter;
-    return matchesSearch && matchesInvestor;
+
+    // 2. Status Filter
+    let matchesStatus = true;
+    if (selectedStatusFilter === "pending") {
+      matchesStatus = !p.isSent && !p.isReceived && p.status !== "Received";
+    } else if (selectedStatusFilter === "sent") {
+      matchesStatus = p.isSent && !p.isReceived && p.status !== "Received";
+    } else if (selectedStatusFilter === "received") {
+      matchesStatus = p.isReceived || p.status === "Received";
+    }
+
+    // 3. Date Range Filter
+    let matchesDate = true;
+    if (startDateFilter || endDateFilter) {
+      const pDate = new Date(p.paymentDate);
+      if (!isNaN(pDate.getTime())) {
+        if (startDateFilter) {
+          const sDate = new Date(startDateFilter);
+          sDate.setHours(0, 0, 0, 0);
+          if (pDate < sDate) matchesDate = false;
+        }
+        if (endDateFilter) {
+          const eDate = new Date(endDateFilter);
+          eDate.setHours(23, 59, 59, 999);
+          if (pDate > eDate) matchesDate = false;
+        }
+      }
+    }
+
+    return matchesInvestor && matchesStatus && matchesDate;
   });
 
   const totalEntries = filteredPayments.length;
@@ -241,26 +270,53 @@ export const Payments = () => {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by Payment ID, name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-          />
+      {/* Filter Controls Bar */}
+      <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-4">
+        
+        {/* Filter 1: Date Range */}
+        <div className="space-y-1 text-left w-full md:flex-1">
+          <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Date Range</label>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="date"
+              value={startDateFilter}
+              onChange={(e) => { setStartDateFilter(e.target.value); setCurrentPage(1); }}
+              title="From Date"
+              className="w-full px-3 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
+            />
+            <input
+              type="date"
+              value={endDateFilter}
+              onChange={(e) => { setEndDateFilter(e.target.value); setCurrentPage(1); }}
+              title="To Date"
+              className="w-full px-3 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
+            />
+          </div>
         </div>
 
+        {/* Filter 2: Status */}
+        <div className="space-y-1 text-left w-full md:w-52">
+          <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Status</label>
+          <select
+            value={selectedStatusFilter}
+            onChange={(e) => { setSelectedStatusFilter(e.target.value); setCurrentPage(1); }}
+            className="w-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
+          >
+            <option value="all">All Statuses</option>
+            <option value="pending">Acknowledge Pending</option>
+            <option value="sent">Acknowledge Sent</option>
+            <option value="received">Acknowledge Recieved</option>
+          </select>
+        </div>
+
+        {/* Filter 3: Investor (Admin / Manager only) */}
         {isAdmin && (
-          <div className="relative w-full md:w-64">
-            <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <div className="space-y-1 text-left w-full md:w-60">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Investor</label>
             <select
               value={investorFilter}
-              onChange={(e) => setInvestorFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none"
+              onChange={(e) => { setInvestorFilter(e.target.value); setCurrentPage(1); }}
+              className="w-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
             >
               <option value="all">All Investors</option>
               {uniqueInvestors.map(name => (
