@@ -1,7 +1,8 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { FileText, CheckCircle2, ShieldCheck, PenTool, Lock, AlertCircle, RefreshCw, ArrowLeft, LogOut, Crown } from "lucide-react";
 import { API_BASE_URL, authHeaders } from "../config/api";
+import { Investor } from "../types";
 
 interface AgreementModalProps {
   isOpen: boolean;
@@ -28,6 +29,73 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
   const [agreed, setAgreed] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [investorData, setInvestorData] = useState<Investor | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() })
+        .then(res => res.ok ? res.json() : [])
+        .then((data: any[]) => {
+          const matched = data.find(i => 
+            i.email?.toLowerCase() === investorEmail.toLowerCase() || 
+            String(i.id) === String(documentId) ||
+            i.name?.toLowerCase() === investorName.toLowerCase()
+          );
+          if (matched) setInvestorData(matched);
+        })
+        .catch(err => console.warn("Failed to load investor details for modal", err));
+    }
+  }, [isOpen, investorEmail, documentId, investorName]);
+
+  const targetName = investorData?.name || investorName || "Investor";
+  const targetAddress = investorData?.address && investorData.address !== "—" ? investorData.address : "71B Ayres Road, Old Trafford, Manchester – M16 7GS";
+  const amountNumber = Number(investorData?.amount) || Number(amount) || 50000;
+  const amountFormatted = amountNumber.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const onboardingDate = investorData?.date_of_onboarding ? new Date(investorData.date_of_onboarding).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const minRoiVal = Number(investorData?.min_roi_id || investorData?.min_RoiRangeId || 1);
+  const maxRoiVal = Number(investorData?.max_roi_id || investorData?.max_RoiRangeId || 5);
+
+  const minRoiPct = (minRoiVal > 0 && minRoiVal <= 20 ? minRoiVal : 1) / 100;
+  const maxRoiPct = (maxRoiVal > 0 && maxRoiVal <= 20 ? maxRoiVal : 5) / 100;
+
+  const minRoi = Math.round(amountNumber * minRoiPct);
+  const maxRoi = Math.round(amountNumber * maxRoiPct);
+
+  const computeReturnPeriod = (dateStr?: string) => {
+    let invDate = new Date();
+    if (dateStr) {
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) invDate = parsed;
+    }
+
+    const startDate = new Date(invDate.getTime() + 45 * 24 * 60 * 60 * 1000);
+    const endDate = new Date(invDate.getTime() + 52 * 24 * 60 * 60 * 1000);
+
+    const getDaySuffix = (d: number) => {
+      if (d > 3 && d < 21) return `${d}th`;
+      switch (d % 10) {
+        case 1:  return `${d}st`;
+        case 2:  return `${d}nd`;
+        case 3:  return `${d}rd`;
+        default: return `${d}th`;
+      }
+    };
+
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    
+    const startMonth = months[startDate.getMonth()];
+    const startDayStr = getDaySuffix(startDate.getDate());
+    
+    const endMonth = months[endDate.getMonth()];
+    const endDayStr = getDaySuffix(endDate.getDate());
+    const yearStr = endDate.getFullYear();
+
+    return `First payment – ${startMonth} ${startDayStr} to ${endDayStr} of ${endMonth} ${yearStr} then after recurring payments will follow.`;
+  };
+
+  const firstPaymentPeriodText = computeReturnPeriod(investorData?.date_of_onboarding);
+  const witnessName = investorData?.witness || "Accredited Witness";
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);

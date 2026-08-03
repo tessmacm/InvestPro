@@ -1228,7 +1228,7 @@ export const Investors = () => {
 
             {/* Input card wrapper */}
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 w-full">
-              <div className="border-b border-slate-100 pb-5 mb-8 flex justify-between items-start gap-4">
+              <div className="border-b border-slate-100 pb-5 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h3 className="text-lg font-display font-bold text-slate-800">
                     {isViewDetailsMode ? "Investor Profile Details" : selectedInvestor ? "Modify Investor Details" : "New Investor Registration"}
@@ -1237,9 +1237,23 @@ export const Investors = () => {
                     {isViewDetailsMode ? "Legal and financial particulars of the selected investor." : "Enter legal organization or individual credentials below."}
                   </p>
                 </div>
-                {/* Edit Button top right */}
-                {isViewDetailsMode && !isClient && (
-                  <div className="flex gap-2">
+
+                {/* Account Status Select on top right corner against panel title */}
+                <div className="flex items-center gap-3 self-end sm:self-auto">
+                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-2xl shadow-xs">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Account Status:</label>
+                    <select
+                      disabled={isViewDetailsMode}
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="bg-transparent text-xs font-extrabold outline-none text-slate-800 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+
+                  {isViewDetailsMode && !isClient && (
                     <button
                       type="button"
                       onClick={() => setIsViewDetailsMode(false)}
@@ -1247,8 +1261,8 @@ export const Investors = () => {
                     >
                       <Edit className="w-3.5 h-3.5" /> Edit Profile
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               <form onSubmit={handleSaveInvestor} className="space-y-8">
