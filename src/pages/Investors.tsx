@@ -53,6 +53,7 @@ export const Investors = () => {
 
   // Primary States
   const [investors, setInvestors] = useState<Investor[]>([]);
+  const [documentsList, setDocumentsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeView, setActiveView] = useState<"list" | "add">("list");
@@ -384,17 +385,61 @@ export const Investors = () => {
   const fetchInvestors = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/investors`, {
-        headers: authHeaders()
-      });
-      if (!response.ok) throw new Error("Could not fetch list");
-      const data = await response.json();
+      const [invRes, docRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() }),
+        fetch(`${API_BASE_URL}/api/admin/documents`, { headers: authHeaders() }).catch(() => null)
+      ]);
+      if (!invRes.ok) throw new Error("Could not fetch list");
+      const data = await invRes.json();
       setInvestors(data);
+
+      if (docRes && docRes.ok) {
+        const docData = await docRes.json();
+        if (Array.isArray(docData)) setDocumentsList(docData);
+      }
     } catch (error: any) {
       showToast("error", "Failed to retrieve investors from server.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const getCombinedStatusBadge = (investor: Investor) => {
+    const isUserActive = (investor.status || "active").toLowerCase() === "active";
+    
+    if (!isUserActive) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+          Inactive
+        </span>
+      );
+    }
+
+    const invIdNum = Number(investor.id);
+    const invDoc = documentsList.find(d => 
+      (invIdNum && Number(d.investor_id) === invIdNum) ||
+      (investor.email && d.investor_email && d.investor_email.toLowerCase() === investor.email.toLowerCase()) ||
+      (investor.name && d.investor_name && d.investor_name.toLowerCase() === investor.name.toLowerCase())
+    );
+
+    const isSigned = invDoc ? (invDoc.status === "Signed" || invDoc.status === "Approved") : (investor as any).isSigned === true;
+
+    if (isSigned) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
+          <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+          Active Signed
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-amber-50 text-amber-800 border border-amber-200 shadow-xs">
+        <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+        Active Unsigned
+      </span>
+    );
   };
 
   // Switch to list view and clean form
@@ -964,9 +1009,9 @@ export const Investors = () => {
                           <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Name</th>
                           <th className="w-32 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type</th>
                           <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</th>
-                          <th className="w-44 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Mobile Number</th>
+                          <th className="w-44 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Phone Number</th>
                           <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Company</th>
-                          <th className="w-32 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                          <th className="w-44 px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status & Agreement</th>
                           <th className="w-28 px-6 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
@@ -1022,8 +1067,8 @@ export const Investors = () => {
                                 </a>
                               </td>
 
-                              {/* Primary Contact Number */}
-                              <td className="px-4 py-4.5 font-mono text-xs text-slate-500">
+                              {/* Phone Number */}
+                              <td className="px-4 py-4.5 font-mono text-xs text-slate-600 font-semibold">
                                 {row.mobile || <span className="text-slate-300 font-normal">-</span>}
                               </td>
 
@@ -1032,20 +1077,9 @@ export const Investors = () => {
                                 {row.organization || <span className="text-slate-300 font-bold">-</span>}
                               </td>
 
-                              {/* Status Badge */}
+                              {/* Combined Status & Agreement Badge */}
                               <td className="px-4 py-4.5">
-                                <span className={cn(
-                                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide",
-                                  row.status === "active" 
-                                    ? "bg-emerald-50 text-emerald-700" 
-                                    : "bg-slate-100 text-slate-500"
-                                )}>
-                                  <span className={cn(
-                                    "w-1.5 h-1.5 rounded-full",
-                                    row.status === "active" ? "bg-emerald-500" : "bg-slate-400"
-                                  )} />
-                                  {row.status}
-                                </span>
+                                {getCombinedStatusBadge(row)}
                               </td>
 
                               {/* Hover Action Triggers */}

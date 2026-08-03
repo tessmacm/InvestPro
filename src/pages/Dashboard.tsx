@@ -352,7 +352,7 @@ export const Dashboard = () => {
                   icon={Landmark} 
                   trend="4.2" 
                   color="bg-blue-50 text-blue-600" 
-                  link="/payments"
+                  link="/investors"
                 />
                 <StatCard 
                   title="Payouts Till Date" 
@@ -387,7 +387,7 @@ export const Dashboard = () => {
                   icon={Landmark} 
                   trend="4.2" 
                   color="bg-blue-50 text-blue-600" 
-                  link="/payments"
+                  link="/investors"
                 />
                 <StatCard 
                   title="Payouts Till Date" 
