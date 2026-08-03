@@ -337,8 +337,8 @@ export const Payments = () => {
           </div>
           <h3 className="text-lg font-display font-bold text-slate-900">No payments found</h3>
           <p className="text-sm text-slate-500 mt-1 font-medium max-w-sm">
-            {searchTerm || investorFilter !== "all"
-              ? "Try adjusting your search or filter criteria."
+            {startDateFilter || endDateFilter || selectedStatusFilter !== "all" || investorFilter !== "all"
+              ? "Try adjusting your date range or filter criteria."
               : "No upcoming investor payment payouts have been scheduled yet."}
           </p>
         </div>
