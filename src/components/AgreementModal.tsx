@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { FileText, CheckCircle2, ShieldCheck, PenTool, Lock, AlertCircle, RefreshCw, ArrowLeft, LogOut, Crown } from "lucide-react";
+import { CheckCircle2, ShieldCheck, PenTool, Lock, AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { Investor } from "../types";
+import { AgreementDocument } from "./AgreementDocument";
 
 interface AgreementModalProps {
   isOpen: boolean;
@@ -27,112 +28,44 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
   onSignedSuccessfully,
   onSignLater,
 }) => {
-  const [typedName, setTypedName] = useState("");
-  const [agreed, setAgreed] = useState(false);
-  const [isSigning, setIsSigning] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [typedName, setTypedName]       = useState("");
+  const [agreed, setAgreed]             = useState(false);
+  const [isSigning, setIsSigning]       = useState(false);
+  const [error, setError]               = useState<string | null>(null);
   const [investorData, setInvestorData] = useState<Investor | null>(null);
 
+  // ── Fetch the real investor record from the API ─────────────────────────────
   useEffect(() => {
-    if (isOpen) {
-      fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() })
-        .then(res => res.ok ? res.json() : [])
-        .then((data: any[]) => {
-          const matched = data.find(i => 
-            (investorId && String(i.id) === String(investorId)) ||
-            (investorEmail && i.email?.toLowerCase() === investorEmail.toLowerCase()) || 
-            (investorName && i.name?.toLowerCase() === investorName.toLowerCase())
-          );
-          if (matched) setInvestorData(matched);
-        })
-        .catch(err => console.warn("Failed to load investor details for modal", err));
-    }
-  }, [isOpen, investorId, investorEmail, investorName]);
+    if (!isOpen) return;
+    fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() })
+      .then(res => res.ok ? res.json() : [])
+      .then((data: any[]) => {
+        const matched = data.find(i =>
+          (investorId    && String(i.id) === String(investorId)) ||
+          (investorEmail && i.email?.toLowerCase() === investorEmail.toLowerCase()) ||
+          (investorName  && i.name?.toLowerCase()  === investorName.toLowerCase())
+        );
+        if (matched) {
+          setInvestorData(matched);
+        } else {
+          // Fallback stub so the document renders with login-time info
+          setInvestorData({ name: investorName, email: investorEmail, amount: Number(amount) } as Investor);
+        }
+      })
+      .catch(() => {
+        setInvestorData({ name: investorName, email: investorEmail, amount: Number(amount) } as Investor);
+      });
+  }, [isOpen, investorId, investorEmail, investorName, amount]);
 
-  // Helper to strip sentinel placeholder values returned by the backend
-  const isRealValue = (v?: string | null) =>
-    !!v && v.trim() !== "" && v !== "—" && v !== "Accredited" && v !== "Accredited Witness";
-
-  const investorNameText = investorData?.name || investorName || "Investor";
-  const investorAddressText = isRealValue(investorData?.address)
-    ? investorData!.address!
-    : "71B Ayres Road, Old Trafford, Manchester – M16 7GS";
-  const amountNumber = Number(investorData?.amount) || Number(amount) || 10000;
-  const amountFormatted = amountNumber.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  
-  const formatDateStr = (dateStr?: string) => {
-    if (!dateStr) return "30th of December 2025";
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    const day = d.getDate();
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    return `${day}th of ${months[d.getMonth()]} ${d.getFullYear()}`;
-  };
-
-  const agreementDate = formatDateStr(investorData?.date_of_onboarding);
-  const investmentDate = formatDateStr(investorData?.date_of_onboarding);
-  const witnessNameText = isRealValue(investorData?.witness) ? investorData!.witness! : "Accredited Witness";
-
-  const minRoiVal = Number(investorData?.min_roi_id || investorData?.min_RoiRangeId || 1);
-  const maxRoiVal = Number(investorData?.max_roi_id || investorData?.max_RoiRangeId || 5);
-
-  const minRoiPct = (minRoiVal > 0 && minRoiVal <= 20 ? minRoiVal : 1) / 100;
-  const maxRoiPct = (maxRoiVal > 0 && maxRoiVal <= 20 ? maxRoiVal : 5) / 100;
-
-  const minRoi = Math.round(amountNumber * minRoiPct);
-  const maxRoi = Math.round(amountNumber * maxRoiPct);
-
-  const computeReturnPeriod = (dateStr?: string) => {
-    let invDate = new Date();
-    if (dateStr) {
-      const parsed = new Date(dateStr);
-      if (!isNaN(parsed.getTime())) invDate = parsed;
-    }
-
-    const startDate = new Date(invDate.getTime() + 45 * 24 * 60 * 60 * 1000);
-    const endDate = new Date(invDate.getTime() + 52 * 24 * 60 * 60 * 1000);
-
-    const getDaySuffix = (d: number) => {
-      if (d > 3 && d < 21) return `${d}th`;
-      switch (d % 10) {
-        case 1:  return `${d}st`;
-        case 2:  return `${d}nd`;
-        case 3:  return `${d}rd`;
-        default: return `${d}th`;
-      }
-    };
-
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    
-    const startMonth = months[startDate.getMonth()];
-    const startDayStr = getDaySuffix(startDate.getDate());
-    
-    const endMonth = months[endDate.getMonth()];
-    const endDayStr = getDaySuffix(endDate.getDate());
-    const yearStr = endDate.getFullYear();
-
-    return `First payment – ${startMonth} ${startDayStr} to ${endDayStr} of ${endMonth} ${yearStr} then after recurring payments will follow.`;
-  };
-
-  const firstPaymentPeriodText = computeReturnPeriod(investorData?.date_of_onboarding);
-
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [hasDrawn, setHasDrawn] = useState(false);
-
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    setIsDrawing(true);
-    setHasDrawn(true);
-    draw(e);
-  };
+  // ── Signature canvas ────────────────────────────────────────────────────────
+  const canvasRef                   = useRef<HTMLCanvasElement | null>(null);
+  const [isDrawing, setIsDrawing]   = useState(false);
+  const [hasDrawn, setHasDrawn]     = useState(false);
 
   const stopDrawing = () => {
     setIsDrawing(false);
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) ctx.beginPath();
-    }
+    const ctx = canvasRef.current?.getContext("2d");
+    if (ctx) ctx.beginPath();
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -141,41 +74,32 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    let clientX = 0;
-    let clientY = 0;
-
-    if ("touches" in e) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-
-    ctx.lineWidth = 2.5;
-    ctx.lineCap = "round";
+    const rect     = canvas.getBoundingClientRect();
+    const clientX  = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY  = "touches" in e ? e.touches[0].clientY : e.clientY;
+    ctx.lineWidth  = 2.5;
+    ctx.lineCap    = "round";
     ctx.strokeStyle = "#1e3a8a";
-
-    ctx.lineTo(x, y);
+    ctx.lineTo(clientX - rect.left, clientY - rect.top);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctx.moveTo(clientX - rect.left, clientY - rect.top);
+  };
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    setIsDrawing(true);
+    setHasDrawn(true);
+    draw(e);
   };
 
   const clearSignature = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
     setHasDrawn(false);
   };
 
+  // ── Submit digital signature ─────────────────────────────────────────────────
   const handleSignAgreement = async () => {
     if (!agreed) {
       setError("Please confirm your acknowledgment by checking the agreement box.");
@@ -185,17 +109,13 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
       setError("Please type your full legal name as digital signature confirmation.");
       return;
     }
-
     setIsSigning(true);
     setError(null);
-
-    let canvasDataUrl = "";
-    if (hasDrawn && canvasRef.current) {
-      canvasDataUrl = canvasRef.current.toDataURL("image/png");
-    }
-
+    const canvasDataUrl = hasDrawn && canvasRef.current
+      ? canvasRef.current.toDataURL("image/png")
+      : "";
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/documents/${documentId}/sign`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/documents/${documentId}/sign`, {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({
@@ -204,11 +124,7 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
           signedAt: new Date().toISOString(),
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to record digital signature on server.");
-      }
-
+      if (!res.ok) throw new Error("Failed to record digital signature on server.");
       onSignedSuccessfully();
     } catch (err: any) {
       setError(err.message || "An error occurred while signing the agreement.");
@@ -228,10 +144,10 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-4xl w-full overflow-hidden flex flex-col max-h-[92vh]"
         >
-          {/* Top Header Banner */}
+          {/* Header */}
           <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-blue-950 px-8 py-6 text-white flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-600/30 border border-blue-400/30 flex items-center justify-center text-blue-400">
+              <div className="w-12 h-12 rounded-2xl bg-blue-600/30 border border-blue-400/30 flex items-center justify-center">
                 <ShieldCheck className="w-7 h-7 text-blue-400" />
               </div>
               <div>
@@ -251,142 +167,40 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
                   className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border border-white/20 active:scale-95"
                   title="Sign later and return to login page"
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Back to Login</span>
+                  <ArrowLeft className="w-4 h-4" /><span>Back to Login</span>
                 </button>
               )}
               <div className="hidden sm:flex items-center gap-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300">
-                <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                <span>256-Bit Encrypted Lock</span>
+                <Lock className="w-3.5 h-3.5 text-emerald-400" /><span>256-Bit Encrypted Lock</span>
               </div>
             </div>
           </div>
 
-          {/* Warning Banner */}
+          {/* Warning banner */}
           <div className="bg-amber-50 border-b border-amber-200 px-8 py-3 flex items-center gap-3 text-amber-900 text-xs font-semibold flex-shrink-0">
             <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <span>
-              Feature access is restricted until you digitally review and sign your Investment Agreement below.
-            </span>
+            <span>Feature access is restricted until you digitally review and sign your Investment Agreement below.</span>
           </div>
 
-          {/* Contract Content Viewport (Unified Official Tessma Group Agreement Template) */}
+          {/* Scrollable body */}
           <div className="p-8 overflow-y-auto space-y-6 flex-1 custom-scrollbar text-slate-700 text-sm bg-slate-50/50">
-            <div className="bg-white shadow-md rounded-2xl border border-slate-200 p-8 space-y-6 text-xs text-slate-800 leading-relaxed">
-              {/* Top Logo Header */}
-              <div className="flex justify-between items-start border-b border-slate-100 pb-6 mb-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-extrabold tracking-widest text-slate-400 uppercase">TESSMA GROUP</span>
-                </div>
-                {/* Official Tessma Group Logo */}
-                <div className="text-right">
-                  <div className="flex items-center justify-end gap-1.5 text-[#c49a45] font-extrabold text-2xl tracking-tight font-serif">
-                    <Crown className="w-6 h-6 text-[#c49a45] fill-[#c49a45]" />
-                    <span>tessm<span className="text-slate-900 font-sans font-bold">A</span></span>
-                  </div>
-                  <p className="text-[8px] tracking-[0.25em] text-slate-500 font-bold uppercase mt-0.5">
-                    PRECISION | PASSION | PERFORMANCE
-                  </p>
-                </div>
-              </div>
 
-              {/* Section 1 */}
-              <div className="space-y-3">
-                <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">1. INVESTMENT AGREEMENT</h3>
-                <p>
-                  This Investment Agreement ("Agreement") is made and entered into on the <strong>{agreementDate}</strong>, by and between:
-                </p>
-                <p className="pl-4 border-l-2 border-amber-500/80">
-                  <strong>Tessma Group</strong>, represented by <strong>Mushtaq A Mohammed</strong>, with its office address at <strong>701 Chester Road, M32 0RW</strong>, hereinafter referred to as the "Investee"; and
-                </p>
-                <p className="pl-4 border-l-2 border-blue-500/80">
-                  <strong>{investorNameText}</strong>, residing at <strong>{investorAddressText}</strong>, hereinafter referred to as the "Investor".
-                </p>
-                <p>
-                  The Investee and the Investor are collectively referred to as the "Parties" and individually as a "Party".
-                </p>
-              </div>
+            {/* ── Single-source agreement document ── */}
+            <AgreementDocument
+              investorData={investorData}
+              isSigned={false}
+              fullPageLayout={false}
+            />
 
-              <hr className="border-slate-200" />
-
-              {/* Section 2 */}
-              <div className="space-y-3">
-                <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">2. BUSINESS OF THE GROUP’S</h3>
-                <p>
-                  The Investee shall utilize the investment amount for the growth and expansion of its operations in the following industries:
-                </p>
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 font-bold text-slate-800 text-[11px] text-center">
-                  Information Technology (IT), Hospitality, Facilities Management, Retail, Health Services, Training and Development, Properties, Professional Services
-                </div>
-                <p>
-                  The Investee shall ensure that the funds are used in a manner that maximizes returns for the Investor.
-                </p>
-                <p>
-                  The purpose of this Agreement is to outline the terms and conditions under which the Investor has invested a sum of <strong>£{amountFormatted} GBP</strong> into the Investee's business operations.
-                </p>
-              </div>
-
-              <hr className="border-slate-200" />
-
-              {/* Section 3 */}
-              <div className="space-y-3">
-                <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">3. INVESTMENT DETAILS</h3>
-                <p>
-                  <strong>Investment Amount:</strong> The Investor invested a total sum of <strong>£{amountFormatted} GBP</strong> (Pounds Sterling).
-                </p>
-                <p>
-                  <strong>Date of Investment:</strong> <strong>{investmentDate}</strong>
-                </p>
-                <p>
-                  <strong>Duration of Investment:</strong> The investment shall remain active for the period of minimum 6 months, unless otherwise terminated or extended by mutual agreement in writing.
-                </p>
-              </div>
-
-              <hr className="border-slate-200" />
-
-              {/* Section 4 */}
-              <div className="space-y-3">
-                <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">4. RETURN ON INVESTMENT</h3>
-                <p>
-                  <strong>Monthly Return:</strong> The Investee agrees to provide the Investor with a monthly return ranging between <strong>£{minRoi.toLocaleString()} GBP</strong> and <strong>£{maxRoi.toLocaleString()} GBP</strong>.
-                </p>
-                <p>
-                  <strong>Date of Profit Payment:</strong> The monthly profit shall be paid to the Investor with-in 30 days of completion of the previous investment month. Any Delays will be notified in advance.
-                </p>
-                <p className="italic text-slate-600 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100">
-                  {firstPaymentPeriodText}
-                </p>
-              </div>
-
-              <hr className="border-slate-200" />
-
-              {/* Section 5, 6, 7 & 8 */}
-              <div className="space-y-3">
-                <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">5. TERMINATION OF AGREEMENT</h3>
-                <p>
-                  The Agreement may be terminated by either Party upon providing <strong>60 (sixty) days' written notice</strong> to the other Party. In the event of termination, the Investee shall return the remaining principal amount (if any) to the Investor within <strong>14 (fourteen) days of completion of Notice period</strong>.
-                </p>
-              </div>
-
-              <hr className="border-slate-200" />
-
-              {/* Witness Details */}
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700">
-                Witness Name: {witnessNameText}
-              </div>
-            </div>
-
-            {/* Error Message */}
+            {/* Error */}
             {error && (
               <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-xs font-semibold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-                <span>{error}</span>
+                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" /><span>{error}</span>
               </div>
             )}
 
-            {/* Signature Area */}
+            {/* Signature pad */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/80 p-6 rounded-2xl border border-slate-200">
-              {/* Type Name */}
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Type Full Legal Name <span className="text-rose-500">*</span>
@@ -395,13 +209,11 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
                   type="text"
                   placeholder="e.g. Johnathan Doe"
                   value={typedName}
-                  onChange={(e) => setTypedName(e.target.value)}
+                  onChange={e => setTypedName(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-semibold text-sm"
                 />
                 <p className="text-[11px] text-slate-400 font-medium">Must match your account legal name.</p>
               </div>
-
-              {/* Draw Signature Pad */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -433,12 +245,12 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
               </div>
             </div>
 
-            {/* Checkbox Acknowledgment */}
+            {/* Acknowledgment checkbox */}
             <label className="flex items-start gap-3 p-4 bg-blue-50/50 border border-blue-100 rounded-2xl cursor-pointer hover:bg-blue-50 transition-colors">
               <input
                 type="checkbox"
                 checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
+                onChange={e => setAgreed(e.target.checked)}
                 className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-0.5"
               />
               <span className="text-xs text-slate-700 font-medium leading-relaxed">
@@ -447,13 +259,12 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
             </label>
           </div>
 
-          {/* Action Footer */}
+          {/* Footer */}
           <div className="bg-slate-100 px-8 py-5 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Identity Verified • IP & Timestamp Logged</span>
+              <span>Identity Verified &bull; IP &amp; Timestamp Logged</span>
             </div>
-
             <div className="flex items-center gap-3">
               {onSignLater && (
                 <button
@@ -461,8 +272,7 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
                   onClick={onSignLater}
                   className="flex items-center gap-1.5 border border-slate-300 hover:bg-slate-200/60 text-slate-700 font-bold text-xs px-5 py-3 rounded-2xl cursor-pointer transition-all active:scale-95"
                 >
-                  <ArrowLeft className="w-4 h-4 text-slate-500" />
-                  <span>Sign Later</span>
+                  <ArrowLeft className="w-4 h-4 text-slate-500" /><span>Sign Later</span>
                 </button>
               )}
               <button
@@ -471,15 +281,9 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-sm px-7 py-3 rounded-2xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all cursor-pointer"
               >
                 {isSigning ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Processing Signature...
-                  </>
+                  <><RefreshCw className="w-4 h-4 animate-spin" />Processing Signature...</>
                 ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    Sign & Accept Agreement
-                  </>
+                  <><CheckCircle2 className="w-4 h-4" />Sign &amp; Accept Agreement</>
                 )}
               </button>
             </div>
