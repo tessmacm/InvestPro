@@ -73,8 +73,11 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
   const witnessName = investorData?.witness || "Accredited Witness";
   const firstPaymentPeriodText = computeReturnPeriod(investorData?.date_of_onboarding);
 
-  const minRoiPct = Number(investorData?.min_roi_id) === 1 ? 0.05 : Number(investorData?.min_roi_id) === 2 ? 0.075 : Number(investorData?.min_roi_id) === 3 ? 0.10 : 0.05;
-  const maxRoiPct = Number(investorData?.max_roi_id) === 4 ? 0.125 : Number(investorData?.max_roi_id) === 3 ? 0.10 : 0.10;
+  const minRoiVal = Number(investorData?.min_roi_id || investorData?.min_RoiRangeId || 1);
+  const maxRoiVal = Number(investorData?.max_roi_id || investorData?.max_RoiRangeId || 5);
+
+  const minRoiPct = (minRoiVal > 0 && minRoiVal <= 20 ? minRoiVal : 1) / 100;
+  const maxRoiPct = (maxRoiVal > 0 && maxRoiVal <= 20 ? maxRoiVal : 5) / 100;
 
   const minRoi = Math.round(amountNumber * minRoiPct);
   const maxRoi = Math.round(amountNumber * maxRoiPct);

@@ -56,6 +56,7 @@ export const Investors = () => {
   const [documentsList, setDocumentsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [activeView, setActiveView] = useState<"list" | "add">("list");
   
   // Modal states
@@ -743,19 +744,32 @@ export const Investors = () => {
 
   // Computation of searches and pages
   const filteredAndSearchedArray = investors.filter((i) => {
-    // 1. Term check
-    const matchesSearch = 
+    // 1. Text Search
+    const matchesSearch =
       i.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (i.email && i.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      i.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (i.mobile && i.mobile.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (i.organization && i.organization.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    // 2. Applied Group
+    // 2. Applied Group (Type)
+    let matchesType = true;
     if (appliedFilterType !== "All") {
-      const matchesType = i.type === appliedFilterType;
-      return matchesSearch && matchesType;
+      matchesType = i.type === appliedFilterType;
     }
-    return matchesSearch;
+
+    // 3. Status Filter
+    let matchesStatus = true;
+    if (statusFilter === "active_signed") {
+      const isSigned = documentsList.some(d => d.investorId === i.id && (d.documentType === "Agreement" || d.title?.includes("Agreement")) && d.status === "Signed");
+      matchesStatus = i.status === "active" && isSigned;
+    } else if (statusFilter === "active_unsigned") {
+      const isSigned = documentsList.some(d => d.investorId === i.id && (d.documentType === "Agreement" || d.title?.includes("Agreement")) && d.status === "Signed");
+      matchesStatus = i.status === "active" && !isSigned;
+    } else if (statusFilter === "inactive") {
+      matchesStatus = i.status === "inactive";
+    }
+
+    return matchesSearch && matchesType && matchesStatus;
   });
 
   // Derived stats
@@ -946,6 +960,21 @@ export const Investors = () => {
                   </div>
                   
                   <div className="flex gap-2 w-full md:w-auto items-center justify-end">
+                    {/* Status Filter */}
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => {
+                        setStatusFilter(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="h-11 px-3 border border-slate-200 rounded-xl text-xs text-slate-700 bg-white hover:bg-slate-50 outline-none font-bold cursor-pointer"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="active_signed">Active Signed</option>
+                      <option value="active_unsigned">Active Unsigned</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+
                     <button
                       onClick={() => setIsFilterModalOpen(true)}
                       id="btn-filter"

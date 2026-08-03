@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { RootState } from "../store";
 import { Payment } from "../types";
 import { BaseModal } from "../components/BaseModal";
@@ -23,10 +24,12 @@ const item = {
 };
 
 export const Payments = () => {
+  const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === "admin" || user?.role === "manager" || user?.role === "superadmin";
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [payIdSearchTerm, setPayIdSearchTerm] = useState("");
   const [startDateFilter, setStartDateFilter] = useState("");
   const [endDateFilter, setEndDateFilter] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
@@ -145,16 +148,34 @@ export const Payments = () => {
   const totalAllCount = pendingCount + sentCount + doneCount;
   const totalAllAmount = pendingTotal + sentTotal + doneTotal;
 
-  const uniqueInvestors = Array.from(new Set(upcomingPayments.map(p => p.investorName)));
+  // Include ALL investors across historical & upcoming records
+  const uniqueInvestors = React.useMemo(() => {
+    const names = relevantPayments.map(p => p.investorName).filter(Boolean);
+    return Array.from(new Set(names)).sort();
+  }, [relevantPayments]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(5);
 
-  const filteredPayments = upcomingPayments.filter(p => {
-    // 1. Investor Filter
+  // Sort upcoming payments by date descending (latest payment date first)
+  const sortedPayments = React.useMemo(() => {
+    return [...upcomingPayments].sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
+  }, [upcomingPayments]);
+
+  const filteredPayments = sortedPayments.filter(p => {
+    // 1. Pay ID Search Filter
+    let matchesPayId = true;
+    if (payIdSearchTerm.trim()) {
+      const cleanSearch = payIdSearchTerm.trim().toLowerCase().replace(/^payid#?|^#/, "");
+      const payIdStr = String(p.paymentId).toLowerCase();
+      const fullPayId = `payid#${p.paymentId}`.toLowerCase();
+      matchesPayId = payIdStr.includes(cleanSearch) || fullPayId.includes(payIdSearchTerm.trim().toLowerCase());
+    }
+
+    // 2. Investor Filter
     const matchesInvestor = investorFilter === "all" || p.investorName === investorFilter;
 
-    // 2. Status Filter
+    // 3. Status Filter
     let matchesStatus = true;
     if (selectedStatusFilter === "pending") {
       matchesStatus = !p.isSent && !p.isReceived && p.status !== "Received";
@@ -164,7 +185,7 @@ export const Payments = () => {
       matchesStatus = p.isReceived || p.status === "Received";
     }
 
-    // 3. Date Range Filter
+    // 4. Date Range Filter
     let matchesDate = true;
     if (startDateFilter || endDateFilter) {
       const pDate = new Date(p.paymentDate);
@@ -182,7 +203,7 @@ export const Payments = () => {
       }
     }
 
-    return matchesInvestor && matchesStatus && matchesDate;
+    return matchesPayId && matchesInvestor && matchesStatus && matchesDate;
   });
 
   const totalEntries = filteredPayments.length;
@@ -273,6 +294,18 @@ export const Payments = () => {
       {/* Filter Controls Bar */}
       <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-4">
         
+        {/* Pay ID Search Filter */}
+        <div className="space-y-1 text-left w-full md:w-44">
+          <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Search Pay ID</label>
+          <input
+            type="text"
+            placeholder="e.g. 1 or PayId#1"
+            value={payIdSearchTerm}
+            onChange={(e) => { setPayIdSearchTerm(e.target.value); setCurrentPage(1); }}
+            className="w-full px-3 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
+          />
+        </div>
+
         {/* Filter 1: Date Range */}
         <div className="space-y-1 text-left w-full md:flex-1">
           <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Filter by Date Range</label>
@@ -348,6 +381,7 @@ export const Payments = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                  <th className="px-6 py-4">Pay ID</th>
                   <th className="px-6 py-4">Investor</th>
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Cycle</th>
@@ -367,7 +401,17 @@ export const Payments = () => {
                       exit={{ opacity: 0 }}
                       className="hover:bg-slate-50/50 transition-colors"
                     >
-                      <td className="px-6 py-4 font-semibold text-slate-900">{p.investorName}</td>
+                      <td className="px-6 py-4 font-mono font-bold text-slate-700 text-xs">
+                        PayId#{p.paymentId}
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => navigate('/investors', { state: { searchInvestor: p.investorName } })}
+                          className="font-bold text-slate-900 hover:text-blue-600 transition-colors text-left cursor-pointer outline-none hover:underline"
+                        >
+                          {p.investorName}
+                        </button>
+                      </td>
                       <td className="px-6 py-4 font-bold text-emerald-600">£{p.amount.toLocaleString()}</td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
