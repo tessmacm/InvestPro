@@ -49,8 +49,14 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
     }
   }, [isOpen, investorId, investorEmail, investorName]);
 
+  // Helper to strip sentinel placeholder values returned by the backend
+  const isRealValue = (v?: string | null) =>
+    !!v && v.trim() !== "" && v !== "—" && v !== "Accredited" && v !== "Accredited Witness";
+
   const investorNameText = investorData?.name || investorName || "Investor";
-  const investorAddressText = investorData?.address && investorData.address !== "—" ? investorData.address : "71B Ayres Road, Old Trafford, Manchester – M16 7GS";
+  const investorAddressText = isRealValue(investorData?.address)
+    ? investorData!.address!
+    : "71B Ayres Road, Old Trafford, Manchester – M16 7GS";
   const amountNumber = Number(investorData?.amount) || Number(amount) || 10000;
   const amountFormatted = amountNumber.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   
@@ -65,7 +71,7 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
 
   const agreementDate = formatDateStr(investorData?.date_of_onboarding);
   const investmentDate = formatDateStr(investorData?.date_of_onboarding);
-  const witnessNameText = investorData?.witness || "Accredited Witness";
+  const witnessNameText = isRealValue(investorData?.witness) ? investorData!.witness! : "Accredited Witness";
 
   const minRoiVal = Number(investorData?.min_roi_id || investorData?.min_RoiRangeId || 1);
   const maxRoiVal = Number(investorData?.max_roi_id || investorData?.max_RoiRangeId || 5);

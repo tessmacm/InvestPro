@@ -20,9 +20,14 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
 
   if (!isOpen || !document) return null;
 
-  // Derive investor dynamic values
-  const investorName = investorData?.name || (document as any)?.investor_name || "Fareed Chunara";
-  const investorAddress = investorData?.address && investorData.address !== "—" ? investorData.address : "71B Ayres Road, Old Trafford, Manchester – M16 7GS";
+  // Helper to strip sentinel placeholder values
+  const isRealValue = (v?: string | null) =>
+    !!v && v.trim() !== "" && v !== "—" && v !== "Accredited" && v !== "Accredited Witness";
+
+  const investorName = investorData?.name || (document as any)?.investor_name || "Investor";
+  const investorAddress = isRealValue(investorData?.address)
+    ? investorData!.address!
+    : "71B Ayres Road, Old Trafford, Manchester – M16 7GS";
   const amountNumber = Number(investorData?.amount) || 10000;
   const amountFormatted = amountNumber.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   
@@ -70,7 +75,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
 
   const agreementDate = formatDateStr(investorData?.date_of_onboarding);
   const investmentDate = formatDateStr(investorData?.date_of_onboarding);
-  const witnessName = investorData?.witness || "Accredited Witness";
+  const witnessName = isRealValue(investorData?.witness) ? investorData!.witness! : "Accredited Witness";
   const firstPaymentPeriodText = computeReturnPeriod(investorData?.date_of_onboarding);
 
   const minRoiVal = Number(investorData?.min_roi_id || investorData?.min_RoiRangeId || 1);
