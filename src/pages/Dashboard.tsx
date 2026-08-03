@@ -202,21 +202,17 @@ export const Dashboard = () => {
           (myInvestor?.name && p.investorName === myInvestor.name)
         );
 
-        // Completed payments (sent or received)
-        const completedPayments = myPayments.filter(p => p.isSent || p.isReceived);
-        
-        if (completedPayments.length > 0) {
-          payoutsTillDateVal = completedPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-          avgPayoutVal = payoutsTillDateVal / completedPayments.length;
-        } else if (myPayments.length > 0) {
-          payoutsTillDateVal = myPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-          avgPayoutVal = payoutsTillDateVal / myPayments.length;
-        } else {
-          // Fallback to active ROI contract for investor
-          const myRoiContracts = allRoiContracts.filter(r => r.investorId === myInvestorId || r.investorName === myInvestor?.name);
-          payoutsTillDateVal = myRoiContracts.reduce((sum, r) => sum + (Number(r.monthlyPayment) || 0), 0);
-          avgPayoutVal = payoutsTillDateVal;
-        }
+        // Send Acknowledge Payments (sent by admin)
+        const sendAckPayments = myPayments.filter(p => p.isSent || p.isReceived || p.status === "Sent" || p.status === "Received");
+        const sendAckAmount = sendAckPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        const sendAckCount = sendAckPayments.length;
+
+        // Completed payments (acknowledged by investor)
+        const completedPayments = myPayments.filter(p => p.isReceived || p.status === "Received");
+        payoutsTillDateVal = completedPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+        // Average Payouts Till Date: Send Acknowledge Amount / Send Acknowledge Count
+        avgPayoutVal = sendAckCount > 0 ? sendAckAmount / sendAckCount : 0;
 
         // 3. My Documents
         documentsCountVal = Array.isArray(allDocuments) ? allDocuments.length : 0;
@@ -257,17 +253,17 @@ export const Dashboard = () => {
         investorsCountVal = allInvestors.length;
         documentsCountVal = allDocuments.length;
 
-        const completedPayments = allPayments.filter(p => p.isSent || p.isReceived);
-        if (completedPayments.length > 0) {
-          payoutsTillDateVal = completedPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-          avgPayoutVal = payoutsTillDateVal / completedPayments.length;
-        } else if (allPayments.length > 0) {
-          payoutsTillDateVal = allPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-          avgPayoutVal = payoutsTillDateVal / allPayments.length;
-        } else {
-          payoutsTillDateVal = allRoiContracts.reduce((sum, r) => sum + (Number(r.monthlyPayment) || 0), 0);
-          avgPayoutVal = investorsCountVal > 0 ? payoutsTillDateVal / investorsCountVal : payoutsTillDateVal;
-        }
+        // Send Acknowledge Payments (sent by admin across all investors)
+        const sendAckPayments = allPayments.filter(p => p.isSent || p.isReceived || p.status === "Sent" || p.status === "Received");
+        const sendAckAmount = sendAckPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        const sendAckCount = sendAckPayments.length;
+
+        // Completed payments (acknowledged by investors)
+        const completedPayments = allPayments.filter(p => p.isReceived || p.status === "Received");
+        payoutsTillDateVal = completedPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+        // Average Payouts Till Date: Send Acknowledge Amount / Send Acknowledge Count
+        avgPayoutVal = sendAckCount > 0 ? sendAckAmount / sendAckCount : 0;
 
         // Admin Chart Points (Investment, Payouts Done, Average Payout)
         if (allInvestors.length > 0) {

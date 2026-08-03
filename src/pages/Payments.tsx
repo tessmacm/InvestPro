@@ -85,12 +85,22 @@ export const Payments = () => {
     fetchPayments();
   }, []);
 
-  // Filter to include ONLY the next upcoming payment for each investor
+  // Filter payments for current user role
+  const relevantPayments = React.useMemo(() => {
+    if (isAdmin) return payments;
+    return payments.filter(p => 
+      (user?.id && String(p.investorId) === String(user.id)) ||
+      (user?.name && p.investorName?.toLowerCase() === user.name.toLowerCase()) ||
+      (user?.email && p.investorName?.toLowerCase() === user.email.toLowerCase())
+    );
+  }, [payments, isAdmin, user]);
+
+  // Filter to include ONLY the single next upcoming payment for each investor
   const upcomingPayments = React.useMemo(() => {
     const map = new Map<number | string, Payment>();
     
     // Sort payments by payment date ascending
-    const sorted = [...payments].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
+    const sorted = [...relevantPayments].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
 
     for (const p of sorted) {
       const key = p.investorId || p.investorName;
@@ -110,12 +120,12 @@ export const Payments = () => {
     }
 
     return Array.from(map.values());
-  }, [payments]);
+  }, [relevantPayments]);
 
-  // Card Calculations
-  const pendingPaymentsList = payments.filter(p => !p.isSent && !p.isReceived && p.status !== "Received");
-  const sentPaymentsList = payments.filter(p => p.isSent && !p.isReceived && p.status !== "Received");
-  const donePaymentsList = payments.filter(p => p.isReceived || p.status === "Received");
+  // Card Calculations across all historical transactions till date
+  const pendingPaymentsList = relevantPayments.filter(p => !p.isSent && !p.isReceived && p.status !== "Received");
+  const sentPaymentsList = relevantPayments.filter(p => p.isSent && !p.isReceived && p.status !== "Received");
+  const donePaymentsList = relevantPayments.filter(p => p.isReceived || p.status === "Received");
 
   const pendingCount = pendingPaymentsList.length;
   const pendingTotal = pendingPaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
