@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { FileText, CheckCircle2, ShieldCheck, PenTool, Lock, AlertCircle, RefreshCw, ArrowLeft, LogOut } from "lucide-react";
+import { FileText, CheckCircle2, ShieldCheck, PenTool, Lock, AlertCircle, RefreshCw, ArrowLeft, LogOut, Crown } from "lucide-react";
 import { API_BASE_URL, authHeaders } from "../config/api";
 
 interface AgreementModalProps {
@@ -183,60 +183,103 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
             </span>
           </div>
 
-          {/* Contract Content Viewport */}
-          <div className="p-8 overflow-y-auto space-y-6 flex-1 custom-scrollbar text-slate-700 text-sm">
-            {/* Document Header */}
-            <div className="border border-slate-200 rounded-2xl p-6 bg-slate-50/50 space-y-4">
-              <div className="flex justify-between items-start border-b border-slate-200 pb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">INVESTPRO PORTFOLIO INVESTMENT AGREEMENT</h3>
-                  <p className="text-xs text-slate-500">Reference: INVESTPRO-AGR-{documentId || "2026"}</p>
+          {/* Contract Content Viewport (Unified Official Tessma Group Agreement Template) */}
+          <div className="p-8 overflow-y-auto space-y-6 flex-1 custom-scrollbar text-slate-700 text-sm bg-slate-50/50">
+            <div className="bg-white shadow-md rounded-2xl border border-slate-200 p-8 space-y-6 text-xs text-slate-800 leading-relaxed">
+              {/* Top Logo Header */}
+              <div className="flex justify-between items-start border-b border-slate-100 pb-6 mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-extrabold tracking-widest text-slate-400 uppercase">TESSMA GROUP</span>
                 </div>
+                {/* Official Tessma Group Logo */}
                 <div className="text-right">
-                  <p className="text-xs font-bold text-slate-500">Date of Agreement</p>
-                  <p className="text-sm font-extrabold text-slate-900">{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  <div className="flex items-center justify-end gap-1.5 text-[#c49a45] font-extrabold text-2xl tracking-tight font-serif">
+                    <Crown className="w-6 h-6 text-[#c49a45] fill-[#c49a45]" />
+                    <span>tessm<span className="text-slate-900 font-sans font-bold">A</span></span>
+                  </div>
+                  <p className="text-[8px] tracking-[0.25em] text-slate-500 font-bold uppercase mt-0.5">
+                    PRECISION | PASSION | PERFORMANCE
+                  </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div>
-                  <span className="text-slate-400 font-bold block uppercase">Investor / Principal</span>
-                  <span className="font-extrabold text-slate-900 text-sm">{investorName}</span>
-                  <span className="block text-slate-500">{investorEmail}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 font-bold block uppercase">Target Project</span>
-                  <span className="font-extrabold text-slate-900 text-sm">{projectName}</span>
-                  <span className="block text-slate-500">Managed Asset Fund</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 font-bold block uppercase">Committed Capital</span>
-                  <span className="font-extrabold text-emerald-600 text-base">£{Number(amount).toLocaleString()}</span>
-                </div>
+              {/* Section 1 */}
+              <div className="space-y-3">
+                <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">1. INVESTMENT AGREEMENT</h3>
+                <p>
+                  This Investment Agreement ("Agreement") is made and entered into on the <strong>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</strong>, by and between:
+                </p>
+                <p className="pl-4 border-l-2 border-amber-500/80">
+                  <strong>Tessma Group</strong>, represented by <strong>Mushtaq A Mohammed</strong>, with its office address at <strong>701 Chester Road, M32 0RW</strong>, hereinafter referred to as the "Investee"; and
+                </p>
+                <p className="pl-4 border-l-2 border-blue-500/80">
+                  <strong>{investorName}</strong>, residing at <strong>701 Chester Road, M32 0RW</strong>, hereinafter referred to as the "Investor".
+                </p>
+                <p>
+                  The Investee and the Investor are collectively referred to as the "Parties" and individually as a "Party".
+                </p>
               </div>
-            </div>
 
-            {/* Terms Articles */}
-            <div className="space-y-4 text-xs leading-relaxed text-slate-600 bg-white border border-slate-200 rounded-2xl p-6 shadow-inner max-h-60 overflow-y-auto custom-scrollbar">
-              <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">1. General Engagement & Capital Commitment</h4>
-              <p>
-                This Investment Agreement ("Agreement") is executed between InvestPro Platform Management ("Manager") and {investorName} ("Investor"). The Investor hereby commits the agreed capital amount of £{Number(amount).toLocaleString()} into the designated portfolio operations project ({projectName}).
-              </p>
+              <hr className="border-slate-200" />
 
-              <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">2. Return on Investment & Disbursements</h4>
-              <p>
-                The Manager agrees to disburse ROI earnings in accordance with the selected distribution frequency (Monthly/Quarterly). All payout calculations shall adhere to established portfolio performance metrics and undergo verified audit checks prior to account transfer.
-              </p>
+              {/* Section 2 */}
+              <div className="space-y-3">
+                <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">2. BUSINESS OF THE GROUP’S</h3>
+                <p>
+                  The Investee shall utilize the investment amount for the growth and expansion of its operations in the following industries:
+                </p>
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 font-bold text-slate-800 text-[11px] text-center">
+                  Information Technology (IT), Hospitality, Facilities Management, Retail, Health Services, Training and Development, Properties, Professional Services
+                </div>
+                <p>
+                  The Investee shall ensure that the funds are used in a manner that maximizes returns for the Investor.
+                </p>
+                <p>
+                  The purpose of this Agreement is to outline the terms and conditions under which the Investor has invested a sum of <strong>£{Number(amount).toLocaleString()} GBP</strong> into the Investee's business operations.
+                </p>
+              </div>
 
-              <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">3. Representation & Governing Law</h4>
-              <p>
-                The Investor confirms that all provided registration information, tax identification, and banking details are true and accurate. This Agreement shall be governed by and construed in accordance with the applicable commercial laws.
-              </p>
+              <hr className="border-slate-200" />
 
-              <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">4. Digital Signature & Legal Validity</h4>
-              <p>
-                By affixing a digital signature below, the Investor agrees to be bound by all terms, conditions, and covenant obligations specified herein. Electronic signatures executed on this platform carry the full legal equivalent of handwritten signatures.
-              </p>
+              {/* Section 3 */}
+              <div className="space-y-3">
+                <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">3. INVESTMENT DETAILS</h3>
+                <p>
+                  <strong>Investment Amount:</strong> The Investor invested a total sum of <strong>£{Number(amount).toLocaleString()} GBP</strong> (Pounds Sterling).
+                </p>
+                <p>
+                  <strong>Date of Investment:</strong> <strong>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</strong>
+                </p>
+                <p>
+                  <strong>Duration of Investment:</strong> The investment shall remain active for the period of minimum 6 months, unless otherwise terminated or extended by mutual agreement in writing.
+                </p>
+              </div>
+
+              <hr className="border-slate-200" />
+
+              {/* Section 4 */}
+              <div className="space-y-3">
+                <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">4. RETURN ON INVESTMENT</h3>
+                <p>
+                  <strong>Monthly Return:</strong> The Investee agrees to provide the Investor with a monthly return ranging between <strong>£{Math.round(Number(amount) * 0.01).toLocaleString()} GBP</strong> and <strong>£{Math.round(Number(amount) * 0.05).toLocaleString()} GBP</strong>.
+                </p>
+                <p>
+                  <strong>Date of Profit Payment:</strong> The monthly profit shall be paid to the Investor with-in 30 days of completion of the previous investment month. Any Delays will be notified in advance.
+                </p>
+                <p className="italic text-slate-600 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100">
+                  {`First payment – ${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { month: 'long', day: 'numeric' })}th to ${new Date(Date.now() + 52 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: 'numeric' })}th of ${new Date(Date.now() + 52 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })} then after recurring payments will follow.`}
+                </p>
+              </div>
+
+              <hr className="border-slate-200" />
+
+              {/* Section 5, 6, 7 & 8 */}
+              <div className="space-y-3">
+                <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">5. TERMINATION OF AGREEMENT</h3>
+                <p>
+                  The Agreement may be terminated by either Party upon providing <strong>60 (sixty) days' written notice</strong> to the other Party. In the event of termination, the Investee shall return the remaining principal amount (if any) to the Investor within <strong>14 (fourteen) days of completion of Notice period</strong>.
+                </p>
+              </div>
             </div>
 
             {/* Error Message */}

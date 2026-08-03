@@ -57,6 +57,14 @@ export default function App() {
           } 
         />
         <Route 
+          path="investors/:id" 
+          element={
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <Investors />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="projects" 
           element={
             <ProtectedRoute allowedRoles={["admin", "manager"]}>

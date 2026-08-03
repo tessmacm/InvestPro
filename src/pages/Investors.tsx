@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import { 
   Users, 
   Plus, 
@@ -569,6 +570,25 @@ export const Investors = () => {
     setIsViewDetailsMode(true);
     setActiveView("add");
   };
+
+  const { id: routeInvestorId } = useParams();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!loading && investors.length > 0) {
+      if (routeInvestorId) {
+        const found = investors.find(i => String(i.id) === String(routeInvestorId) || String(i.name).toLowerCase() === String(routeInvestorId).toLowerCase());
+        if (found) {
+          handleOpenViewDetails(found);
+        }
+      } else if (location.state?.searchInvestor) {
+        const found = investors.find(i => i.name.toLowerCase().includes(location.state.searchInvestor.toLowerCase()));
+        if (found) {
+          handleOpenViewDetails(found);
+        }
+      }
+    }
+  }, [routeInvestorId, location.state, investors, loading]);
 
   // Delete dialog
   const handleOpenDelete = (investor: Investor) => {

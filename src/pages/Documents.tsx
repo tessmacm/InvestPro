@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { RootState } from "../store";
 import { 
   FileText, 
@@ -42,6 +43,7 @@ const item = {
 };
 
 export const Documents = () => {
+  const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const isReadOnly = user?.role === "client" || user?.role === "investor";
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -210,11 +212,15 @@ export const Documents = () => {
       render: (d: Document) => {
         const name = d.investor_name || d.uploaded_by || "Investor Profile";
         const email = d.investor_email;
+        const targetId = (d as any).investorId || (d as any).investor_id || "";
         return (
           <div className="flex flex-col text-left py-1">
-            <h4 className="font-extrabold text-slate-900 text-sm">
+            <button
+              onClick={() => navigate(targetId ? `/investors/${targetId}` : "/investors", { state: { searchInvestor: name } })}
+              className="font-extrabold text-slate-900 text-sm hover:text-blue-600 transition-colors text-left cursor-pointer outline-none hover:underline"
+            >
               {name}
-            </h4>
+            </button>
             {email ? (
               <a
                 href={`mailto:${email}`}

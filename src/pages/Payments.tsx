@@ -406,7 +406,7 @@ export const Payments = () => {
                       </td>
                       <td className="px-6 py-4">
                         <button
-                          onClick={() => navigate('/investors', { state: { searchInvestor: p.investorName } })}
+                          onClick={() => navigate(`/investors/${p.investorId}`)}
                           className="font-bold text-slate-900 hover:text-blue-600 transition-colors text-left cursor-pointer outline-none hover:underline"
                         >
                           {p.investorName}
