@@ -44,9 +44,11 @@ jobs:
           sed -i 's/\r$//' android/gradlew
           chmod +x android/gradlew
 
-      - name: Copy Capacitor Assets to Android
+      - name: Copy Built Web Assets to Android Native Folder
         run: |
-          npx --yes @capacitor/cli copy android
+          mkdir -p android/app/src/main/assets/public
+          cp -r dist/* android/app/src/main/assets/public/
+          cp capacitor.config.json android/app/src/main/assets/
 
       - name: Build Debug APK
         run: |

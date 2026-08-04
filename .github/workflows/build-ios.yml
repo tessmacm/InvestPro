@@ -33,9 +33,11 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=4096'
         run: npx --yes vite build
 
-      - name: Copy Capacitor Assets to iOS
+      - name: Copy Built Web Assets to iOS Native Folder
         run: |
-          npx --yes @capacitor/cli copy ios
+          mkdir -p ios/App/App/public
+          cp -r dist/* ios/App/App/public/
+          cp capacitor.config.json ios/App/App/
 
       - name: Resolve Swift Package Dependencies
         run: |
