@@ -35,7 +35,7 @@ jobs:
 
       - name: Sync Capacitor iOS Assets
         run: |
-          npx @capacitor/cli sync ios
+          ./node_modules/.bin/cap sync ios
 
       - name: Resolve Swift Package Dependencies
         run: |
