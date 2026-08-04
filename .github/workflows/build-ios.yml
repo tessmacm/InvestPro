@@ -31,7 +31,7 @@ jobs:
         env:
           GEMINI_API_KEY: ''
           NODE_OPTIONS: '--max-old-space-size=4096'
-        run: npx vite build
+        run: npx --yes vite build
 
       - name: Sync Capacitor iOS Assets
         run: |
