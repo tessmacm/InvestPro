@@ -33,9 +33,9 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=4096'
         run: npx --yes vite build
 
-      - name: Sync Capacitor iOS Assets
+      - name: Copy Capacitor Assets to iOS
         run: |
-          npx cap sync ios
+          npx cap copy ios
 
       - name: Resolve Swift Package Dependencies
         run: |
