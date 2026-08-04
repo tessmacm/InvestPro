@@ -19,7 +19,7 @@ jobs:
           node-version: 20
 
       - name: Install Node dependencies
-        run: npm install --legacy-peer-deps
+        run: npm install --legacy-peer-deps --include=dev
 
       - name: Build Web Application (Mobile)
         env:
