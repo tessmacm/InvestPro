@@ -34,7 +34,7 @@ jobs:
         run: npx --yes vite build
 
       - name: Sync Capacitor iOS Assets
-        run: npx cap sync ios --verbose
+        run: npx --yes @capacitor/cli sync ios
 
       - name: Resolve Swift Package Dependencies
         run: |
