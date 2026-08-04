@@ -1,0 +1,23 @@
+# Force shell scripts and Gradle wrapper to always use LF line endings
+android/gradlew text eol=lf
+*.sh text eol=lf
+
+# Default text files to use LF
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.apk binary
+*.ipa binary
+*.zip binary
