@@ -41,11 +41,11 @@ jobs:
 
       - name: Resolve Swift Package Dependencies
         run: |
-          xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj
+          xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App -clonedSourcePackagesFolderPath ios/App/DerivedData/SourcePackages
 
       - name: Build iOS App (Simulator / Unsigned)
         run: |
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath ios/App/DerivedData COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath ios/App/DerivedData -clonedSourcePackagesFolderPath ios/App/DerivedData/SourcePackages COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
 
       - name: Compress iOS App Bundle
         run: |
