@@ -35,7 +35,7 @@ jobs:
 
       - name: Copy Capacitor Assets to iOS
         run: |
-          npx cap copy ios
+          npx --yes @capacitor/cli copy ios
 
       - name: Resolve Swift Package Dependencies
         run: |

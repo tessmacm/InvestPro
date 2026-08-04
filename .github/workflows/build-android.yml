@@ -46,7 +46,7 @@ jobs:
 
       - name: Copy Capacitor Assets to Android
         run: |
-          npx cap copy android
+          npx --yes @capacitor/cli copy android
 
       - name: Build Debug APK
         run: |
