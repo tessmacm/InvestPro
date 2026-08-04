@@ -21,3 +21,6 @@ android/gradlew text eol=lf
 *.apk binary
 *.ipa binary
 *.zip binary
+*.jar binary
+*.class binary
+*.keystore binary
