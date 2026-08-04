@@ -42,7 +42,7 @@ jobs:
       - name: Make Gradle Wrapper Executable & Sync Capacitor Android
         run: |
           chmod +x android/gradlew
-          npm run cap:sync:android
+          npx @capacitor/cli sync android
 
       - name: Build Debug APK
         run: |
