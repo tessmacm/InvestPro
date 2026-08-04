@@ -27,7 +27,7 @@ jobs:
         run: npx --yes vite build
 
       - name: Sync Capacitor iOS
-        run: npx cap sync ios
+        run: npm run cap:sync:ios
 
       - name: Build iOS App (Simulator / Unsigned)
         run: |
