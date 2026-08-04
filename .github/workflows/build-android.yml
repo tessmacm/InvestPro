@@ -32,10 +32,14 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Fix Gradle Wrapper Line Endings and Permissions
+      - name: Fix Gradle Wrapper Line Endings, Permissions and Re-download JAR
         run: |
           sed -i 's/\r$//' android/gradlew
           chmod +x android/gradlew
+          curl -fsSL "https://services.gradle.org/distributions/gradle-8.14.3-wrapper.jar.sha256" || true
+          curl -fsSL "https://raw.githubusercontent.com/gradle/gradle/v8.14.3/gradle/wrapper/gradle-wrapper.jar" \
+            -o android/gradle/wrapper/gradle-wrapper.jar
+          echo "JAR size: $(wc -c < android/gradle/wrapper/gradle-wrapper.jar) bytes"
 
       - name: Sync Capacitor Android
         run: npm run cap:sync:android
