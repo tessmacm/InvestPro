@@ -2,17 +2,11 @@ name: Build iOS App
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
-
-env:
-  CI: false
 
 jobs:
   build-ios:
-    name: Build iOS Application
     runs-on: macos-latest
 
     steps:
@@ -29,19 +23,11 @@ jobs:
 
       - name: Build Web Application (Mobile)
         env:
-          GEMINI_API_KEY: ''
           NODE_OPTIONS: '--max-old-space-size=4096'
         run: npx --yes vite build
 
-      - name: Copy Built Web Assets to iOS Native Folder
-        run: |
-          mkdir -p ios/App/App/public
-          cp -r dist/* ios/App/App/public/
-          cp capacitor.config.json ios/App/App/
-
-      - name: Resolve Swift Package Dependencies
-        run: |
-          xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App -clonedSourcePackagesFolderPath ios/App/DerivedData/SourcePackages
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
 
       - name: Build iOS App (Simulator / Unsigned)
         run: |
@@ -49,12 +35,12 @@ jobs:
 
       - name: Compress iOS App Bundle
         run: |
+          mkdir -p ios-build
           cd ios/App/DerivedData/Build/Products/Debug-iphonesimulator
-          zip -r InvestPro-iOS-Debug.app.zip App.app
+          zip -r ../../../../../../ios-build/InvestPro-iOS-Simulator.zip App.app
 
       - name: Upload iOS App Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: investpro-ios-debug-app
-          path: ios/App/DerivedData/Build/Products/Debug-iphonesimulator/InvestPro-iOS-Debug.app.zip
-          retention-days: 14
+          name: investpro-ios-simulator-app
+          path: ios-build/InvestPro-iOS-Simulator.zip

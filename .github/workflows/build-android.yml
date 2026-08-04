@@ -2,17 +2,11 @@ name: Build Android App
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
-
-env:
-  CI: false
 
 jobs:
   build-android:
-    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -29,7 +23,6 @@ jobs:
 
       - name: Build Web Application (Mobile)
         env:
-          GEMINI_API_KEY: ''
           NODE_OPTIONS: '--max-old-space-size=4096'
         run: npx --yes vite build
 
@@ -39,29 +32,18 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Make Gradle Wrapper Executable & Fix Line Endings
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Build Debug APK
         run: |
           sed -i 's/\r$//' android/gradlew
           chmod +x android/gradlew
-
-      - name: Copy Built Web Assets to Android Native Folder
-        run: |
-          mkdir -p android/app/src/main/assets/public
-          cp -r dist/* android/app/src/main/assets/public/
-          cp capacitor.config.json android/app/src/main/assets/
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Build Debug APK
-        working-directory: ./android
-        run: |
-          chmod +x gradlew
-          bash ./gradlew assembleDebug --stacktrace
+          cd android
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: investpro-android-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 14
