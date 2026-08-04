@@ -24,7 +24,7 @@ jobs:
       - name: Build Web Application (Mobile)
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
-        run: npx --yes vite build
+        run: npm run build:mobile
 
       - name: Sync Capacitor iOS
         run: npm run cap:sync:ios
