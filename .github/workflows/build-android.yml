@@ -50,10 +50,12 @@ jobs:
           cp -r dist/* android/app/src/main/assets/public/
           cp capacitor.config.json android/app/src/main/assets/
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Build Debug APK
-        run: |
-          cd android
-          bash ./gradlew assembleDebug --stacktrace
+        working-directory: ./android
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
