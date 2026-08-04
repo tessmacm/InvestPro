@@ -32,13 +32,16 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      - name: Fix Gradle Wrapper Line Endings and Permissions
+        run: |
+          sed -i 's/\r$//' android/gradlew
+          chmod +x android/gradlew
+
       - name: Sync Capacitor Android
         run: npm run cap:sync:android
 
       - name: Build Debug APK
         run: |
-          sed -i 's/\r$//' android/gradlew
-          chmod +x android/gradlew
           cd android
           ./gradlew assembleDebug --stacktrace
 
