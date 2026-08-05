@@ -210,7 +210,7 @@ export const Reports = () => {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">Reports & Analytics</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-extrabold text-slate-900 tracking-tight">Reports & Analytics</h1>
           <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
             Generate and export comprehensive operational and financial analytics.
           </p>

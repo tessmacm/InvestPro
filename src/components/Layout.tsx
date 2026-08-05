@@ -283,7 +283,7 @@ export const Layout = () => {
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <h2 className="text-xl font-display font-bold text-slate-900">
+              <h2 className="text-base sm:text-lg md:text-xl font-display font-bold text-slate-900 truncate">
                 {menuItems.find(m => m.path === location.pathname)?.name || "Dashboard"}
               </h2>
             </div>
