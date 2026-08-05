@@ -1,0 +1,8 @@
+{
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "downloadUrl": "https://github.com/tessmacm/InvestPro/releases/download/v1.0.0/app-debug.apk",
+  "releaseNotes": "Performance improvements and backend connectivity fixes.",
+  "mandatory": false,
+  "releasedAt": "2026-08-06T00:00:00Z"
+}

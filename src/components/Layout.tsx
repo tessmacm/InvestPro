@@ -26,12 +26,15 @@ import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { AgreementModal } from "./AgreementModal";
+import { useAppUpdate } from "../hooks/useAppUpdate";
+import { UpdateBanner } from "./UpdateBanner";
 
 export const Layout = () => {
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => typeof window !== "undefined" ? window.innerWidth >= 768 : true);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [pendingAgreementDoc, setPendingAgreementDoc] = useState<any | null>(null);
+  const { isUpdateAvailable, updateInfo, dismissUpdate } = useAppUpdate();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -258,6 +261,11 @@ export const Layout = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Non-intrusive Update Banner */}
+        {isUpdateAvailable && updateInfo && (
+          <UpdateBanner updateInfo={updateInfo} onDismiss={dismissUpdate} />
+        )}
+
         {/* Header */}
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 flex-shrink-0">
           <div className="flex items-center gap-4">
