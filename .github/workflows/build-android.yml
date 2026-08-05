@@ -8,6 +8,8 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -52,9 +54,22 @@ jobs:
           mkdir -p ../public/downloads ../dist/downloads
           cp app/build/outputs/apk/debug/app-debug.apk ../public/downloads/investpro.apk
           cp app/build/outputs/apk/debug/app-debug.apk ../dist/downloads/investpro.apk
+          echo "Built APK Size: $(wc -c < app/build/outputs/apk/debug/app-debug.apk) bytes"
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: investpro-android-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Create or Update GitHub Release with Real APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: "InvestPro Mobile v1.0.0"
+          body: "Latest compiled InvestPro Android APK build."
+          draft: false
+          prerelease: false
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

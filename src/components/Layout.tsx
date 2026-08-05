@@ -284,7 +284,7 @@ export const Layout = () => {
           <div className="flex items-center gap-2 relative">
             {/* Active Android APK Download Icon */}
             <a
-              href="/downloads/investpro.apk"
+              href="https://github.com/tessmacm/InvestPro/releases/download/v1.0.0/app-debug.apk"
               download="InvestPro.apk"
               className="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center transition-all shadow-2xs active:scale-95 cursor-pointer relative group"
               title="Download Android App (APK)"
