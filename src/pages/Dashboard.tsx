@@ -132,20 +132,40 @@ export const Dashboard = () => {
     try {
       const isInvestorUser = user?.role === "investor" || user?.role === "client";
 
-      // Fetch all dashboard datasets in parallel
-      const [invRes, payRes, docRes, roiRes, projRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() }).catch(() => null),
-        fetch(`${API_BASE_URL}/api/admin/payments`, { headers: authHeaders() }).catch(() => null),
-        fetch(`${API_BASE_URL}/api/admin/documents`, { headers: authHeaders() }).catch(() => null),
-        fetch(`${API_BASE_URL}/api/roi`, { headers: authHeaders() }).catch(() => null),
-        fetch(`${API_BASE_URL}/api/projects`, { headers: authHeaders() }).catch(() => null)
-      ]);
+      let allInvestors: any[] = [];
+      let allPayments: any[] = [];
+      let allDocuments: any[] = [];
+      let allRoiContracts: any[] = [];
+      let allProjects: any[] = [];
 
-      const allInvestors: any[] = (invRes && invRes.ok) ? await invRes.json() : [];
-      const allPayments: any[] = (payRes && payRes.ok) ? await payRes.json() : [];
-      const allDocuments: any[] = (docRes && docRes.ok) ? await docRes.json() : [];
-      const allRoiContracts: any[] = (roiRes && roiRes.ok) ? await roiRes.json() : [];
-      const allProjects: any[] = (projRes && projRes.ok) ? await projRes.json() : [];
+      // Single aggregated API endpoint call for instant single-roundtrip response
+      const res = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
+        headers: authHeaders()
+      }).catch(() => null);
+
+      if (res && res.ok) {
+        const statsData = await res.json();
+        allInvestors = statsData.investors || [];
+        allPayments = statsData.payments || [];
+        allDocuments = statsData.documents || [];
+        allRoiContracts = statsData.roiContracts || [];
+        allProjects = statsData.projects || [];
+      } else {
+        // Fallback to parallel requests if endpoint unavailable
+        const [invRes, payRes, docRes, roiRes, projRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() }).catch(() => null),
+          fetch(`${API_BASE_URL}/api/admin/payments`, { headers: authHeaders() }).catch(() => null),
+          fetch(`${API_BASE_URL}/api/admin/documents`, { headers: authHeaders() }).catch(() => null),
+          fetch(`${API_BASE_URL}/api/roi`, { headers: authHeaders() }).catch(() => null),
+          fetch(`${API_BASE_URL}/api/projects`, { headers: authHeaders() }).catch(() => null)
+        ]);
+
+        if (invRes && invRes.ok) allInvestors = await invRes.json();
+        if (payRes && payRes.ok) allPayments = await payRes.json();
+        if (docRes && docRes.ok) allDocuments = await docRes.json();
+        if (roiRes && roiRes.ok) allRoiContracts = await roiRes.json();
+        if (projRes && projRes.ok) allProjects = await projRes.json();
+      }
 
       setMyDocuments(Array.isArray(allDocuments) ? allDocuments : []);
 

@@ -1,6 +1,9 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*.{css,js}", "/images/*.{png,jpg,gif}", "/api/*"]
+    "exclude": ["/assets/*.{css,js}", "/images/*.{png,jpg,gif}", "/api/*", "/downloads/*"]
+  },
+  "mimeTypes": {
+    ".apk": "application/vnd.android.package-archive"
   }
 }
