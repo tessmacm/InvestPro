@@ -19,7 +19,8 @@ import {
   Loader2,
   ChevronRight,
   ArrowLeft,
-  Smartphone
+  Smartphone,
+  Apple
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -282,21 +283,32 @@ export const Layout = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 relative">
-            {/* Download Mobile APK Button */}
+          <div className="flex items-center gap-2.5 relative">
+            {/* Direct Android APK Download Button */}
             <a
-              href="https://github.com/tessmacm/InvestPro/actions/workflows/build-android.yml"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
-              title="Download InvestPro Android APK directly"
+              href="/downloads/investpro.apk"
+              download="InvestPro.apk"
+              className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-200/90 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer group"
+              title="Directly download InvestPro Android APK file"
             >
-              <div className="w-6 h-6 rounded-lg bg-emerald-600 flex items-center justify-center text-white flex-shrink-0">
+              <div className="w-6 h-6 rounded-lg bg-emerald-600 group-hover:bg-emerald-700 flex items-center justify-center text-white flex-shrink-0 transition-colors shadow-2xs">
                 <Smartphone className="w-3.5 h-3.5" />
               </div>
-              <span className="hidden sm:inline font-bold">Download APK</span>
-              <Download className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden md:inline font-bold">Download APK</span>
+              <Download className="w-3.5 h-3.5 text-emerald-600 group-hover:translate-y-0.5 transition-transform" />
             </a>
+
+            {/* iOS App Button (Disabled / Coming Soon) */}
+            <div
+              className="hidden lg:flex items-center gap-2 px-2.5 py-1.5 bg-slate-100/80 text-slate-400 border border-slate-200/70 rounded-xl text-xs font-medium cursor-not-allowed opacity-80 select-none"
+              title="iOS App - Coming Soon"
+            >
+              <div className="w-6 h-6 rounded-lg bg-slate-200 flex items-center justify-center text-slate-500 flex-shrink-0">
+                <Apple className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-semibold text-slate-500">iOS App</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-slate-200/90 text-slate-600 rounded-md">Coming Soon</span>
+            </div>
 
             <div className="relative">
               <button

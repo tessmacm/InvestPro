@@ -49,6 +49,8 @@ jobs:
         run: |
           cd android
           ./gradlew assembleDebug --stacktrace
+          mkdir -p ../public/downloads
+          cp app/build/outputs/apk/debug/app-debug.apk ../public/downloads/investpro.apk
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
