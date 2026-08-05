@@ -132,51 +132,22 @@ export const Dashboard = () => {
     try {
       const isInvestorUser = user?.role === "investor" || user?.role === "client";
 
-      // 1. Fetch Investors List
-      let allInvestors: any[] = [];
-      const invResponse = await fetch(`${API_BASE_URL}/api/admin/investors`, {
-        headers: authHeaders()
-      }).catch(() => null);
-      if (invResponse && invResponse.ok) {
-        allInvestors = await invResponse.json();
-      }
+      // Fetch all dashboard datasets in parallel
+      const [invRes, payRes, docRes, roiRes, projRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() }).catch(() => null),
+        fetch(`${API_BASE_URL}/api/admin/payments`, { headers: authHeaders() }).catch(() => null),
+        fetch(`${API_BASE_URL}/api/admin/documents`, { headers: authHeaders() }).catch(() => null),
+        fetch(`${API_BASE_URL}/api/roi`, { headers: authHeaders() }).catch(() => null),
+        fetch(`${API_BASE_URL}/api/projects`, { headers: authHeaders() }).catch(() => null)
+      ]);
 
-      // 2. Fetch Payments List
-      let allPayments: any[] = [];
-      const payResponse = await fetch(`${API_BASE_URL}/api/admin/payments`, {
-        headers: authHeaders()
-      }).catch(() => null);
-      if (payResponse && payResponse.ok) {
-        allPayments = await payResponse.json();
-      }
+      const allInvestors: any[] = (invRes && invRes.ok) ? await invRes.json() : [];
+      const allPayments: any[] = (payRes && payRes.ok) ? await payRes.json() : [];
+      const allDocuments: any[] = (docRes && docRes.ok) ? await docRes.json() : [];
+      const allRoiContracts: any[] = (roiRes && roiRes.ok) ? await roiRes.json() : [];
+      const allProjects: any[] = (projRes && projRes.ok) ? await projRes.json() : [];
 
-      // 3. Fetch Documents List
-      let allDocuments: any[] = [];
-      const docResponse = await fetch(`${API_BASE_URL}/api/admin/documents`, {
-        headers: authHeaders()
-      }).catch(() => null);
-      if (docResponse && docResponse.ok) {
-        allDocuments = await docResponse.json();
-      }
       setMyDocuments(Array.isArray(allDocuments) ? allDocuments : []);
-
-      // 4. Fetch ROI Contracts List
-      let allRoiContracts: any[] = [];
-      const roiResponse = await fetch(`${API_BASE_URL}/api/roi`, {
-        headers: authHeaders()
-      }).catch(() => null);
-      if (roiResponse && roiResponse.ok) {
-        allRoiContracts = await roiResponse.json();
-      }
-
-      // 5. Fetch Projects List
-      let allProjects: any[] = [];
-      const projResponse = await fetch(`${API_BASE_URL}/api/projects`, {
-        headers: authHeaders()
-      }).catch(() => null);
-      if (projResponse && projResponse.ok) {
-        allProjects = await projResponse.json();
-      }
 
       let investmentVal = 0;
       let payoutsTillDateVal = 0;
