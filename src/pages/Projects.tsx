@@ -31,7 +31,7 @@ import {
   Lightbulb,
   Check
 } from "lucide-react";
-import { authHeaders } from "../config/api";
+import { API_BASE_URL, authHeaders } from "../config/api";
 
 export const Projects = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -115,7 +115,7 @@ export const Projects = () => {
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/projects", {
+      const response = await fetch(`${API_BASE_URL}/api/projects`, {
         headers: authHeaders()
       });
       if (!response.ok) {
@@ -194,7 +194,7 @@ export const Projects = () => {
 
   const executeAddProject = async () => {
     try {
-      const response = await fetch("/api/projects", {
+      const response = await fetch(`${API_BASE_URL}/api/projects`, {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({
@@ -247,7 +247,7 @@ export const Projects = () => {
     if (!selectedProject) return;
 
     try {
-      const response = await fetch(`/api/projects/${selectedProject.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/projects/${selectedProject.id}`, {
         method: "PUT",
         headers: authHeaders(),
         body: JSON.stringify({
@@ -298,7 +298,7 @@ export const Projects = () => {
     if (!target) return;
 
     try {
-      const response = await fetch(`/api/projects/${target.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/projects/${target.id}`, {
         method: "DELETE",
         headers: authHeaders()
       });
@@ -329,7 +329,7 @@ export const Projects = () => {
 
     const nextStatus = projectToToggle.status === "active" ? "inactive" : "active";
     try {
-      const response = await fetch(`/api/projects/${projectToToggle.id}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/projects/${projectToToggle.id}/status`, {
         method: "PATCH",
         headers: authHeaders(),
         body: JSON.stringify({ status: nextStatus })

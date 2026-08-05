@@ -1,8 +1,13 @@
 /// <reference types="vite/client" />
 
+const DEFAULT_PROD_API = "https://investpro-api-eah3gdgnc2dmf9ah.canadacentral-01.azurewebsites.net";
+
 const getApiBaseUrl = (): string => {
   const url = import.meta.env.VITE_API_URL;
-  return url ? url.trim() : "";
+  if (url && url.trim()) {
+    return url.trim().replace(/\/+$/, '');
+  }
+  return DEFAULT_PROD_API;
 };
 
 export const API_BASE_URL = getApiBaseUrl();

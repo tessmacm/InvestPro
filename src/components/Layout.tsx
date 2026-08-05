@@ -18,7 +18,8 @@ import {
   Bell,
   Loader2,
   ChevronRight,
-  ArrowLeft
+  ArrowLeft,
+  Smartphone
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -281,7 +282,22 @@ export const Layout = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 relative">
+          <div className="flex items-center gap-3 relative">
+            {/* Download Mobile APK Button */}
+            <a
+              href="https://github.com/tessmacm/InvestPro/actions/workflows/build-android.yml"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+              title="Download InvestPro Android APK directly"
+            >
+              <div className="w-6 h-6 rounded-lg bg-emerald-600 flex items-center justify-center text-white flex-shrink-0">
+                <Smartphone className="w-3.5 h-3.5" />
+              </div>
+              <span className="hidden sm:inline font-bold">Download APK</span>
+              <Download className="w-3.5 h-3.5 text-emerald-600" />
+            </a>
+
             <div className="relative">
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}

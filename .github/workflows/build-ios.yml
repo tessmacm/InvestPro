@@ -24,6 +24,7 @@ jobs:
       - name: Build Web Application (Mobile)
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
+          VITE_API_URL: 'https://investpro-api-eah3gdgnc2dmf9ah.canadacentral-01.azurewebsites.net'
         run: npm run build:mobile
 
       - name: Sync Capacitor iOS
