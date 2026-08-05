@@ -28,9 +28,9 @@ import { API_BASE_URL, authHeaders } from "../config/api";
 import { AgreementModal } from "./AgreementModal";
 
 export const Layout = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => typeof window !== "undefined" ? window.innerWidth >= 768 : true);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [pendingAgreementDoc, setPendingAgreementDoc] = useState<any | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -72,8 +72,6 @@ export const Layout = () => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (mobile) setIsSidebarOpen(false);
-      else setIsSidebarOpen(true);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -283,31 +281,26 @@ export const Layout = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 relative">
-            {/* Direct Android APK Download Button */}
+          <div className="flex items-center gap-2 relative">
+            {/* Active Android APK Download Icon */}
             <a
               href="/downloads/investpro.apk"
               download="InvestPro.apk"
-              className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-200/90 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer group"
-              title="Directly download InvestPro Android APK file"
+              className="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center transition-all shadow-2xs active:scale-95 cursor-pointer relative group"
+              title="Download Android App (APK)"
             >
-              <div className="w-6 h-6 rounded-lg bg-emerald-600 group-hover:bg-emerald-700 flex items-center justify-center text-white flex-shrink-0 transition-colors shadow-2xs">
-                <Smartphone className="w-3.5 h-3.5" />
-              </div>
-              <span className="hidden md:inline font-bold">Download APK</span>
-              <Download className="w-3.5 h-3.5 text-emerald-600 group-hover:translate-y-0.5 transition-transform" />
+              <Smartphone className="w-5 h-5 text-emerald-600" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-600 rounded-full flex items-center justify-center text-white text-[9px] font-bold border border-white">
+                ↓
+              </span>
             </a>
 
-            {/* iOS App Button (Disabled / Coming Soon) */}
+            {/* Inactive iOS Download Icon */}
             <div
-              className="hidden lg:flex items-center gap-2 px-2.5 py-1.5 bg-slate-100/80 text-slate-400 border border-slate-200/70 rounded-xl text-xs font-medium cursor-not-allowed opacity-80 select-none"
-              title="iOS App - Coming Soon"
+              className="w-9 h-9 rounded-xl bg-slate-100/90 text-slate-400 border border-slate-200/80 flex items-center justify-center opacity-45 cursor-not-allowed select-none pointer-events-none"
+              title="iOS App (Coming Soon)"
             >
-              <div className="w-6 h-6 rounded-lg bg-slate-200 flex items-center justify-center text-slate-500 flex-shrink-0">
-                <Apple className="w-3.5 h-3.5" />
-              </div>
-              <span className="font-semibold text-slate-500">iOS App</span>
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-slate-200/90 text-slate-600 rounded-md">Coming Soon</span>
+              <Apple className="w-5 h-5 text-slate-500" />
             </div>
 
             <div className="relative">
