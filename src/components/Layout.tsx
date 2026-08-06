@@ -261,8 +261,8 @@ export const Layout = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Non-intrusive Update Banner */}
-        {isUpdateAvailable && updateInfo && (
+        {/* Non-intrusive Update Banner (Native App Only) */}
+        {isNative && isUpdateAvailable && updateInfo && (
           <UpdateBanner updateInfo={updateInfo} onDismiss={dismissUpdate} />
         )}
 
