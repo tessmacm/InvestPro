@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 
 export interface VersionInfo {
   versionCode: number;
@@ -16,7 +17,12 @@ export const useAppUpdate = () => {
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
+  const isNative = Capacitor.isNativePlatform();
+
   const checkVersion = async () => {
+    // Mobile App Update Notification appears ONLY inside native mobile app (Android / iOS)
+    if (!isNative) return;
+
     try {
       const res = await fetch("/downloads/version.json", { cache: "no-store" });
       if (res.ok) {
@@ -43,7 +49,8 @@ export const useAppUpdate = () => {
     currentVersionName: CURRENT_VERSION_NAME,
     currentVersionCode: CURRENT_VERSION_CODE,
     updateInfo,
-    isUpdateAvailable: isUpdateAvailable && !isDismissed,
+    isNative,
+    isUpdateAvailable: isNative && isUpdateAvailable && !isDismissed,
     dismissUpdate,
     checkVersion
   };

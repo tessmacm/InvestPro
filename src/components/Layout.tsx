@@ -34,7 +34,7 @@ export const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => typeof window !== "undefined" ? window.innerWidth >= 768 : true);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [pendingAgreementDoc, setPendingAgreementDoc] = useState<any | null>(null);
-  const { isUpdateAvailable, updateInfo, dismissUpdate } = useAppUpdate();
+  const { isUpdateAvailable, updateInfo, dismissUpdate, isNative } = useAppUpdate();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -290,26 +290,31 @@ export const Layout = () => {
           </div>
 
           <div className="flex items-center gap-2 relative">
-            {/* Active Android APK Download Icon */}
-            <a
-              href="https://github.com/tessmacm/InvestPro/releases/download/v1.0.0/app-debug.apk"
-              download="InvestPro.apk"
-              className="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center transition-all shadow-2xs active:scale-95 cursor-pointer relative group"
-              title="Download Android App (APK)"
-            >
-              <Smartphone className="w-5 h-5 text-emerald-600" />
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-600 rounded-full flex items-center justify-center text-white text-[9px] font-bold border border-white">
-                ↓
-              </span>
-            </a>
+            {/* Header Download APK & iOS Icons (visible ONLY on web browser, hidden in native mobile app) */}
+            {!isNative && (
+              <>
+                {/* Active Android APK Download Icon */}
+                <a
+                  href="https://github.com/tessmacm/InvestPro/releases/download/v1.0.0/app-debug.apk"
+                  download="InvestPro.apk"
+                  className="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center transition-all shadow-2xs active:scale-95 cursor-pointer relative group"
+                  title="Download Android App (APK)"
+                >
+                  <Smartphone className="w-5 h-5 text-emerald-600" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-600 rounded-full flex items-center justify-center text-white text-[9px] font-bold border border-white">
+                    ↓
+                  </span>
+                </a>
 
-            {/* Inactive iOS Download Icon */}
-            <div
-              className="w-9 h-9 rounded-xl bg-slate-100/90 text-slate-400 border border-slate-200/80 flex items-center justify-center opacity-45 cursor-not-allowed select-none pointer-events-none"
-              title="iOS App (Coming Soon)"
-            >
-              <Apple className="w-5 h-5 text-slate-500" />
-            </div>
+                {/* Inactive iOS Download Icon */}
+                <div
+                  className="w-9 h-9 rounded-xl bg-slate-100/90 text-slate-400 border border-slate-200/80 flex items-center justify-center opacity-45 cursor-not-allowed select-none pointer-events-none"
+                  title="iOS App (Coming Soon)"
+                >
+                  <Apple className="w-5 h-5 text-slate-500" />
+                </div>
+              </>
+            )}
 
             <div className="relative">
               <button
