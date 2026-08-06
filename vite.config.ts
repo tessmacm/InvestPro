@@ -41,3 +41,4 @@ export default defineConfig(({mode}) => {
     },
   };
 });
+// Trigger CI/CD workflow build
