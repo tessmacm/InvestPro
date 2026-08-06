@@ -23,6 +23,7 @@ import { Document, Investor } from "../types";
 import { DataTable } from "../components/DataTable";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
+import { cachedFetch } from "../utils/apiCache";
 import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
 import { cn } from "../lib/utils";
 import { AgreementViewerModal } from "../components/AgreementViewerModal";
@@ -93,8 +94,11 @@ export const Documents = () => {
 
   const fetchDocuments = async () => {
     setLoading(true);
+    const targetParam = isAllInvestors || selectedInvestorIds.length === 0
+        ? (formData.investorId ? `id=${formData.investorId}` : "id=0")
+        : `targetIds=${selectedInvestorIds.join(",")}`;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/documents`, {
+      const response = await cachedFetch(`${API_BASE_URL}/api/admin/documents?${targetParam}`, {
         headers: authHeaders()
       });
       const data = await response.json();
@@ -108,7 +112,7 @@ export const Documents = () => {
 
   const fetchInvestors = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/investors`, {
+      const response = await cachedFetch(`${API_BASE_URL}/api/admin/investors`, {
         headers: authHeaders()
       });
       if (response.ok) {

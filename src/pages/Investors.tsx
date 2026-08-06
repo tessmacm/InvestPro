@@ -32,6 +32,7 @@ import { RootState } from "../store";
 import { Investor } from "../types";
 import { cn } from "../lib/utils";
 import { API_BASE_URL, authHeaders } from "../config/api";
+import { cachedFetch } from "../utils/apiCache";
 import { BaseModal } from "../components/BaseModal";
 import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
 
@@ -335,12 +336,12 @@ export const Investors = () => {
   const fetchLookups = async () => {
     try {
       const [typesRes, interestsRes, roiRangesRes, roiTypesRes, banksRes, projectsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/lookups/investor-types`),
-        fetch(`${API_BASE_URL}/api/lookups/investment-interests`),
-        fetch(`${API_BASE_URL}/api/lookups/roi-ranges`),
-        fetch(`${API_BASE_URL}/api/lookups/roi-types`),
-        fetch(`${API_BASE_URL}/api/lookups/banks`),
-        fetch(`${API_BASE_URL}/api/projects`, { headers: authHeaders() }).catch(() => null),
+        cachedFetch(`${API_BASE_URL}/api/lookups/investor-types`),
+        cachedFetch(`${API_BASE_URL}/api/lookups/investment-interests`),
+        cachedFetch(`${API_BASE_URL}/api/lookups/roi-ranges`),
+        cachedFetch(`${API_BASE_URL}/api/lookups/roi-types`),
+        cachedFetch(`${API_BASE_URL}/api/lookups/banks`),
+        cachedFetch(`${API_BASE_URL}/api/projects`, { headers: authHeaders() }).catch(() => null),
       ]);
       if (typesRes.ok) {
         const data = await typesRes.json();
@@ -388,8 +389,8 @@ export const Investors = () => {
     setLoading(true);
     try {
       const [invRes, docRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() }),
-        fetch(`${API_BASE_URL}/api/admin/documents`, { headers: authHeaders() }).catch(() => null)
+        cachedFetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() }),
+        cachedFetch(`${API_BASE_URL}/api/admin/documents`, { headers: authHeaders() }).catch(() => null)
       ]);
       if (!invRes.ok) throw new Error("Could not fetch list");
       const data = await invRes.json();

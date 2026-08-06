@@ -4,6 +4,7 @@ import { RootState } from "../store";
 import { RoiContract } from "../types";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
+import { cachedFetch } from "../utils/apiCache";
 import { TableSkeleton } from "../components/TableSkeleton";
 import { Search, Eye, TrendingUp, Calendar, Landmark, Percent } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -32,7 +33,7 @@ export const Roi = () => {
   const fetchRoiContracts = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/roi`, {
+      const response = await cachedFetch(`${API_BASE_URL}/api/roi`, {
         headers: authHeaders()
       });
       if (!response.ok) throw new Error("Failed to fetch ROI contracts");

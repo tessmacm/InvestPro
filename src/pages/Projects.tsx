@@ -32,6 +32,7 @@ import {
   Check
 } from "lucide-react";
 import { API_BASE_URL, authHeaders } from "../config/api";
+import { cachedFetch } from "../utils/apiCache";
 
 export const Projects = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -115,7 +116,7 @@ export const Projects = () => {
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/projects`, {
+      const response = await cachedFetch(`${API_BASE_URL}/api/projects`, {
         headers: authHeaders()
       });
       if (!response.ok) {

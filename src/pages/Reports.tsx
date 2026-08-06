@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import { Investor, Payment, Project } from "../types";
 import { API_BASE_URL, authHeaders } from "../config/api";
+import { cachedFetch } from "../utils/apiCache";
 import { TableSkeleton } from "../components/TableSkeleton";
 import { Search, Download, Calendar, Filter, FileSpreadsheet, Users, Folder, Landmark, RefreshCw, CheckCircle2, TrendingUp, DollarSign } from "lucide-react";
 import { motion } from "motion/react";
@@ -32,14 +33,14 @@ export const Reports = () => {
       setLoading(true);
       try {
         const [invRes, projRes, payRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() }),
-          fetch(`${API_BASE_URL}/api/admin/projects`, { headers: authHeaders() }),
-          fetch(`${API_BASE_URL}/api/admin/payments`, { headers: authHeaders() })
+          cachedFetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() }),
+          cachedFetch(`${API_BASE_URL}/api/projects`, { headers: authHeaders() }).catch(() => null),
+          cachedFetch(`${API_BASE_URL}/api/admin/payments`, { headers: authHeaders() })
         ]);
 
-        if (invRes.ok) setInvestors(await invRes.json());
-        if (projRes.ok) setProjects(await projRes.json());
-        if (payRes.ok) setPayments(await payRes.json());
+        if (invRes) setInvestors(await invRes.json());
+        if (projRes) setProjects(await projRes.json());
+        if (payRes) setPayments(await payRes.json());
       } catch (err) {
         console.error("Failed to load reports data", err);
       } finally {

@@ -30,6 +30,7 @@ import {
 } from "recharts";
 import { Link } from "react-router-dom";
 import { API_BASE_URL, authHeaders } from "../config/api";
+import { cachedFetch } from "../utils/apiCache";
 import { cn } from "../lib/utils";
 
 const data = [
@@ -138,8 +139,8 @@ export const Dashboard = () => {
       let allRoiContracts: any[] = [];
       let allProjects: any[] = [];
 
-      // Single aggregated API endpoint call for instant single-roundtrip response
-      const res = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
+      // Single aggregated API endpoint call with SWR caching for 0ms page loads
+      const res = await cachedFetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
         headers: authHeaders()
       }).catch(() => null);
 

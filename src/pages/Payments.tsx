@@ -5,6 +5,7 @@ import { RootState } from "../store";
 import { Payment } from "../types";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
+import { cachedFetch } from "../utils/apiCache";
 import { TableSkeleton } from "../components/TableSkeleton";
 import { Filter, Eye, DollarSign, Calendar, Landmark, Clock, Send, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -40,7 +41,7 @@ export const Payments = () => {
   const fetchPayments = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/payments`, {
+      const response = await cachedFetch(`${API_BASE_URL}/api/admin/payments`, {
         headers: authHeaders()
       });
       if (!response.ok) throw new Error("Failed to fetch payments");
