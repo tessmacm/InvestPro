@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - feature/local-dev-improvements
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
+      - feature/local-dev-improvements
   workflow_dispatch:
 
 jobs:

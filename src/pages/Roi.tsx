@@ -127,7 +127,7 @@ export const Roi = () => {
                       <td className="px-6 py-4 font-mono font-bold text-slate-500">Inv#{c.investorId}</td>
                       <td className="px-6 py-4 font-semibold text-slate-900">{c.projectTitle}</td>
                       <td className="px-6 py-4 font-bold text-slate-800">{c.roiAgreed}%</td>
-                      <td className="px-6 py-4 font-bold text-emerald-600">${c.monthlyPayment.toLocaleString()}</td>
+                      <td className="px-6 py-4 font-bold text-emerald-600">£{c.monthlyPayment.toLocaleString()}</td>
                       <td className="px-6 py-4 text-slate-500">
                         {new Date(c.nextPaymentDate).toLocaleDateString(undefined, {
                           day: "2-digit",
@@ -180,7 +180,7 @@ export const Roi = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Monthly Yield</span>
-                <span className="text-sm font-bold text-emerald-600">${selectedContract.monthlyPayment.toLocaleString()}</span>
+                <span className="text-sm font-bold text-emerald-600">£{selectedContract.monthlyPayment.toLocaleString()}</span>
               </div>
               <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Next Payout Date</span>

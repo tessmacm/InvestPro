@@ -1077,9 +1077,9 @@ export const Projects = () => {
                 <div className="space-y-4">
                   {/* Budget */}
                   <div className="space-y-1.5 text-left">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Budget ($) <strong className="text-rose-500">*</strong></label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Budget (£) <strong className="text-rose-500">*</strong></label>
                     <div className="relative">
-                      <div className="absolute left-3.5 top-3 bg-slate-100 border border-slate-200/50 rounded-lg text-slate-500 w-6 h-6 flex items-center justify-center font-bold text-xs">$</div>
+                      <div className="absolute left-3.5 top-3 bg-slate-100 border border-slate-200/50 rounded-lg text-slate-500 w-6 h-6 flex items-center justify-center font-bold text-xs">£</div>
                       <input
                         required
                         type="number"
@@ -1589,9 +1589,9 @@ export const Projects = () => {
                 <div className="space-y-4">
                   {/* Budget */}
                   <div className="space-y-1.5 text-left">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Budget ($) <strong className="text-rose-500">*</strong></label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Budget (£) <strong className="text-rose-500">*</strong></label>
                     <div className="relative">
-                      <div className="absolute left-3.5 top-3 bg-slate-100 border border-slate-200/50 rounded-lg text-slate-500 w-6 h-6 flex items-center justify-center font-bold text-xs">$</div>
+                      <div className="absolute left-3.5 top-3 bg-slate-100 border border-slate-200/50 rounded-lg text-slate-500 w-6 h-6 flex items-center justify-center font-bold text-xs">£</div>
                       <input
                         required
                         type="number"

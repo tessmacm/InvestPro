@@ -18,7 +18,6 @@ export interface Investor {
   amount: number;
   reg_number: string;
   interest: string;
-  accreditation: "Accredited" | "Non-Accredited";
   country: string;
   status: "active" | "inactive";
   date_of_onboarding?: string;
@@ -38,6 +37,7 @@ export interface Investor {
   min_RoiRangeId?: number | string;
   max_RoiRangeId?: number | string;
   roiTypeId?: number | string;
+  duration?: string;
 }
 
 export interface Document {
@@ -78,8 +78,11 @@ export interface Payment {
   paymentId: number;
   investorId: number;
   investorName: string;
+  investorEmail?: string;
+  mobile?: string;
   amount: number;
   paymentDate: string;
+  dueDate?: string;
   status: string;
   isSent: boolean;
   isReceived: boolean;
@@ -102,13 +105,19 @@ export interface SystemNotification {
   id: number;
   title: string;
   message: string;
-  eventType: string;
+  eventType?: string;
   isRead: boolean;
+  readAt?: string;
   createdAt: string;
+  senderUserId?: string;
+  senderName?: string;
+  senderRole?: string;
+  isSentByMe?: boolean;
   investorId?: number;
   targetInvestorIds?: string;
+  recipientName?: string;
   investorName?: string;
-  status: string;
+  status?: string;
 }
 
 export interface SystemReport {

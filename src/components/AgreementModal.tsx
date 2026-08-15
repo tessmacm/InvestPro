@@ -13,6 +13,8 @@ interface AgreementModalProps {
   investorEmail: string;
   amount?: number | string;
   projectName?: string;
+  currentIndex?: number;
+  totalCount?: number;
   onSignedSuccessfully: () => void;
   onSignLater?: () => void;
 }
@@ -25,6 +27,8 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
   investorEmail,
   amount = 10000,
   projectName = "Current Operations",
+  currentIndex = 1,
+  totalCount = 1,
   onSignedSuccessfully,
   onSignLater,
 }) => {
@@ -133,6 +137,14 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
     }
   };
 
+  // Reset signature inputs when documentId changes
+  useEffect(() => {
+    setTypedName("");
+    setAgreed(false);
+    setError(null);
+    clearSignature();
+  }, [documentId]);
+
   if (!isOpen) return null;
 
   return (
@@ -151,9 +163,16 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
                 <ShieldCheck className="w-7 h-7 text-blue-400" />
               </div>
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-full">
-                  Action Required
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-full">
+                    Action Required
+                  </span>
+                  {totalCount > 1 && (
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full">
+                      Agreement {currentIndex} of {totalCount}
+                    </span>
+                  )}
+                </div>
                 <h2 className="text-xl font-display font-extrabold text-white mt-1">
                   Master Investment Agreement Digital Signature
                 </h2>

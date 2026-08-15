@@ -33,7 +33,8 @@ export const Layout = () => {
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => typeof window !== "undefined" ? window.innerWidth >= 768 : true);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [pendingAgreementDoc, setPendingAgreementDoc] = useState<any | null>(null);
+  const [pendingAgreements, setPendingAgreements] = useState<any[]>([]);
+  const [currentAgreementIndex, setCurrentAgreementIndex] = useState(0);
   const { isUpdateAvailable, updateInfo, dismissUpdate, isNative } = useAppUpdate();
   const location = useLocation();
   const navigate = useNavigate();
@@ -50,19 +51,21 @@ export const Layout = () => {
         if (res.ok) {
           const docs = await res.json();
           if (Array.isArray(docs)) {
-            const pending = docs.find(
+            const pending = docs.filter(
               (d: any) =>
                 (d.type === "Agreement" || d.title?.toLowerCase().includes("agreement")) &&
                 d.status === "Pending Signature"
             );
-            setPendingAgreementDoc(pending || null);
+            setPendingAgreements(pending);
+            setCurrentAgreementIndex(0);
           }
         }
       } catch (err) {
         console.error("Failed to check agreement status", err);
       }
     } else {
-      setPendingAgreementDoc(null);
+      setPendingAgreements([]);
+      setCurrentAgreementIndex(0);
     }
   };
 
@@ -91,7 +94,7 @@ export const Layout = () => {
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["admin", "manager", "investor"] },
     { name: "Admin Panel", path: "/admin", icon: ShieldCheck, roles: ["admin"] },
-    { name: "Investors", path: "/investors", icon: Users, roles: ["admin", "manager"] },
+    { name: "Investments", path: "/investors", icon: Users, roles: ["admin", "manager"] },
     { name: "Projects", path: "/projects", icon: Folder, roles: ["admin", "manager"] },
     { name: "Documents", path: "/documents", icon: FileText, roles: ["admin", "manager", "investor"] },
     { name: "Payments", path: "/payments", icon: Landmark, roles: ["admin", "manager", "investor"] },
@@ -383,17 +386,24 @@ export const Layout = () => {
         </div>
       </div>
 
-      {pendingAgreementDoc && (
+      {pendingAgreements.length > 0 && pendingAgreements[currentAgreementIndex] && (
         <AgreementModal
-          isOpen={!!pendingAgreementDoc}
-          documentId={pendingAgreementDoc.id}
-          investorId={(pendingAgreementDoc as any).investor_id || (pendingAgreementDoc as any).investorId}
+          isOpen={true}
+          documentId={pendingAgreements[currentAgreementIndex].id}
+          investorId={(pendingAgreements[currentAgreementIndex] as any).investor_id || (pendingAgreements[currentAgreementIndex] as any).investorId}
           investorName={user?.name || "Investor"}
           investorEmail={user?.email || ""}
           projectName="Current Operations"
+          currentIndex={currentAgreementIndex + 1}
+          totalCount={pendingAgreements.length}
           onSignedSuccessfully={() => {
-            setPendingAgreementDoc(null);
-            checkInvestorAgreement();
+            if (currentAgreementIndex + 1 < pendingAgreements.length) {
+              setCurrentAgreementIndex(prev => prev + 1);
+            } else {
+              setPendingAgreements([]);
+              setCurrentAgreementIndex(0);
+              checkInvestorAgreement();
+            }
           }}
           onSignLater={handleLogout}
         />

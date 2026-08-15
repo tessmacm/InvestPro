@@ -7,7 +7,7 @@ import { API_BASE_URL, authHeaders } from "../config/api";
 import { TableSkeleton } from "../components/TableSkeleton";
 import {
   Search, Filter, Eye, Edit2, Plus, Bell, Calendar, Tag, CheckCircle,
-  AlertCircle, X, ChevronLeft, ChevronRight, Users, Clock, MessageSquare,
+  AlertCircle, X, ChevronLeft, ChevronRight, Users, User, Clock, MessageSquare,
   Mail, MailOpen, ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -302,15 +302,13 @@ export const Notifications = () => {
               Mark All Read ({unreadCount})
             </button>
           )}
-          {isAdmin && (
-            <button
-              onClick={resetAddForm}
-              className="inline-flex items-center gap-2 bg-slate-950 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors shadow-sm cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              Add Notification
-            </button>
-          )}
+          <button
+            onClick={resetAddForm}
+            className="inline-flex items-center gap-2 bg-slate-950 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors shadow-sm cursor-pointer active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            {isAdmin ? "Send Notification" : "Send Message to Management"}
+          </button>
         </div>
       </div>
 
@@ -375,11 +373,11 @@ export const Notifications = () => {
                 <thead>
                   <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
                     <th className="px-6 py-4 w-8"></th>
-                    <th className="px-6 py-4">Title</th>
-                    <th className="px-6 py-4 hidden md:table-cell">Event Type</th>
-                    <th className="px-6 py-4 hidden md:table-cell">Investor</th>
+                    <th className="px-6 py-4">Title &amp; Message</th>
+                    <th className="px-6 py-4 hidden md:table-cell">Sender</th>
+                    <th className="px-6 py-4 hidden md:table-cell">Recipient</th>
                     <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4 hidden sm:table-cell">Status</th>
+                    <th className="px-6 py-4 text-center">Receiver Status</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -393,33 +391,32 @@ export const Notifications = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className={`transition-colors cursor-pointer ${
-                          !n.isRead ? "bg-blue-50/40 hover:bg-blue-50/70" : "hover:bg-slate-50/50"
+                          !n.isRead && !n.isSentByMe ? "bg-blue-50/40 hover:bg-blue-50/70" : "hover:bg-slate-50/50"
                         }`}
                         onClick={() => openDetails(n)}
                       >
                         <td className="px-6 py-4">
                           <span className={`inline-block w-2.5 h-2.5 rounded-full ${
-                            n.isRead ? "bg-slate-200" : "bg-blue-500"
+                            n.isRead ? "bg-slate-200" : (n.isSentByMe ? "bg-amber-400" : "bg-blue-500")
                           }`} />
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className={`text-sm ${!n.isRead ? "font-bold text-slate-900" : "font-semibold text-slate-700"}`}>
+                          <div className="flex flex-col max-w-sm">
+                            <span className={`text-sm ${!n.isRead && !n.isSentByMe ? "font-bold text-slate-900" : "font-semibold text-slate-700"}`}>
                               {n.title}
                             </span>
-                            <span className="text-xs text-slate-400 truncate max-w-xs mt-0.5">{n.message}</span>
+                            <span className="text-xs text-slate-400 truncate mt-0.5">{n.message}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 hidden md:table-cell">
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-md">
-                            <Tag className="w-3 h-3" />
-                            {n.eventType}
+                          <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md">
+                            {n.isSentByMe ? "You (" + (n.senderName || "Me") + ")" : (n.senderName || "Management")}
                           </span>
                         </td>
                         <td className="px-6 py-4 hidden md:table-cell">
                           <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
                             <Users className="w-3.5 h-3.5 text-slate-400" />
-                            {n.investorName || "All Investors"}
+                            {n.recipientName || n.investorName || "All Investors"}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -428,12 +425,18 @@ export const Notifications = () => {
                             {timeAgo(n.createdAt)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 hidden sm:table-cell">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                            n.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
-                          }`}>
-                            {n.status}
-                          </span>
+                        <td className="px-6 py-4 text-center">
+                          {n.isRead ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <CheckCircle className="w-3 h-3 text-emerald-600" />
+                              Read
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              <Clock className="w-3 h-3 text-amber-600" />
+                              Unread
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
@@ -445,7 +448,7 @@ export const Notifications = () => {
                               <Eye className="w-3.5 h-3.5" />
                               <span className="hidden sm:inline">View</span>
                             </button>
-                            {isAdmin && (
+                            {isAdmin && n.isSentByMe && (
                               <button
                                 onClick={() => openEditForm(n)}
                                 className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
@@ -455,7 +458,7 @@ export const Notifications = () => {
                                 <span className="hidden sm:inline">Edit</span>
                               </button>
                             )}
-                            {!n.isRead && (
+                            {!n.isRead && !n.isSentByMe && (
                               <button
                                 onClick={() => handleMarkAsRead(n.id)}
                                 className="inline-flex items-center text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-1.5 rounded-md transition-colors"
@@ -513,7 +516,7 @@ export const Notifications = () => {
         </>
       )}
 
-      <BaseModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Configure New Notification" description="Create a new system notification for investors.">
+      <BaseModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={isAdmin ? "Send New Notification" : "Send Message to Management"} description={isAdmin ? "Send a direct notification to investors or broadcast to all." : "Send an inquiry or communication directly to Admin and Manager."}>
         <form onSubmit={handleAddSubmit} className="space-y-4 p-6">
           <div>
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
@@ -524,6 +527,7 @@ export const Notifications = () => {
               type="text"
               required
               maxLength={100}
+              placeholder="e.g. Account update / Inquiry regarding ROI"
               value={formData.title}
               onChange={(e) => { setFormData({ ...formData, title: e.target.value }); setFormErrors(prev => ({ ...prev, title: undefined })); }}
               className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all ${
@@ -539,8 +543,9 @@ export const Notifications = () => {
             </label>
             <textarea
               required
-              rows={3}
+              rows={4}
               maxLength={500}
+              placeholder="Type your message content here..."
               value={formData.message}
               onChange={(e) => { setFormData({ ...formData, message: e.target.value }); setFormErrors(prev => ({ ...prev, message: undefined })); }}
               className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none ${
@@ -549,81 +554,65 @@ export const Notifications = () => {
             />
             {formErrors.message && <p className="text-xs text-rose-500 mt-1 font-medium">{formErrors.message}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+
+          {isAdmin ? (
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Event Type</label>
-              <select
-                value={formData.eventType}
-                onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-                className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
-              >
-                {EVENT_TYPES.map(et => (
-                  <option key={et} value={et}>{et}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold text-slate-700 pointer-events-auto cursor-pointer focus:ring-4 focus:ring-blue-100/50"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Target Recipients</label>
-            <div className="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
-              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!formData.investorId && !formData.targetInvestorIds}
-                  onChange={() => setFormData({ ...formData, investorId: "", targetInvestorIds: "" })}
-                  className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
-                />
-                <span>All Investors</span>
-              </label>
-              <div className="border-t border-slate-200 my-1"></div>
-              {investors.map(i => {
-                const isChecked = formData.investorId === String(i.id) || formData.targetInvestorIds.split(",").includes(String(i.id));
-                return (
-                  <label key={i.id} className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={(e) => {
-                        let newTargetIds = formData.targetInvestorIds.split(",").filter(Boolean);
-                        if (formData.investorId) {
-                          newTargetIds.push(formData.investorId);
-                        }
-                        
-                        if (e.target.checked) {
-                          if (!newTargetIds.includes(String(i.id))) {
-                            newTargetIds.push(String(i.id));
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Target Recipients</label>
+              <div className="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!formData.investorId && !formData.targetInvestorIds}
+                    onChange={() => setFormData({ ...formData, investorId: "", targetInvestorIds: "" })}
+                    className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                  />
+                  <span>All Active Investors</span>
+                </label>
+                <div className="border-t border-slate-200 my-1"></div>
+                {investors.map(i => {
+                  const isChecked = formData.investorId === String(i.id) || formData.targetInvestorIds.split(",").includes(String(i.id));
+                  return (
+                    <label key={i.id} className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          let newTargetIds = formData.targetInvestorIds.split(",").filter(Boolean);
+                          if (formData.investorId) {
+                            newTargetIds.push(formData.investorId);
                           }
-                        } else {
-                          newTargetIds = newTargetIds.filter(id => id !== String(i.id));
-                        }
-                        
-                        if (newTargetIds.length === 0) {
-                          setFormData({ ...formData, investorId: "", targetInvestorIds: "" });
-                        } else if (newTargetIds.length === 1) {
-                          setFormData({ ...formData, investorId: newTargetIds[0], targetInvestorIds: "" });
-                        } else {
-                          setFormData({ ...formData, investorId: "", targetInvestorIds: "," + newTargetIds.join(",") + "," });
-                        }
-                      }}
-                      className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
-                    />
-                    <span>{i.name}</span>
-                  </label>
-                );
-              })}
+                          
+                          if (e.target.checked) {
+                            if (!newTargetIds.includes(String(i.id))) {
+                              newTargetIds.push(String(i.id));
+                            }
+                          } else {
+                            newTargetIds = newTargetIds.filter(id => id !== String(i.id));
+                          }
+                          
+                          if (newTargetIds.length === 0) {
+                            setFormData({ ...formData, investorId: "", targetInvestorIds: "" });
+                          } else if (newTargetIds.length === 1) {
+                            setFormData({ ...formData, investorId: newTargetIds[0], targetInvestorIds: "" });
+                          } else {
+                            setFormData({ ...formData, investorId: "", targetInvestorIds: "," + newTargetIds.join(",") + "," });
+                          }
+                        }}
+                        className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                      />
+                      <span>{i.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 text-xs font-semibold text-blue-900 flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-600 shrink-0" />
+              <span>Recipient: <strong>Admin &amp; Manager Team</strong> (will be notified immediately)</span>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-1">
             <button
               type="button"
@@ -636,7 +625,7 @@ export const Notifications = () => {
               type="submit"
               className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100"
             >
-              Send Notification
+              {isAdmin ? "Send Notification" : "Send Message"}
             </button>
           </div>
         </form>
@@ -819,14 +808,21 @@ export const Notifications = () => {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Event Type</span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Sender</span>
                   <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
-                    <Tag className="w-4 h-4 text-slate-400 shrink-0" />
-                    {selectedNotification.eventType}
+                    <User className="w-4 h-4 text-slate-400 shrink-0" />
+                    {selectedNotification.isSentByMe ? "You" : (selectedNotification.senderName || "Management")}
                   </span>
                 </div>
                 <div className="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Created</span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Recipient</span>
+                  <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-slate-400 shrink-0" />
+                    {selectedNotification.recipientName || selectedNotification.investorName || "All Investors"}
+                  </span>
+                </div>
+                <div className="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Sent On</span>
                   <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
                     {new Date(selectedNotification.createdAt).toLocaleDateString(undefined, {
@@ -835,16 +831,18 @@ export const Notifications = () => {
                   </span>
                 </div>
                 <div className="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Status</span>
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold mt-0.5 ${
-                    selectedNotification.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
-                  }`}>
-                    {selectedNotification.status}
-                  </span>
-                </div>
-                <div className="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">ID</span>
-                  <span className="text-sm font-bold text-slate-700 font-mono">Not#{selectedNotification.id}</span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Receiver Status</span>
+                  {selectedNotification.isRead ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                      Read {selectedNotification.readAt ? `(${new Date(selectedNotification.readAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : ""}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      <Clock className="w-3.5 h-3.5 text-amber-600" />
+                      Unread
+                    </span>
+                  )}
                 </div>
               </div>
 

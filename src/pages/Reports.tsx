@@ -142,7 +142,6 @@ export const Reports = () => {
         "Organization": i.organization || "N/A",
         "Investor Type": i.type,
         "Committed Capital (£)": i.amount,
-        "Accreditation": i.accreditation || "Accredited",
         "Bank Name": i.bank || "N/A",
         "Account Number": i.acNumber || "N/A",
         "Sort Code": i.sortCode || "N/A",

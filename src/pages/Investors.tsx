@@ -24,7 +24,9 @@ import {
   Briefcase,
   Upload,
   FileSpreadsheet,
-  Download
+  Download,
+  Clock,
+  Lock
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useSelector } from "react-redux";
@@ -93,11 +95,11 @@ export const Investors = () => {
   const [isSaveConfirmModalOpen, setIsSaveConfirmModalOpen] = useState(false);
 
   const handleDownloadCsvTemplate = () => {
-    const templateHeader = "Name,Email,Mobile,InvestorType,Organization,CompanyRegistrationNo,AccreditationStatus,CapitalAmount,DateOfOnboarding,AssignedProject,MinRoi,MaxRoi,PayoutCategory,PayoutCycle,BankName,BankAccountNo,SortCode,Address,Witness,Notes\n";
-    const sampleRow1 = 'John Doe,johndoe@example.com,+447123456789,Individual,John Doe,"—","Accredited",25000,2026-07-26,"Current Operations",1,4,"Fixed","Constant","Barclays","12345678","20-40-60","123 High St, London","Jane Smith","Initial onboarding"\n';
-    const sampleRow2 = 'Apex Capital Ltd,contact@apexcap.com,+447987654321,Business,"Apex Capital Ltd","CRN-884920","Accredited",100000,2026-07-26,"Current Operations",1,4,"Variant","Monthly","HSBC","87654321","40-20-60","45 Commercial Rd, Manchester","Robert Brown","Partner client"\n';
+    const templateHeader = "Name,Email,Mobile,InvestorType,Organization,CompanyRegistrationNo,CapitalAmount,DateOfOnboarding,Duration,AssignedProject,MinRoi,MaxRoi,PayoutCategory,PayoutCycle,BankName,BankAccountNo,SortCode,Address,Witness,Notes\n";
+    const sampleRow = "John Doe,john.doe@example.com,+44 7700 900077,Individual,—,—,50000,2026-06-28,12 Months,Current Operations,1,4,Fixed,Constant,Barclays,12345678,20-00-00,123 Main St London,Jane Doe,Initial bulk import investment\n";
+    const sampleRow2 = 'Apex Capital Ltd,contact@apexcap.com,+447987654321,Business,"Apex Capital Ltd","CRN-884920",100000,2026-07-26,"24 Months","Current Operations",1,4,"Variant","Monthly","HSBC","87654321","40-20-60","45 Commercial Rd, Manchester","Robert Brown","Partner client"\n';
     
-    const blob = new Blob(["\uFEFF" + templateHeader + sampleRow1 + sampleRow2], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + templateHeader + sampleRow + sampleRow2], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -137,16 +139,16 @@ export const Investors = () => {
         
         if (row.length < 2 || !row.some(cell => cell !== "")) continue;
 
-        const [
+        let [
           name,
           email,
           mobile,
           investorType,
           organization,
           reg_number,
-          accreditation,
           capitalAmount,
           date_of_onboarding,
+          durationOrProject,
           assignedProject,
           minRoi,
           maxRoi,
@@ -160,6 +162,11 @@ export const Investors = () => {
           notes
         ] = row;
 
+        let duration = "12 Months";
+        if (durationOrProject) {
+          duration = durationOrProject;
+        }
+
         const rowErrors: string[] = [];
 
         // Strict validation of required fields BEFORE creating DTOs
@@ -171,7 +178,7 @@ export const Investors = () => {
         }
         const capAmtNum = parseFloat(capitalAmount);
         if (isNaN(capAmtNum) || capAmtNum <= 0) {
-          rowErrors.push(`Row ${lineNum}, Column 8 (Capital Amount): '${capitalAmount || "blank"}' must be a positive number greater than 0.`);
+          rowErrors.push(`Row ${lineNum}, Column 7 (Capital Amount): '${capitalAmount || "blank"}' must be a positive number greater than 0.`);
         }
 
         if (rowErrors.length > 0) {
@@ -187,20 +194,23 @@ export const Investors = () => {
             type: typeId,
             organization: (organization || '').trim() || (isBusiness ? (name || '').trim() : "—"),
             reg_number: (reg_number || '').trim() || "—",
-            accreditation: (accreditation || '').trim() || "Accredited",
             amount: capAmtNum,
             date_of_onboarding: (date_of_onboarding || '').trim() || new Date().toISOString().split("T")[0],
+            duration: (duration || '').trim() || "12 Months",
             min_RoiRangeId: Math.min(Math.max(parseInt(minRoi) || 1, 1), 4),
             max_RoiRangeId: Math.min(Math.max(parseInt(maxRoi) || 4, 1), 4),
+            min_roi_id: Math.min(Math.max(parseInt(minRoi) || 1, 1), 4),
+            max_roi_id: Math.min(Math.max(parseInt(maxRoi) || 4, 1), 4),
             roiTypeId: (payoutCategory || '').toLowerCase() === 'variant'
               ? ((payoutCycle || '').toLowerCase() === 'weekly' ? 2 : (payoutCycle || '').toLowerCase() === 'quarterly' ? 4 : (payoutCycle || '').toLowerCase() === 'yearly' ? 5 : 3)
               : 1,
             bank: (bankName || '').trim(),
             acNumber: (bankAccountNo || '').trim(),
             soreCode: (sortCode || '').trim(),
+            sortCode: (sortCode || '').trim(),
             witness: (witness || '').trim(),
             address: (address || '').trim(),
-            notes: (notes || '').trim() || "Bulk imported investor",
+            notes: (notes || '').trim() || "Bulk imported investment",
             status: "active"
           });
         }
@@ -274,7 +284,7 @@ export const Investors = () => {
     reg_number: "",
     interest: "",
     minRoi: "1",
-    maxRoi: "5",
+    maxRoi: "4",
     payoutCategory: "Fixed",
     payoutCycle: "Constant",
     bank: "",
@@ -283,6 +293,7 @@ export const Investors = () => {
     witness: "",
     address: "",
     projectId: "1",
+    duration: "12 Months",
     notes: "",
     accreditation: "Accredited",
     status: "active" as "active" | "inactive",
@@ -290,6 +301,10 @@ export const Investors = () => {
     amount: "",
     mobile: "",
   });
+
+  const [investmentMode, setInvestmentMode] = useState<"new" | "existing">("new");
+  const [selectedExistingInvestorId, setSelectedExistingInvestorId] = useState<string>("");
+  const [investorSearchQuery, setInvestorSearchQuery] = useState<string>("");
 
   const [projectsList, setProjectsList] = useState<{ id: string | number; title: string }[]>([
     { id: 1, title: "Current Operations" }
@@ -458,12 +473,18 @@ export const Investors = () => {
       reg_number: "",
       interest: "",
       roi: "",
-      roiType: "",
+      minRoi: "1",
+      maxRoi: "4",
+      payoutCategory: "Fixed",
+      payoutCycle: "Constant",
       bank: "",
       acNumber: "",
       sortCode: "",
+      witness: "",
+      address: "",
+      projectId: "1",
+      duration: "12 Months",
       notes: "",
-      accreditation: "Accredited",
       status: "active",
       date_of_onboarding: "",
       amount: "",
@@ -487,7 +508,7 @@ export const Investors = () => {
       reg_number: investor.reg_number || "",
       interest: String(matchedInterest),
       minRoi: String(investor.min_roi_id || 1),
-      maxRoi: String(investor.max_roi_id || 5),
+      maxRoi: String(investor.max_roi_id || 4),
       payoutCategory: investor.payoutType === "Variant" ? "Variant" : "Fixed",
       payoutCycle: investor.payoutType === "Variant" ? (investor.roiType || "Monthly") : "Constant",
       bank: matchedBank,
@@ -496,8 +517,8 @@ export const Investors = () => {
       witness: investor.witness || "",
       address: investor.address || "",
       projectId: String(investor.projectId || projectsList[0]?.id || "1"),
+      duration: investor.duration || "12 Months",
       notes: investor.notes || "",
-      accreditation: investor.accreditation || "Accredited",
       status: investor.status || "active",
       date_of_onboarding: investor.date_of_onboarding ? investor.date_of_onboarding.split("T")[0] : "",
       amount: String(investor.amount || ""),
@@ -509,6 +530,9 @@ export const Investors = () => {
 
   // Open Add Flow
   const handleOpenAdd = () => {
+    setInvestmentMode("new");
+    setSelectedExistingInvestorId("");
+    setInvestorSearchQuery("");
     setFormData({
       name: "",
       type: investorTypes.length > 0 ? String(investorTypes[0].value) : "1",
@@ -517,7 +541,7 @@ export const Investors = () => {
       reg_number: "",
       interest: investmentInterests.length > 0 ? String(investmentInterests[0].value) : "",
       minRoi: "1",
-      maxRoi: "5",
+      maxRoi: "4",
       payoutCategory: "Fixed",
       payoutCycle: "Constant",
       bank: banks.length > 0 ? String(banks[0].value) : "",
@@ -526,8 +550,8 @@ export const Investors = () => {
       witness: "",
       address: "",
       projectId: String(projectsList[0]?.id || "1"),
+      duration: "12 Months",
       notes: "",
-      accreditation: "Accredited",
       status: "active",
       date_of_onboarding: new Date().toISOString().split("T")[0],
       amount: "",
@@ -535,6 +559,39 @@ export const Investors = () => {
     });
     setIsViewDetailsMode(false);
     setActiveView("add");
+  };
+
+  // Handle selecting an existing investor to add a new investment to them
+  const handleSelectExistingInvestor = (invId: string) => {
+    setSelectedExistingInvestorId(invId);
+    if (!invId) return;
+
+    const existingInv = investors.find(i => String(i.id) === String(invId));
+    if (!existingInv) return;
+
+    const matchedType = investorTypes.find(t => t.text === existingInv.type || String(t.value) === String(existingInv.type))?.value || 1;
+    const matchedBank = banks.find(b => b.text === existingInv.bank || String(b.value) === String(existingInv.bank))?.text || existingInv.bank || "";
+
+    setFormData(prev => ({
+      ...prev,
+      name: existingInv.name,
+      email: existingInv.email || "",
+      mobile: existingInv.mobile || "",
+      type: String(matchedType),
+      organization: existingInv.organization || "",
+      reg_number: existingInv.reg_number || "",
+      bank: matchedBank,
+      acNumber: existingInv.acNumber || "",
+      sortCode: existingInv.sortCode || "",
+      witness: existingInv.witness || "",
+      address: existingInv.address || "",
+      status: existingInv.status || "active",
+      // Reset investment-specific fields for the new investment
+      amount: "",
+      duration: "12 Months",
+      date_of_onboarding: new Date().toISOString().split("T")[0],
+      notes: `Additional investment for ${existingInv.name}`
+    }));
   };
 
   // Details flow: opens Add view in read-only details mode
@@ -552,7 +609,7 @@ export const Investors = () => {
       reg_number: investor.reg_number || "",
       interest: String(matchedInterest),
       minRoi: String(investor.min_roi_id || 1),
-      maxRoi: String(investor.max_roi_id || 5),
+      maxRoi: String(investor.max_roi_id || 4),
       payoutCategory: investor.payoutType === "Variant" ? "Variant" : "Fixed",
       payoutCycle: investor.payoutType === "Variant" ? (investor.roiType || "Monthly") : "Constant",
       bank: matchedBank,
@@ -561,8 +618,8 @@ export const Investors = () => {
       witness: investor.witness || "",
       address: investor.address || "",
       projectId: String(investor.projectId || projectsList[0]?.id || "1"),
+      duration: investor.duration || "12 Months",
       notes: investor.notes || "",
-      accreditation: investor.accreditation || "Accredited",
       status: investor.status || "active",
       date_of_onboarding: investor.date_of_onboarding ? investor.date_of_onboarding.split("T")[0] : "",
       amount: String(investor.amount || ""),
@@ -627,7 +684,6 @@ export const Investors = () => {
       organization: formData.organization || "—",
       amount: parseFloat(formData.amount) || 0,
       reg_number: formData.reg_number || "—",
-      accreditation: formData.accreditation || "Accredited",
       status: formData.status,
       date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0],
       min_roi_id: minRoiVal,
@@ -643,6 +699,7 @@ export const Investors = () => {
       witness: formData.witness || "",
       address: formData.address || "",
       projectId: parseInt(formData.projectId) || 1,
+      duration: formData.duration || "12 Months",
       notes: formData.notes || ""
     } : {
       name: formData.name,
@@ -652,7 +709,6 @@ export const Investors = () => {
       organization: formData.organization || "—",
       amount: parseFloat(formData.amount) || 0,
       reg_number: formData.reg_number || "—",
-      accreditation: formData.accreditation || "Accredited",
       status: formData.status,
       date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0],
       min_RoiRangeId: minRoiVal,
@@ -668,6 +724,7 @@ export const Investors = () => {
       witness: formData.witness || "",
       address: formData.address || "",
       projectId: parseInt(formData.projectId) || 1,
+      duration: formData.duration || "12 Months",
       notes: formData.notes || ""
     };
 
@@ -793,11 +850,20 @@ export const Investors = () => {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  // Derived stats
-  const totalInvestorsCount = investors.length;
-  const activeInvestorsCount = investors.filter(i => i.status === "active").length;
-  const individualInvestorsCount = investors.filter(i => i.type === "Individual").length;
-  const businessInvestorsCount = investors.filter(i => i.type === "Business").length;
+  // Derived stats: Unique investors by email (or name), total investments contracts, and investor types
+  const uniqueEmails = new Set(investors.map(i => (i.email || i.name).toLowerCase().trim()));
+  const totalUniqueInvestorsCount = uniqueEmails.size;
+  
+  const activeUniqueEmails = new Set(
+    investors
+      .filter(i => (i.status || "active").toLowerCase() === "active")
+      .map(i => (i.email || i.name).toLowerCase().trim())
+  );
+  const activeInvestorsCount = activeUniqueEmails.size;
+  
+  const totalInvestmentsCount = investors.length;
+  const individualInvestorsCount = investors.filter(i => i.type === "Individual" || i.type === 1 || String(i.type) === "1").length;
+  const businessInvestorsCount = investors.filter(i => i.type === "Business" || i.type === 2 || String(i.type) === "2").length;
 
   // Calculate pages
   const totalEntries = filteredAndSearchedArray.length;
@@ -853,9 +919,9 @@ export const Investors = () => {
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <motion.div variants={itemVariants}>
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-extrabold text-slate-900 tracking-tight">Investor Directory</h1>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-extrabold text-slate-900 tracking-tight">Investments Directory</h1>
                 <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
-                  Manage verified legal entities and individual investor profiles.
+                  Manage verified legal entities and investor contracts.
                 </p>
               </motion.div>
               {!isClient && (
@@ -881,7 +947,7 @@ export const Investors = () => {
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-[0.98] transition-transform"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Investor
+                    Add Investment(s)
                   </motion.button>
                 </div>
               )}
@@ -902,63 +968,54 @@ export const Investors = () => {
               <div className="space-y-6">
                 
                 {/* Statistics Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Total Investors */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Investors Total / Active */}
                   <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
                           <Users className="w-5 h-5" />
                         </div>
-                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Total Investors</span>
+                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Investors (Total / Active)</span>
                       </div>
                       <div className="flex items-baseline gap-2 pt-2">
-                        <span className="text-3xl font-extrabold text-slate-900">{totalInvestorsCount}</span>
+                        <span className="text-3xl font-extrabold text-slate-900">{totalUniqueInvestorsCount}</span>
+                        <span className="text-sm font-bold text-emerald-600">/ {activeInvestorsCount} active</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Active Investors */}
+                  {/* Investments Total */}
                   <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
-                          <CheckCircle className="w-5 h-5" />
+                          <Briefcase className="w-5 h-5" />
                         </div>
-                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Active Investors</span>
+                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Investments Total</span>
                       </div>
                       <div className="flex items-baseline gap-2 pt-2">
-                        <span className="text-3xl font-extrabold text-slate-900">{activeInvestorsCount}</span>
+                        <span className="text-3xl font-extrabold text-slate-900">{totalInvestmentsCount}</span>
+                        <span className="text-xs font-semibold text-slate-400">Contracts</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Individual Investors */}
+                  {/* Investor Type: Org & Individual */}
                   <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
-                          <User className="w-5 h-5" />
-                        </div>
-                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Individual</span>
-                      </div>
-                      <div className="flex items-baseline gap-2 pt-2">
-                        <span className="text-3xl font-extrabold text-slate-900">{individualInvestorsCount}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Business Investors */}
-                  <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
                           <Building2 className="w-5 h-5" />
                         </div>
-                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Business</span>
+                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Investor Type (Org / Ind)</span>
                       </div>
                       <div className="flex items-baseline gap-2 pt-2">
-                        <span className="text-3xl font-extrabold text-slate-900">{businessInvestorsCount}</span>
+                        <span className="text-3xl font-extrabold text-purple-600">{businessInvestorsCount}</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase">Org</span>
+                        <span className="text-slate-300 font-normal">/</span>
+                        <span className="text-2xl font-extrabold text-blue-600">{individualInvestorsCount}</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase">Ind</span>
                       </div>
                     </div>
                   </div>
@@ -1027,13 +1084,13 @@ export const Investors = () => {
                 {currentRows.length === 0 ? (
                   <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center flex flex-col items-center justify-center">
                     <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
-                      <Users className="w-8 h-8 text-slate-300" />
+                      <Briefcase className="w-8 h-8 text-slate-300" />
                     </div>
-                    <h3 className="text-lg font-display font-bold text-slate-900">No investors found</h3>
+                    <h3 className="text-lg font-display font-bold text-slate-900">No investments found</h3>
                     <p className="text-sm text-slate-500 mt-1 font-medium max-w-sm">
                       {searchTerm || appliedFilterType !== "All"
                         ? "Try adjusting your search or filter criteria."
-                        : "No investors have been created yet."}
+                        : "No investments have been created yet."}
                     </p>
                     {!isClient && !searchTerm && appliedFilterType === "All" && (
                       <button
@@ -1041,7 +1098,7 @@ export const Investors = () => {
                         className="mt-4 inline-flex items-center gap-2 bg-slate-950 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors cursor-pointer"
                       >
                         <Plus className="w-4 h-4" />
-                        Add Investor
+                        Add Investment(s)
                       </button>
                     )}
                   </div>
@@ -1219,10 +1276,10 @@ export const Investors = () => {
               </button>
               <div>
                 <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
-                  {isViewDetailsMode ? "Investors > View Details" : selectedInvestor ? "Investors > Edit Details" : "Investors > Add Investor"}
+                  {isViewDetailsMode ? "Investments > View Details" : selectedInvestor ? "Investments > Edit Details" : "Investments > Add Investment(s)"}
                 </span>
                 <h1 className="text-2xl font-display font-bold text-slate-900 mt-0.5">
-                  {isViewDetailsMode ? "View Investor Details" : selectedInvestor ? "Edit Investor Details" : "Add New Investor"}
+                  {isViewDetailsMode ? "View Investment Details" : selectedInvestor ? "Edit Investment Details" : "Add Investment(s)"}
                 </h1>
               </div>
             </div>
@@ -1232,10 +1289,10 @@ export const Investors = () => {
               <div className="border-b border-slate-100 pb-5 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h3 className="text-lg font-display font-bold text-slate-800">
-                    {isViewDetailsMode ? "Investor Profile Details" : selectedInvestor ? "Modify Investor Details" : "New Investor Registration"}
+                    {isViewDetailsMode ? "Investment Profile Details" : selectedInvestor ? "Modify Investment Details" : "New Registration"}
                   </h3>
                   <p className="text-sm text-slate-500 mt-1">
-                    {isViewDetailsMode ? "Legal and financial particulars of the selected investor." : "Enter legal organization or individual credentials below."}
+                    {isViewDetailsMode ? "Legal and financial particulars of the selected investment." : "Enter legal organization or individual credentials below."}
                   </p>
                 </div>
 
@@ -1267,15 +1324,110 @@ export const Investors = () => {
               </div>
 
               <form onSubmit={handleSaveInvestor} className="space-y-8">
+                {/* Mode Selector for Admin/Manager when adding a new investment */}
+                {!selectedInvestor && !isViewDetailsMode && (
+                  <div className="bg-blue-50/60 p-6 rounded-2xl border border-blue-200/80 space-y-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div>
+                        <h4 className="text-sm font-bold text-blue-950 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-blue-600" />
+                          Investment Target Profile
+                        </h4>
+                        <p className="text-xs text-blue-700/80 mt-0.5">
+                          Choose whether you want to register a brand new investor or allocate an additional investment to an existing investor.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-blue-200 shadow-xs">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInvestmentMode("new");
+                            setSelectedExistingInvestorId("");
+                            setFormData(prev => ({
+                              ...prev,
+                              name: "",
+                              email: "",
+                              mobile: "",
+                              organization: "",
+                              reg_number: "",
+                              bank: banks.length > 0 ? String(banks[0].value) : "",
+                              acNumber: "",
+                              sortCode: "",
+                              witness: "",
+                              address: "",
+                              amount: "",
+                              notes: ""
+                            }));
+                          }}
+                          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            investmentMode === "new"
+                              ? "bg-blue-600 text-white shadow-xs"
+                              : "text-slate-600 hover:text-slate-900"
+                          }`}
+                        >
+                          Create New Investor
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setInvestmentMode("existing")}
+                          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            investmentMode === "existing"
+                              ? "bg-blue-600 text-white shadow-xs"
+                              : "text-slate-600 hover:text-slate-900"
+                          }`}
+                        >
+                          Select Existing Investor
+                        </button>
+                      </div>
+                    </div>
+
+                    {investmentMode === "existing" && (
+                      <div className="pt-2 border-t border-blue-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                        <div className="flex-1 space-y-1.5 text-left">
+                          <label className="block text-xs font-bold text-blue-900 uppercase tracking-wider">
+                            Choose Existing Investor <span className="text-rose-500">*</span>
+                          </label>
+                          <select
+                            value={selectedExistingInvestorId}
+                            onChange={(e) => handleSelectExistingInvestor(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-blue-300 focus:border-blue-600 rounded-xl text-sm font-bold text-slate-800 outline-none shadow-xs cursor-pointer"
+                          >
+                            <option value="">-- Select an Investor Profile ({Array.from(new Set(investors.map(i => i.email))).length} available) --</option>
+                            {/* Group by unique email so each distinct user appears clearly */}
+                            {(Array.from(new Map(investors.map(i => [i.email?.toLowerCase() || i.id, i])).values()) as Investor[]).map((inv) => (
+                              <option key={inv.id} value={String(inv.id)}>
+                                {inv.name} ({inv.email || "No email"}) — Org: {inv.organization || "Individual"}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        {selectedExistingInvestorId && (
+                          <div className="bg-white px-4 py-3 rounded-xl border border-blue-200 text-xs text-blue-800 font-semibold flex items-center gap-2 self-end">
+                            <Lock className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                            <span>Investor personal &amp; bank details locked. Enter investment terms below.</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Rearranged structured grid sections */}
                 <div className="space-y-8">
 
                   {/* Section 1: Personal & Contact Profile */}
                   <div className="bg-slate-50/40 p-6 rounded-2xl border border-slate-100 space-y-4">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                      1. Personal & Contact Profile
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                        1. Personal & Contact Profile
+                      </h3>
+                      {investmentMode === "existing" && !selectedInvestor && !isViewDetailsMode && (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Lock className="w-3 h-3" /> Linked to Existing Account
+                        </span>
+                      )}
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {/* Full Name */}
                       <div className="space-y-1.5 text-left md:col-span-1">
@@ -1284,12 +1436,12 @@ export const Investors = () => {
                         </label>
                         <input
                           required
-                          disabled={isViewDetailsMode}
+                          disabled={isViewDetailsMode || (investmentMode === "existing" && !selectedInvestor)}
                           type="text"
                           placeholder="Enter full name"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/70 disabled:text-slate-600 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                         />
                       </div>
 
@@ -1300,12 +1452,12 @@ export const Investors = () => {
                         </label>
                         <input
                           required
-                          disabled={isViewDetailsMode || !!selectedInvestor}
+                          disabled={isViewDetailsMode || !!selectedInvestor || (investmentMode === "existing")}
                           type="email"
                           placeholder="Enter email address"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/70 disabled:text-slate-600 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                         />
                       </div>
 
@@ -1315,12 +1467,12 @@ export const Investors = () => {
                           Mobile Number
                         </label>
                         <input
-                          disabled={isViewDetailsMode}
+                          disabled={isViewDetailsMode || (investmentMode === "existing" && !selectedInvestor)}
                           type="text"
                           placeholder="Enter phone number"
                           value={formData.mobile}
                           onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/70 disabled:text-slate-600 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                         />
                       </div>
 
@@ -1331,12 +1483,12 @@ export const Investors = () => {
                           Investor Address
                         </label>
                         <input
-                          disabled={isViewDetailsMode}
+                          disabled={isViewDetailsMode || (investmentMode === "existing" && !selectedInvestor)}
                           type="text"
                           placeholder="Enter full street address"
                           value={formData.address}
                           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/70 disabled:text-slate-600 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                         />
                       </div>
 
@@ -1346,12 +1498,12 @@ export const Investors = () => {
                           Witness Name
                         </label>
                         <input
-                          disabled={isViewDetailsMode}
+                          disabled={isViewDetailsMode || (investmentMode === "existing" && !selectedInvestor)}
                           type="text"
                           placeholder="Enter witness name"
                           value={formData.witness}
                           onChange={(e) => setFormData({ ...formData, witness: e.target.value })}
-                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/70 disabled:text-slate-600 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                         />
                       </div>
                     </div>
@@ -1363,7 +1515,7 @@ export const Investors = () => {
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                       2. Entity & Business Details
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {/* Investor Type */}
                       <div className="space-y-1.5 text-left">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -1381,50 +1533,34 @@ export const Investors = () => {
                         </select>
                       </div>
 
-                      {/* Company / Org */}
+                      {/* Business Name */}
                       <div className="space-y-1.5 text-left">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          Company / Org
+                          Business Name {String(formData.type) === "2" || String(formData.type).toLowerCase() === "business" ? <span className="text-rose-500">*</span> : <span className="text-slate-400 font-normal lowercase">(only for business)</span>}
                         </label>
                         <input
-                          disabled={isViewDetailsMode}
+                          disabled={isViewDetailsMode || (String(formData.type) !== "2" && String(formData.type).toLowerCase() !== "business")}
                           type="text"
-                          placeholder="Company or organization name"
-                          value={formData.organization}
+                          placeholder={String(formData.type) === "2" || String(formData.type).toLowerCase() === "business" ? "Registered business name" : "N/A for Individual"}
+                          value={String(formData.type) === "2" || String(formData.type).toLowerCase() === "business" ? formData.organization : "—"}
                           onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/60 disabled:text-slate-400 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                         />
                       </div>
 
-                      {/* Co Reg Number */}
+                      {/* Business Reg Number */}
                       <div className="space-y-1.5 text-left">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          Co Reg Number
+                          Business Reg Number {String(formData.type) === "2" || String(formData.type).toLowerCase() === "business" ? "" : <span className="text-slate-400 font-normal lowercase">(only for business)</span>}
                         </label>
                         <input
-                          disabled={isViewDetailsMode}
+                          disabled={isViewDetailsMode || (String(formData.type) !== "2" && String(formData.type).toLowerCase() !== "business")}
                           type="text"
-                          placeholder="Company registration number"
-                          value={formData.reg_number}
+                          placeholder={String(formData.type) === "2" || String(formData.type).toLowerCase() === "business" ? "Company registration number" : "N/A for Individual"}
+                          value={String(formData.type) === "2" || String(formData.type).toLowerCase() === "business" ? formData.reg_number : "—"}
                           onChange={(e) => setFormData({ ...formData, reg_number: e.target.value })}
-                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 disabled:bg-slate-100/60 disabled:text-slate-400 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
                         />
-                      </div>
-
-                      {/* Accreditation */}
-                      <div className="space-y-1.5 text-left">
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          Accreditation Status
-                        </label>
-                        <select
-                          disabled={isViewDetailsMode}
-                          value={formData.accreditation}
-                          onChange={(e) => setFormData({ ...formData, accreditation: e.target.value })}
-                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all appearance-none cursor-pointer"
-                        >
-                          <option value="Accredited">Accredited</option>
-                          <option value="Non-Accredited">Non-Accredited</option>
-                        </select>
                       </div>
                     </div>
                   </div>
@@ -1560,8 +1696,30 @@ export const Investors = () => {
                         </select>
                       </div>
 
+                      {/* Investment Duration */}
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          Investment Duration <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          disabled={isViewDetailsMode}
+                          value={formData.duration}
+                          onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                        >
+                          <option value="6 Months">6 Months</option>
+                          <option value="12 Months">12 Months (1 Year)</option>
+                          <option value="24 Months">24 Months (2 Years)</option>
+                          <option value="36 Months">36 Months (3 Years)</option>
+                          <option value="48 Months">48 Months (4 Years)</option>
+                          <option value="60 Months">60 Months (5 Years)</option>
+                        </select>
+                      </div>
+
                       {/* Payment Frequency */}
-                      <div className="space-y-1.5 text-left md:col-span-2">
+                      <div className="space-y-1.5 text-left md:col-span-1">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                           Payment Frequency {formData.payoutCategory === "Variant" && <span className="text-rose-500">*</span>}
                         </label>

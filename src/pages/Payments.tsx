@@ -7,7 +7,7 @@ import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { cachedFetch } from "../utils/apiCache";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Filter, Eye, DollarSign, Calendar, Landmark, Clock, Send, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Filter, Eye, DollarSign, Calendar, Landmark, Clock, Send, CheckCircle2, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 
@@ -214,6 +214,32 @@ export const Payments = () => {
     return filteredPayments.slice(start, start + entriesPerPage);
   }, [filteredPayments, currentPage, entriesPerPage]);
 
+  const handleDownloadPayoutsReport = () => {
+    const headers = ["Payment ID", "Investor Name", "Phone / Email", "Amount (£)", "Payment Cycle", "Due Date", "Status", "Is Sent", "Is Received"];
+    const rows = filteredPayments.map(p => [
+      `PayId#${p.paymentId}`,
+      `"${(p.investorName || "Investor").replace(/"/g, '""')}"`,
+      `"${(p.mobile || p.investorEmail || "—").replace(/"/g, '""')}"`,
+      p.amount.toFixed(2),
+      p.paymentCycle || "Monthly",
+      p.dueDate || new Date(p.paymentDate).toLocaleDateString(),
+      p.status,
+      p.isSent ? "Yes" : "No",
+      p.isReceived ? "Yes" : "No"
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Payouts_Disbursement_Report_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -222,6 +248,17 @@ export const Payments = () => {
           <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
             Track payout disbursements, payment schedules, and investor transactions.
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleDownloadPayoutsReport}
+            className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95"
+            title="Download full filtered payouts report as CSV"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download Report</span>
+          </button>
         </div>
       </div>
 
@@ -383,10 +420,10 @@ export const Payments = () => {
               <thead>
                 <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
                   <th className="px-6 py-4">Pay ID</th>
-                  <th className="px-6 py-4">Investor</th>
+                  <th className="px-6 py-4">Investor &amp; Contact</th>
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Cycle</th>
-                  <th className="px-6 py-4">Payment Date</th>
+                  <th className="px-6 py-4">Due Date</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
@@ -406,21 +443,28 @@ export const Payments = () => {
                         PayId#{p.paymentId}
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => navigate(`/investors/${p.investorId}`)}
-                          className="font-bold text-slate-900 hover:text-blue-600 transition-colors text-left cursor-pointer outline-none hover:underline"
-                        >
-                          {p.investorName}
-                        </button>
+                        <div className="flex flex-col text-left">
+                          <button
+                            onClick={() => navigate(`/investors/${p.investorId}`)}
+                            className="font-bold text-slate-900 hover:text-blue-600 transition-colors text-left cursor-pointer outline-none hover:underline"
+                          >
+                            {p.investorName || "Investor"}
+                          </button>
+                          {(p.mobile || p.investorEmail) && (
+                            <span className="text-[11px] text-slate-400 font-medium mt-0.5">
+                              {p.mobile ? p.mobile : p.investorEmail}
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 font-bold text-emerald-600">£{p.amount.toLocaleString()}</td>
+                      <td className="px-6 py-4 font-bold text-emerald-600 font-sans">£{p.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
                           {p.paymentCycle || "Monthly"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-500">
-                        {new Date(p.paymentDate).toLocaleDateString(undefined, {
+                      <td className="px-6 py-4 text-slate-600 font-medium">
+                        {p.dueDate || new Date(p.paymentDate).toLocaleDateString(undefined, {
                           day: "2-digit",
                           month: "short",
                           year: "numeric"
@@ -530,12 +574,12 @@ export const Payments = () => {
         {selectedPayment && (
           <div className="p-6 space-y-4">
             <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <div className="p-3 bg-blue-100 rounded-xl text-blue-600">
-                <DollarSign className="w-6 h-6" />
+              <div className="p-3 bg-blue-100 rounded-xl text-blue-600 font-extrabold text-lg flex items-center justify-center w-12 h-12">
+                £
               </div>
               <div>
                 <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Payment Amount</span>
-                <h4 className="text-xl font-display font-extrabold text-slate-900">${selectedPayment.amount.toLocaleString()}</h4>
+                <h4 className="text-xl font-display font-extrabold text-slate-900">£{selectedPayment.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h4>
               </div>
             </div>
 
@@ -545,20 +589,27 @@ export const Payments = () => {
                 <span className="text-sm font-mono font-bold text-slate-700">PayId#{selectedPayment.paymentId}</span>
               </div>
               <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Transaction Date</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Due Date</span>
                 <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-slate-400" />
-                  {new Date(selectedPayment.paymentDate).toLocaleDateString()}
+                  {selectedPayment.dueDate || new Date(selectedPayment.paymentDate).toLocaleDateString()}
                 </span>
               </div>
             </div>
 
             <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Investor Profile</span>
-              <span className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <Landmark className="w-4 h-4 text-slate-400" />
-                {selectedPayment.investorName}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-slate-400" />
+                  {selectedPayment.investorName}
+                </span>
+                {(selectedPayment.mobile || selectedPayment.investorEmail) && (
+                  <span className="text-xs text-slate-500 font-medium ml-6 mt-0.5">
+                    {selectedPayment.mobile ? `Phone: ${selectedPayment.mobile}` : `Email: ${selectedPayment.investorEmail}`}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
