@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "tsx server.ts",
     "test:e2e": "tsx test-e2e-real-user.ts",
+    "prepush": "npm run test:e2e",
+    "setup:hooks": "node -e \"const fs=require('fs'); fs.copyFileSync('scripts/pre-push.sh', '.git/hooks/pre-push'); fs.chmodSync('.git/hooks/pre-push', 0o775); console.log('✅ Git pre-push hook installed successfully!');\"",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "build:mobile": "vite build",
     "start": "node dist/server.cjs",
