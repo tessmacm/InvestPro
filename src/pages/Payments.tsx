@@ -280,11 +280,11 @@ export const Payments = () => {
           </div>
         </div>
 
-        {/* Card 2: Pending Payouts */}
+        {/* Card 2: Pending in a month */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Pending Payouts
+              Pending in a month
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{pendingTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -296,11 +296,11 @@ export const Payments = () => {
           </div>
         </div>
 
-        {/* Card 3: Send Acknowledge */}
+        {/* Card 3: Acknowledge Sent */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Send Acknowledge
+              Acknowledge Sent
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{sentTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -312,16 +312,16 @@ export const Payments = () => {
           </div>
         </div>
 
-        {/* Card 4: Acknowledged */}
+        {/* Card 4: Acknowledge Received */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Acknowledged
+              Acknowledge Received
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{doneTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
-            <p className="text-xs text-slate-400 font-semibold">{doneCount} payments acknowledged</p>
+            <p className="text-xs text-slate-400 font-semibold">{doneCount} payments confirmed</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <CheckCircle2 className="w-6 h-6" />

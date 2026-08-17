@@ -22,9 +22,31 @@ interface ProtectedRouteProps {
   allowedRoles?: Role[];
 }
 
+import { useDispatch } from "react-redux";
+import { logout } from "./store/authSlice";
+import { API_BASE_URL, authHeaders } from "./config/api";
+
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
+  const { isAuthenticated, user, token } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
+
+  React.useEffect(() => {
+    if (token && isAuthenticated) {
+      fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: authHeaders()
+      })
+        .then((res) => {
+          if (!res.ok && (res.status === 401 || res.status === 403 || res.status === 404)) {
+            // User does not exist in database or token has expired
+            dispatch(logout());
+          }
+        })
+        .catch(() => {
+          // If backend cannot be reached, do not abruptly logout
+        });
+    }
+  }, [token, isAuthenticated, dispatch, location.pathname]);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;

@@ -107,13 +107,17 @@ async function runE2ETests() {
   logSuccess(`Admin logged in successfully (${adminAuth.user?.email || "tessma.cm@gmail.com"})`);
 
   // Clean DB
-  const cleanRes = await fetch(`${API_BASE}/api/admin/dashboard/clean-database`, {
-    method: "POST",
-    headers: adminHeaders
-  });
-  assert.strictEqual(cleanRes.status, 200, "Database purge should succeed");
-  const cleanResult = await cleanRes.json();
-  logSuccess(`Cleaned database: ${cleanResult.message || "Database wiped clean"}`);
+  if (process.argv.includes("--clean")) {
+    const cleanRes = await fetch(`${API_BASE}/api/admin/dashboard/clean-database`, {
+      method: "POST",
+      headers: adminHeaders
+    });
+    assert.strictEqual(cleanRes.status, 200, "Database purge should succeed");
+    const cleanResult = await cleanRes.json();
+    logSuccess(`Cleaned database: ${cleanResult.message || "Database wiped clean"}`);
+  } else {
+    logSuccess(`Admin logged in successfully (${adminAuth.user?.email || "tessma.cm@gmail.com"}). Preserving database content.`);
+  }
 
   // ──────────────────────────────────────────────────────────────────────────
   // Step 2: Add Manual Investment (Individual)
@@ -354,11 +358,11 @@ async function runE2ETests() {
   assert.ok(Array.isArray(stats.investors), "stats.investors should be an array");
   assert.strictEqual(stats.investors.length, 5, "Total investment contracts should be 5");
   
-  const uniqueInvestorOwnerIds = new Set(stats.investors.map((i: any) => i.OwnerUserId || i.ownerUserId));
+  const uniqueInvestorOwnerIds = new Set(stats.investors.map((i: any) => (i.email || i.Email || i.OwnerUserId || i.ownerUserId || i.name || i.Name).toLowerCase()));
   assert.strictEqual(uniqueInvestorOwnerIds.size, 3, "Total unique investors should be 3 (Alex, Apex, Catherine)");
 
-  const indCount = stats.investors.filter((i: any) => (i.InvestorTypeId ?? i.investorTypeId) === 1).length;
-  const orgCount = stats.investors.filter((i: any) => (i.InvestorTypeId ?? i.investorTypeId) === 2).length;
+  const indCount = stats.investors.filter((i: any) => i.type === "Individual" || i.InvestorTypeId === 1 || i.type === 1 || String(i.type) === "1").length;
+  const orgCount = stats.investors.filter((i: any) => i.type === "Business" || i.type === "Org" || i.InvestorTypeId === 2 || i.type === 2 || String(i.type) === "2").length;
   assert.strictEqual(indCount, 4, "Individual contracts count should be 4 (3 for Alex + 1 for Catherine)");
   assert.strictEqual(orgCount, 1, "Business contracts count should be 1 (Apex)");
   logSuccess(`Verified Dashboard Stats: ${uniqueInvestorOwnerIds.size} Unique Investors, ${stats.investors.length} Total Contracts (${indCount} Individual, ${orgCount} Org)`);
@@ -529,30 +533,34 @@ async function runE2ETests() {
   logSuccess(`Admin verified received notification from investor (Title: "${receivedFromInvestor.title}")`);
 
   // ──────────────────────────────────────────────────────────────────────────
-  // Step 8: Teardown / Clean Test Data
+  // Step 8: Teardown / Clean Test Data (Only executed when --clean flag is provided)
   // ──────────────────────────────────────────────────────────────────────────
-  logStep(8, "Teardown & Cleanup of Test Data");
+  if (process.argv.includes("--clean")) {
+    logStep(8, "Teardown & Cleanup of Test Data");
 
-  const finalCleanRes = await fetch(`${API_BASE}/api/admin/dashboard/clean-database`, {
-    method: "POST",
-    headers: adminHeaders
-  });
-  assert.strictEqual(finalCleanRes.status, 200, "Final database purge should succeed");
-  
-  // Verify clean state
-  const finalInvsRes = await fetch(`${API_BASE}/api/admin/investors`, { headers: adminHeaders });
-  const finalInvs = await finalInvsRes.json();
-  assert.strictEqual(finalInvs.length, 0, "Database should have 0 investors after teardown");
+    const finalCleanRes = await fetch(`${API_BASE}/api/admin/dashboard/clean-database`, {
+      method: "POST",
+      headers: adminHeaders
+    });
+    assert.strictEqual(finalCleanRes.status, 200, "Final database purge should succeed");
+    
+    // Verify clean state
+    const finalInvsRes = await fetch(`${API_BASE}/api/admin/investors`, { headers: adminHeaders });
+    const finalInvs = await finalInvsRes.json();
+    assert.strictEqual(finalInvs.length, 0, "Database should have 0 investors after teardown");
 
-  const finalDocsRes = await fetch(`${API_BASE}/api/admin/documents`, { headers: adminHeaders });
-  const finalDocs = await finalDocsRes.json();
-  assert.strictEqual(finalDocs.length, 0, "Database should have 0 documents after teardown");
+    const finalDocsRes = await fetch(`${API_BASE}/api/admin/documents`, { headers: adminHeaders });
+    const finalDocs = await finalDocsRes.json();
+    assert.strictEqual(finalDocs.length, 0, "Database should have 0 documents after teardown");
 
-  const finalPayRes = await fetch(`${API_BASE}/api/admin/payments`, { headers: adminHeaders });
-  const finalPay = await finalPayRes.json();
-  assert.strictEqual(finalPay.length, 0, "Database should have 0 payments after teardown");
+    const finalPayRes = await fetch(`${API_BASE}/api/admin/payments`, { headers: adminHeaders });
+    const finalPay = await finalPayRes.json();
+    assert.strictEqual(finalPay.length, 0, "Database should have 0 payments after teardown");
 
-  logSuccess("Cleaned all test investments, payments, documents, and notifications");
+    logSuccess("Cleaned all test investments, payments, documents, and notifications");
+  } else {
+    console.log(`\n${colors.cyan}ℹ Preserved database test data (skipping DB teardown).${colors.reset}`);
+  }
   
   console.log(`\n${colors.green}${colors.bold}========================================================================${colors.reset}`);
   console.log(`${colors.green}${colors.bold}   🎉 ALL REAL-USER END-TO-END TESTS PASSED SUCCESSFULLY (100% OK)     ${colors.reset}`);

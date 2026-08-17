@@ -16,32 +16,28 @@ import {
   Landmark,
   CreditCard,
   Bell,
-  Download
+  Download,
+  BarChart3,
+  CheckCircle2
 } from "lucide-react";
 import { motion } from "motion/react";
 import { 
   AreaChart, 
   Area, 
+  BarChart,
+  Bar,
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  Legend
 } from "recharts";
 import { Link } from "react-router-dom";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { cachedFetch } from "../utils/apiCache";
 import { cn } from "../lib/utils";
-
-const data = [
-  { name: "Mon", value: 340000 },
-  { name: "Tue", value: 300000 },
-  { name: "Wed", value: 450000 },
-  { name: "Thu", value: 390000 },
-  { name: "Fri", value: 520000 },
-  { name: "Sat", value: 480000 },
-  { name: "Sun", value: 650000 },
-];
+import { StatCardSkeleton } from "../components/TableSkeleton";
 
 const container = {
   hidden: { opacity: 0 },
@@ -69,36 +65,31 @@ const StatCard = ({ title, value, icon: Icon, color, link }: any) => {
         <div className={`p-3 rounded-2xl ${color} transition-transform duration-300 group-hover:scale-105`}>
           <Icon className="w-6 h-6" />
         </div>
-        {link && (
-          <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 group-hover:bg-blue-600 group-hover:border-blue-600 flex items-center justify-center text-slate-400 group-hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 shadow-sm">
-            <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
-          </div>
-        )}
+        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+          <ArrowUpRight className="w-4 h-4" />
+        </div>
       </div>
       <div>
-        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">{title}</p>
-        <h3 className="text-2xl font-display font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">{value}</h3>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{title}</p>
+        <h3 className="text-2xl font-display font-extrabold text-slate-900 mt-1">{value}</h3>
       </div>
     </motion.div>
   );
 
-  if (link) {
-    return <Link to={link} className="block h-full">{CardContent}</Link>;
-  }
-
-  return CardContent;
+  return link ? <Link to={link} className="block h-full">{CardContent}</Link> : CardContent;
 };
 
-const StatCardSkeleton = () => (
-  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100 flex flex-col animate-pulse">
-    <div className="flex items-center justify-between mb-4">
-      <div className="w-12 h-12 rounded-2xl bg-slate-100" />
-      <div className="w-12 h-6 bg-slate-100 rounded-lg" />
-    </div>
-    <div className="w-24 h-3 bg-slate-100 rounded mb-2" />
-    <div className="w-32 h-8 bg-slate-100 rounded" />
-  </div>
-);
+// Helper functions to safely get properties regardless of PascalCase vs camelCase
+const getInvestorAmount = (i: any) => Number(i.amount ?? i.CapitalAmount ?? i.capitalAmount ?? 0);
+const getInvestorName = (i: any) => i.name ?? i.Name ?? i.LegalBusinessName ?? i.legalBusinessName ?? "Investor";
+const getInvestorEmail = (i: any) => i.email ?? i.Email ?? "";
+const getInvestorId = (i: any) => i.id ?? i.Id ?? i.InvestorId ?? i.investorId;
+const getInvestorDate = (i: any) => i.date_of_onboarding ?? i.DateOfBoarding ?? i.dateOfBoarding ?? i.CreatedAt ?? i.createdAt;
+
+const getPaymentAmount = (p: any) => Number(p.amount ?? p.Amount ?? 0);
+const getPaymentIsSent = (p: any) => Boolean((p.isSent ?? p.IsSent) || p.status === "Sent" || p.Status === "Sent");
+const getPaymentIsReceived = (p: any) => Boolean((p.isReceived ?? p.IsReceived) || p.status === "Received" || p.Status === "Received");
+const getPaymentDate = (p: any) => p.paymentDate ?? p.PaymentDate ?? p.dueDate ?? p.DueDate;
 
 export const Dashboard = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -111,11 +102,14 @@ export const Dashboard = () => {
     documents: 0,
     projects: 0,
     totalRoi: 0,
-    avgPayout: 0
+    avgPayout: 0,
+    totalPaymentsAmt: 0,
+    completedPaymentsAmt: 0
   });
 
   const [rawInvestors, setRawInvestors] = useState<any[]>([]);
   const [myDocuments, setMyDocuments] = useState<any[]>([]);
+  const [paymentBarData, setPaymentBarData] = useState<any[]>([]);
 
   const [chartData, setChartData] = useState<any[]>([
     { name: "Month 1", value: 50000, payout: 2500, avgPayout: 2500 },
@@ -139,7 +133,7 @@ export const Dashboard = () => {
       let allRoiContracts: any[] = [];
       let allProjects: any[] = [];
 
-      // Single aggregated API endpoint call with SWR caching for 0ms page loads
+      // Single aggregated API endpoint call with SWR caching
       const res = await cachedFetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
         headers: authHeaders()
       }).catch(() => null);
@@ -152,7 +146,6 @@ export const Dashboard = () => {
         allRoiContracts = statsData.roiContracts || [];
         allProjects = statsData.projects || [];
       } else {
-        // Fallback to parallel requests if endpoint unavailable
         const [invRes, payRes, docRes, roiRes, projRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() }).catch(() => null),
           fetch(`${API_BASE_URL}/api/admin/payments`, { headers: authHeaders() }).catch(() => null),
@@ -175,53 +168,73 @@ export const Dashboard = () => {
       let avgPayoutVal = 0;
       let investorsCountVal = 0;
       let documentsCountVal = 0;
+      let totalPayAmt = 0;
+      let completedPayAmt = 0;
 
       if (isInvestorUser) {
-        // Investor Dashboard: FILTER BY CURRENT INVESTOR USER
-        const myInvestor = allInvestors.find(i => 
-          i.email?.toLowerCase() === user?.email?.toLowerCase() ||
-          i.name?.toLowerCase() === user?.name?.toLowerCase()
-        ) || allInvestors[0];
+        const userEmail = (user?.email || "").toLowerCase().trim();
+        const userName = (user?.name || "").toLowerCase().trim();
 
-        const myInvestorId = myInvestor?.id;
+        // Match all contracts belonging to this investor
+        const matchingInvestors = allInvestors.filter(i => {
+          const invEmail = getInvestorEmail(i).toLowerCase().trim();
+          const invName = getInvestorName(i).toLowerCase().trim();
+          return (userEmail && invEmail === userEmail) || (userName && invName === userName);
+        });
 
-        // 1. My Investment
-        investmentVal = myInvestor ? Number(myInvestor.amount) || 0 : 0;
+        const myInvestorList = matchingInvestors.length > 0 ? matchingInvestors : (allInvestors.length > 0 ? [allInvestors[0]] : []);
+        const myInvestorIds = new Set(myInvestorList.map(i => getInvestorId(i)).filter(Boolean));
+        const myInvestorNames = new Set(myInvestorList.map(i => getInvestorName(i).toLowerCase().trim()).filter(Boolean));
 
-        // 2. My Payments / Payouts
-        const myPayments = allPayments.filter(p => 
-          (myInvestorId && p.investorId === myInvestorId) || 
-          (myInvestor?.name && p.investorName === myInvestor.name)
-        );
+        // Sum total investment amount across all contracts
+        investmentVal = myInvestorList.reduce((sum, i) => sum + getInvestorAmount(i), 0);
+        investorsCountVal = myInvestorList.length;
 
-        // Send Acknowledge Payments (sent by admin)
-        const sendAckPayments = myPayments.filter(p => p.isSent || p.isReceived || p.status === "Sent" || p.status === "Received");
-        const sendAckAmount = sendAckPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        // Match all payments for this investor
+        const myPayments = allPayments.filter(p => {
+          const pInvId = p.investorId ?? p.InvestorId;
+          const pInvName = (p.investorName ?? p.InvestorName ?? "").toLowerCase().trim();
+          const pInvEmail = (p.investorEmail ?? p.InvestorEmail ?? "").toLowerCase().trim();
+          return (
+            (pInvId && myInvestorIds.has(pInvId)) ||
+            (pInvName && myInvestorNames.has(pInvName)) ||
+            (userEmail && pInvEmail === userEmail)
+          );
+        });
+
+        // Filter investor documents (by investorId or uploaded user)
+        const myFilteredDocs = allDocuments.filter(doc => {
+          const docInvId = doc.investorId ?? doc.InvestorId;
+          const docEmail = (doc.uploadedByEmail ?? doc.UploadedByEmail ?? doc.email ?? "").toLowerCase().trim();
+          return (docInvId && myInvestorIds.has(docInvId)) || (userEmail && docEmail === userEmail) || matchingInvestors.length === 0;
+        });
+        setMyDocuments(myFilteredDocs);
+        documentsCountVal = myFilteredDocs.length;
+
+        totalPayAmt = myPayments.reduce((sum, p) => sum + getPaymentAmount(p), 0);
+        const sendAckPayments = myPayments.filter(p => getPaymentIsSent(p) || getPaymentIsReceived(p));
+        const sendAckAmount = sendAckPayments.reduce((sum, p) => sum + getPaymentAmount(p), 0);
         const sendAckCount = sendAckPayments.length;
 
-        // Completed payments (acknowledged by investor)
-        const completedPayments = myPayments.filter(p => p.isReceived || p.status === "Received");
-        payoutsTillDateVal = completedPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        const completedPayments = myPayments.filter(p => getPaymentIsReceived(p));
+        completedPayAmt = completedPayments.reduce((sum, p) => sum + getPaymentAmount(p), 0);
+        payoutsTillDateVal = completedPayAmt;
 
-        // Average Payouts Till Date: Send Acknowledge Amount / Send Acknowledge Count
-        avgPayoutVal = sendAckCount > 0 ? sendAckAmount / sendAckCount : 0;
+        avgPayoutVal = sendAckCount > 0 ? sendAckAmount / sendAckCount : (completedPayments.length > 0 ? completedPayAmt / completedPayments.length : 0);
 
-        // 3. My Documents
-        documentsCountVal = Array.isArray(allDocuments) ? allDocuments.length : 0;
-
-        // 4. Investor Chart Points (Investment, Payouts Done, Average Payout)
         let chartPoints: any[] = [];
         if (myPayments.length > 0) {
           chartPoints = myPayments.map((p, idx) => {
             let label = `Pay #${idx + 1}`;
-            if (p.paymentDate) {
-              const d = new Date(p.paymentDate);
+            const pDateVal = getPaymentDate(p);
+            if (pDateVal) {
+              const d = new Date(pDateVal);
               if (!isNaN(d.getTime())) {
                 label = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
               }
             }
-            const amt = Number(p.amount) || 0;
-            const pDone = (p.isSent || p.isReceived) ? amt : 0;
+            const amt = getPaymentAmount(p);
+            const pDone = (getPaymentIsSent(p) || getPaymentIsReceived(p)) ? amt : 0;
             return {
               name: label,
               value: investmentVal,
@@ -229,53 +242,62 @@ export const Dashboard = () => {
               avgPayout: Math.round(avgPayoutVal)
             };
           });
-        } else {
+        } else if (investmentVal > 0) {
           chartPoints = [
-            { name: "Month 1", value: investmentVal, payout: Math.round(payoutsTillDateVal * 0.25), avgPayout: Math.round(avgPayoutVal) },
-            { name: "Month 2", value: investmentVal, payout: Math.round(payoutsTillDateVal * 0.50), avgPayout: Math.round(avgPayoutVal) },
-            { name: "Month 3", value: investmentVal, payout: Math.round(payoutsTillDateVal * 0.75), avgPayout: Math.round(avgPayoutVal) },
+            { name: "Contract Start", value: investmentVal, payout: 0, avgPayout: Math.round(avgPayoutVal) },
             { name: "Current", value: investmentVal, payout: Math.round(payoutsTillDateVal), avgPayout: Math.round(avgPayoutVal) },
           ];
+        } else {
+          chartPoints = [];
         }
         setChartData(chartPoints);
 
+        setPaymentBarData([
+          { name: "My Payouts", total: Math.round(totalPayAmt), completed: Math.round(completedPayAmt) }
+        ]);
+
       } else {
-        // Admin / Manager Dashboard: SYSTEM-WIDE METRICS
-        investmentVal = allInvestors.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+        investmentVal = allInvestors.reduce((sum, i) => sum + getInvestorAmount(i), 0);
         investorsCountVal = allInvestors.length;
         documentsCountVal = allDocuments.length;
 
-        // Send Acknowledge Payments (sent by admin across all investors)
-        const sendAckPayments = allPayments.filter(p => p.isSent || p.isReceived || p.status === "Sent" || p.status === "Received");
-        const sendAckAmount = sendAckPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        totalPayAmt = allPayments.reduce((sum, p) => sum + getPaymentAmount(p), 0);
+        const sendAckPayments = allPayments.filter(p => getPaymentIsSent(p) || getPaymentIsReceived(p));
+        const sendAckAmount = sendAckPayments.reduce((sum, p) => sum + getPaymentAmount(p), 0);
         const sendAckCount = sendAckPayments.length;
 
-        // Completed payments (acknowledged by investors)
-        const completedPayments = allPayments.filter(p => p.isReceived || p.status === "Received");
-        payoutsTillDateVal = completedPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        const completedPayments = allPayments.filter(p => getPaymentIsReceived(p));
+        completedPayAmt = completedPayments.reduce((sum, p) => sum + getPaymentAmount(p), 0);
+        payoutsTillDateVal = completedPayAmt;
 
-        // Average Payouts Till Date: Send Acknowledge Amount / Send Acknowledge Count
         avgPayoutVal = sendAckCount > 0 ? sendAckAmount / sendAckCount : 0;
 
-        // Admin Chart Points (Investment, Payouts Done, Average Payout)
         if (allInvestors.length > 0) {
           const sortedInvestors = [...allInvestors].sort((a, b) => {
-            const dateA = a.date_of_onboarding ? new Date(a.date_of_onboarding) : new Date(0);
-            const dateB = b.date_of_onboarding ? new Date(b.date_of_onboarding) : new Date(0);
+            const dateAVal = getInvestorDate(a);
+            const dateBVal = getInvestorDate(b);
+            const dateA = dateAVal ? new Date(dateAVal) : new Date(0);
+            const dateB = dateBVal ? new Date(dateBVal) : new Date(0);
             return dateA.getTime() - dateB.getTime();
           });
 
           const chartPoints = sortedInvestors.map(inv => {
-            let label = inv.name;
-            if (inv.date_of_onboarding) {
-              const d = new Date(inv.date_of_onboarding);
+            let label = getInvestorName(inv);
+            const invDate = getInvestorDate(inv);
+            if (invDate) {
+              const d = new Date(invDate);
               if (!isNaN(d.getTime())) {
                 label = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
               }
             }
-            const invCap = Number(inv.amount) || 0;
-            const invPayments = allPayments.filter(p => p.investorName === inv.name || p.investorId === inv.id);
-            const invPaid = invPayments.filter(p => p.isSent || p.isReceived).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+            const invCap = getInvestorAmount(inv);
+            const invId = getInvestorId(inv);
+            const invName = getInvestorName(inv);
+            const invPayments = allPayments.filter(p => 
+              (invName && (p.investorName === invName || p.InvestorName === invName)) || 
+              (invId && (p.investorId === invId || p.InvestorId === invId))
+            );
+            const invPaid = invPayments.filter(p => getPaymentIsSent(p) || getPaymentIsReceived(p)).reduce((sum, p) => sum + getPaymentAmount(p), 0);
 
             return {
               name: label,
@@ -285,7 +307,13 @@ export const Dashboard = () => {
             };
           });
           setChartData(chartPoints);
+        } else {
+          setChartData([]);
         }
+
+        setPaymentBarData([
+          { name: "Portfolio Payouts", total: Math.round(totalPayAmt), completed: Math.round(completedPayAmt) }
+        ]);
       }
 
       setStats({
@@ -295,7 +323,9 @@ export const Dashboard = () => {
         documents: documentsCountVal,
         projects: allProjects.length,
         totalRoi: payoutsTillDateVal,
-        avgPayout: avgPayoutVal
+        avgPayout: avgPayoutVal,
+        totalPaymentsAmt: totalPayAmt,
+        completedPaymentsAmt: completedPayAmt
       });
 
       setRawInvestors(allInvestors);
@@ -338,7 +368,6 @@ export const Dashboard = () => {
                   title="My Investment" 
                   value={`£${stats.investment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={Landmark} 
-                  trend="4.2" 
                   color="bg-blue-50 text-blue-600" 
                   link="/investors"
                 />
@@ -346,7 +375,6 @@ export const Dashboard = () => {
                   title="Payouts Till Date" 
                   value={`£${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={PoundSterling} 
-                  trend="12" 
                   color="bg-emerald-50 text-emerald-600" 
                   link="/payments"
                 />
@@ -354,7 +382,6 @@ export const Dashboard = () => {
                   title="Average Payouts Till Date" 
                   value={`£${stats.avgPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={PoundSterling} 
-                  trend="8.5" 
                   color="bg-violet-50 text-violet-600" 
                   link="/payments"
                 />
@@ -362,7 +389,6 @@ export const Dashboard = () => {
                   title="My Documents" 
                   value={stats.documents.toString()} 
                   icon={FileText} 
-                  trend="2.1" 
                   color="bg-amber-50 text-amber-600" 
                   link="/documents"
                 />
@@ -373,7 +399,6 @@ export const Dashboard = () => {
                   title="Total Investment" 
                   value={`£${stats.investment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={Landmark} 
-                  trend="4.2" 
                   color="bg-blue-50 text-blue-600" 
                   link="/investors"
                 />
@@ -381,7 +406,6 @@ export const Dashboard = () => {
                   title="Payouts Till Date" 
                   value={`£${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={PoundSterling} 
-                  trend="12" 
                   color="bg-emerald-50 text-emerald-600" 
                   link="/payments"
                 />
@@ -389,7 +413,6 @@ export const Dashboard = () => {
                   title="Average Payouts Till Date" 
                   value={`£${stats.avgPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                   icon={PoundSterling} 
-                  trend="8.5" 
                   color="bg-violet-50 text-violet-600" 
                   link="/payments"
                 />
@@ -397,7 +420,6 @@ export const Dashboard = () => {
                   title="Total Investors" 
                   value={stats.investors.toString()} 
                   icon={Users} 
-                  trend="2.1" 
                   color="bg-amber-50 text-amber-600" 
                   link="/investors"
                 />
@@ -425,35 +447,43 @@ export const Dashboard = () => {
               </div>
             </div>
             
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorPayout" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorAvgPayout" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v/1000}k` : v}`} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: "#0f172a", borderRadius: "16px", color: "#fff", border: "none", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)" }}
-                    formatter={(val: any, name: any) => [`£${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name]}
-                  />
-                  <Area type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" name="Capital Investment" />
-                  <Area type="monotone" dataKey="payout" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorPayout)" name="Payouts Done" />
-                  <Area type="monotone" dataKey="avgPayout" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorAvgPayout)" name="Average Payout" />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="h-72 w-full flex items-center justify-center">
+              {chartData.length === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                  <TrendingUp className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                  <p className="text-sm font-semibold text-slate-600">No chart data available</p>
+                  <p className="text-xs text-slate-400 mt-1">Growth trends will populate as investments are onboarded.</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorPayout" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorAvgPayout" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v/1000}k` : v}`} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: "#0f172a", borderRadius: "16px", color: "#fff", border: "none", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)" }}
+                      formatter={(val: any, name: any) => [`£${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name]}
+                    />
+                    <Area type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" name="Capital Investment" />
+                    <Area type="monotone" dataKey="payout" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorPayout)" name="Payouts Done" />
+                    <Area type="monotone" dataKey="avgPayout" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorAvgPayout)" name="Average Payout" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 
@@ -533,23 +563,30 @@ export const Dashboard = () => {
                   {rawInvestors.length === 0 ? (
                     <p className="text-sm text-slate-400 py-4">No recent investor activity recorded.</p>
                   ) : (
-                    rawInvestors.slice(0, 4).map((inv: any, idx: number) => (
-                      <div key={idx} className="py-3 flex items-center justify-between hover:bg-slate-50/80 px-2 rounded-xl transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-sm">
-                            {inv.name ? inv.name.substring(0, 2).toUpperCase() : "IN"}
+                    rawInvestors.slice(0, 4).map((inv: any, idx: number) => {
+                      const invName = getInvestorName(inv);
+                      const invEmail = getInvestorEmail(inv);
+                      const invDate = getInvestorDate(inv);
+                      const invAmount = getInvestorAmount(inv);
+                      const invType = inv.type ?? (inv.InvestorTypeId === 2 ? "Business" : "Individual");
+                      return (
+                        <div key={idx} className="py-3 flex items-center justify-between hover:bg-slate-50/80 px-2 rounded-xl transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-sm">
+                              {invName ? invName.substring(0, 2).toUpperCase() : "IN"}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-slate-900">{invName}</p>
+                              <p className="text-xs text-slate-500">{invEmail || "—"} • {invDate ? new Date(invDate).toLocaleDateString() : "Active"}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-900">{inv.name}</p>
-                            <p className="text-xs text-slate-500">{inv.email} • {inv.date_of_onboarding || "Active"}</p>
+                          <div className="text-right">
+                            <p className="text-sm font-extrabold text-slate-950">£{invAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{invType}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-extrabold text-slate-950">£{(Number(inv.amount) || 0).toLocaleString()}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{inv.type}</p>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               )}
@@ -557,123 +594,55 @@ export const Dashboard = () => {
           )}
         </motion.div>
 
-        {/* Right Info Card */}
+        {/* Right Info Card - Payment Disbursements Bar Chart */}
         <div className="space-y-6">
-          {/* Quick Actions / Module Management */}
           <motion.div variants={item} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100">
-            <h3 className="text-lg font-display font-bold text-slate-900 mb-4">Module Management</h3>
-            <div className="space-y-3">
-              {user?.role === "investor" ? (
-                <>
-                  <Link to="/documents" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-violet-100 rounded-lg group-hover:bg-violet-200 transition-colors">
-                        <FileText className="w-4 h-4 text-violet-600" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">Signed Agreements & Documents</span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-                  </Link>
-
-                  <Link to="/payments" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
-                        <Landmark className="w-4 h-4 text-emerald-600" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">My Payment Ledger</span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-                  </Link>
-
-                  <Link to="/notifications" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                        <Bell className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">System Notifications</span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link to="/investors" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                        <Users className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">Investor Onboarding & Directory</span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-                  </Link>
-
-                  <Link to="/documents" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-violet-100 rounded-lg group-hover:bg-violet-200 transition-colors">
-                        <FileText className="w-4 h-4 text-violet-600" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">Digital Agreements & Vault</span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-                  </Link>
-
-                  <Link to="/projects" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
-                        <Folder className="w-4 h-4 text-emerald-600" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">Operations & Project Tracking</span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-                  </Link>
-
-                  <Link to="/payments" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
-                        <CreditCard className="w-4 h-4 text-amber-600" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">Financial Payment Disbursements</span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-                  </Link>
-
-                  {user?.role === 'admin' && (
-                    <Link to="/admin" className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 group">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-200 rounded-lg group-hover:bg-slate-300 transition-colors">
-                          <Shield className="w-4 h-4 text-slate-700" />
-                        </div>
-                        <span className="text-sm font-bold text-slate-700">System Governance & Access</span>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                  )}
-                </>
-              )}
-            </div>
-          </motion.div>
-
-          {/* Quick Stats Grid */}
-          <motion.div variants={item} className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6 rounded-3xl shadow-xl border border-slate-800 text-white relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                  <LayoutGrid className="w-4 h-4 text-blue-400" />
-                </div>
-                <h3 className="text-sm font-extrabold uppercase tracking-wider text-blue-400">Active Access</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-display font-bold text-slate-900">Payment Disbursements</h3>
+                <p className="text-xs text-slate-500 mt-1">Total payments vs completed payouts till date</p>
               </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                  <span className="text-xs text-slate-300 font-bold">Role Status</span>
-                  <span className="text-xs font-extrabold bg-blue-500 text-white px-2.5 py-1 rounded-lg uppercase tracking-wide shadow-md shadow-blue-500/20">{user?.role}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-300 font-bold">Permissions</span>
-                  <span className="text-xs font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg uppercase tracking-wide">Verified</span>
-                </div>
+              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-2xl">
+                <BarChart3 className="w-5 h-5" />
               </div>
             </div>
-            <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-blue-500 rounded-full blur-3xl opacity-20" />
+
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={paymentBarData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v/1000}k` : v}`} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: "#0f172a", borderRadius: "16px", color: "#fff", border: "none", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)" }}
+                    formatter={(val: any, name: any) => [`£${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name === "total" ? "Total Scheduled" : "Completed Till Date"]}
+                  />
+                  <Legend 
+                    verticalAlign="top" 
+                    align="right"
+                    iconType="circle"
+                    formatter={(value) => <span className="text-xs font-bold text-slate-600 ml-1">{value === "total" ? "Total Payments" : "Completed"}</span>}
+                  />
+                  <Bar dataKey="total" fill="#3b82f6" radius={[8, 8, 0, 0]} name="total" barSize={36} />
+                  <Bar dataKey="completed" fill="#10b981" radius={[8, 8, 0, 0]} name="completed" barSize={36} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100 mt-4">
+              <div className="p-3 bg-blue-50/60 rounded-2xl border border-blue-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Total Payments</span>
+                <p className="text-base font-extrabold text-slate-900 mt-0.5">
+                  £{stats.totalPaymentsAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div className="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Completed</span>
+                <p className="text-base font-extrabold text-slate-900 mt-0.5">
+                  £{stats.completedPaymentsAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>

@@ -919,9 +919,9 @@ export const Investors = () => {
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <motion.div variants={itemVariants}>
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-extrabold text-slate-900 tracking-tight">Investments Directory</h1>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-extrabold text-slate-900 tracking-tight">Investments</h1>
                 <p className="text-sm text-slate-500 mt-1 font-medium leading-relaxed">
-                  Manage verified legal entities and investor contracts.
+                  Manage Investments
                 </p>
               </motion.div>
               {!isClient && (
@@ -937,7 +937,7 @@ export const Investors = () => {
                     className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-sm px-5 py-3 rounded-2xl border border-emerald-200 shadow-sm cursor-pointer active:scale-[0.98] transition-all"
                   >
                     <Upload className="w-4 h-4" />
-                    Bulk Import
+                    Bulk Onboard
                   </motion.button>
 
                   <motion.button
@@ -969,14 +969,14 @@ export const Investors = () => {
                 
                 {/* Statistics Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Investors Total / Active */}
+                  {/* Investors */}
                   <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
                           <Users className="w-5 h-5" />
                         </div>
-                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Investors (Total / Active)</span>
+                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Investors</span>
                       </div>
                       <div className="flex items-baseline gap-2 pt-2">
                         <span className="text-3xl font-extrabold text-slate-900">{totalUniqueInvestorsCount}</span>
@@ -1001,14 +1001,14 @@ export const Investors = () => {
                     </div>
                   </div>
 
-                  {/* Investor Type: Org & Individual */}
+                  {/* Investor Type */}
                   <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-start justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
                           <Building2 className="w-5 h-5" />
                         </div>
-                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Investor Type (Org / Ind)</span>
+                        <span className="text-xs font-bold font-sans text-slate-500 tracking-wide uppercase">Investor Type</span>
                       </div>
                       <div className="flex items-baseline gap-2 pt-2">
                         <span className="text-3xl font-extrabold text-purple-600">{businessInvestorsCount}</span>

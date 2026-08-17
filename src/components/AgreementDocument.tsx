@@ -117,15 +117,16 @@ export const AgreementDocument: React.FC<AgreementDocumentProps> = ({
   const investorName    = investorData?.name || "Investor";
   const investorAddress = isRealValue(investorData?.address)
     ? investorData!.address!
-    : "71B Ayres Road, Old Trafford, Manchester \u2013 M16 7GS";
-  const amountNumber    = Number(investorData?.amount) || 10000;
+    : (isRealValue((investorData as any)?.Address) ? (investorData as any).Address : "Registered Address on File");
+  const amountNumber    = Number(investorData?.amount ?? (investorData as any)?.CapitalAmount ?? 10000);
   const amountFormatted = amountNumber.toLocaleString(undefined, {
     minimumFractionDigits: 2, maximumFractionDigits: 2,
   });
-  const agreementDate  = formatDateStr(investorData?.date_of_onboarding);
-  const investmentDate = formatDateStr(investorData?.date_of_onboarding);
-  const firstPayment   = computeReturnPeriod(investorData?.date_of_onboarding);
-  const witnessName    = isRealValue(investorData?.witness) ? investorData!.witness! : "Accredited Witness";
+  const dateVal        = investorData?.date_of_onboarding || (investorData as any)?.DateOfBoarding || (investorData as any)?.CreatedAt;
+  const agreementDate  = formatDateStr(dateVal);
+  const investmentDate = formatDateStr(dateVal);
+  const firstPayment   = computeReturnPeriod(dateVal);
+  const witnessName    = isRealValue(investorData?.witness) ? investorData!.witness! : (isRealValue((investorData as any)?.Witness) ? (investorData as any).Witness : "Accredited Witness");
 
   const minRoiVal = Number(investorData?.min_roi_id || investorData?.min_RoiRangeId || 1);
   const maxRoiVal = Number(investorData?.max_roi_id || investorData?.max_RoiRangeId || 5);

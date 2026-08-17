@@ -361,7 +361,7 @@ export const Notifications = () => {
               className="mt-4 inline-flex items-center gap-2 bg-slate-950 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              Create Notification
+              Send Notification
             </button>
           )}
         </div>

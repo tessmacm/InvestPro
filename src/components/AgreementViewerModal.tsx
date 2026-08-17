@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, Printer, Crown } from "lucide-react";
 import { Document, Investor } from "../types";
 import { AgreementDocument } from "./AgreementDocument";
+import { API_BASE_URL, authHeaders } from "../config/api";
 
 interface AgreementViewerModalProps {
   isOpen: boolean;
@@ -15,15 +16,48 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
   isOpen,
   onClose,
   document,
-  investorData,
+  investorData: initialInvestorData,
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const [resolvedInvestor, setResolvedInvestor] = React.useState<Investor | null>(initialInvestorData || null);
+
+  React.useEffect(() => {
+    if (!isOpen || !document) return;
+    if (initialInvestorData && initialInvestorData.amount && initialInvestorData.address) {
+      setResolvedInvestor(initialInvestorData);
+      return;
+    }
+
+    const docInvId = (document as any).investor_id || (document as any).investorId;
+    const docInvEmail = (document as any).investor_email || (document as any).investorEmail;
+    const docInvName = (document as any).investor_name || (document as any).investorName;
+
+    fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() })
+      .then(res => res.ok ? res.json() : [])
+      .then((data: any[]) => {
+        if (!Array.isArray(data)) return;
+        const matched = data.find(i => 
+          (docInvId && (String(i.id) === String(docInvId) || String(i.InvestorId) === String(docInvId))) ||
+          (docInvEmail && i.email?.toLowerCase() === docInvEmail.toLowerCase()) ||
+          (docInvName && i.name?.toLowerCase() === docInvName.toLowerCase())
+        );
+        if (matched) {
+          setResolvedInvestor(matched);
+        } else if (initialInvestorData) {
+          setResolvedInvestor(initialInvestorData);
+        }
+      })
+      .catch(() => {
+        if (initialInvestorData) setResolvedInvestor(initialInvestorData);
+      });
+  }, [isOpen, document, initialInvestorData]);
 
   if (!isOpen || !document) return null;
 
+  const investorData  = resolvedInvestor || initialInvestorData;
   const isSigned      = document.status === "Signed";
-  const signatureData = (document as any).signature || investorData?.name;
-  const investorName  = investorData?.name || (document as any)?.investor_name || "Investor";
+  const signatureData = (document as any).signature || (document as any).signatureData || (document as any).SignatureData || investorData?.name;
+  const investorName  = investorData?.name || (document as any)?.investor_name || (document as any)?.investorName || "Investor";
 
   const handlePrintOrDownload = () => {
     const content = printRef.current;
