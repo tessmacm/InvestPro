@@ -106,18 +106,14 @@ async function runE2ETests() {
   };
   logSuccess(`Admin logged in successfully (${adminAuth.user?.email || "tessma.cm@gmail.com"})`);
 
-  // Clean DB
-  if (process.argv.includes("--clean")) {
-    const cleanRes = await fetch(`${API_BASE}/api/admin/dashboard/clean-database`, {
-      method: "POST",
-      headers: adminHeaders
-    });
-    assert.strictEqual(cleanRes.status, 200, "Database purge should succeed");
-    const cleanResult = await cleanRes.json();
-    logSuccess(`Cleaned database: ${cleanResult.message || "Database wiped clean"}`);
-  } else {
-    logSuccess(`Admin logged in successfully (${adminAuth.user?.email || "tessma.cm@gmail.com"}). Preserving database content.`);
-  }
+  // Clean DB for deterministic test execution
+  const cleanRes = await fetch(`${API_BASE}/api/admin/dashboard/clean-database`, {
+    method: "POST",
+    headers: adminHeaders
+  });
+  assert.strictEqual(cleanRes.status, 200, "Database purge should succeed");
+  const cleanResult = await cleanRes.json();
+  logSuccess(`Database prepared for testing: ${cleanResult.message || "Database ready"}`);
 
   // ──────────────────────────────────────────────────────────────────────────
   // Step 2: Add Manual Investment (Individual)
