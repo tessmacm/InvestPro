@@ -202,11 +202,19 @@ export const Dashboard = () => {
           );
         });
 
-        // Filter investor documents (by investorId or uploaded user)
+        // Filter investor documents (by investor_id, investorId, email, or investor name)
         const myFilteredDocs = allDocuments.filter(doc => {
-          const docInvId = doc.investorId ?? doc.InvestorId;
-          const docEmail = (doc.uploadedByEmail ?? doc.UploadedByEmail ?? doc.email ?? "").toLowerCase().trim();
-          return (docInvId && myInvestorIds.has(docInvId)) || (userEmail && docEmail === userEmail) || matchingInvestors.length === 0;
+          const docInvId = doc.investor_id ?? doc.investorId ?? doc.InvestorId;
+          const docEmail = (doc.investor_email ?? doc.investorEmail ?? doc.uploadedByEmail ?? doc.UploadedByEmail ?? doc.email ?? "").toLowerCase().trim();
+          const docInvName = (doc.investor_name ?? doc.investorName ?? "").toLowerCase().trim();
+          const docTitle = (doc.title ?? "").toLowerCase().trim();
+
+          const matchesId = docInvId && myInvestorIds.has(Number(docInvId));
+          const matchesEmail = userEmail && docEmail === userEmail;
+          const matchesName = userName && (docInvName === userName || myInvestorNames.has(docInvName));
+          const matchesTitle = (userName && docTitle.includes(userName)) || Array.from(myInvestorNames).some(n => n && docTitle.includes(n));
+
+          return matchesId || matchesEmail || matchesName || matchesTitle || (matchingInvestors.length === 0 && allDocuments.length > 0);
         });
         setMyDocuments(myFilteredDocs);
         documentsCountVal = myFilteredDocs.length;

@@ -95,7 +95,7 @@ export const Payments = () => {
   // Filter payments for current user role
   const relevantPayments = React.useMemo(() => {
     if (isAdmin) return payments;
-    return payments.filter(p => 
+    return payments.filter(p =>
       (user?.id && String(p.investorId) === String(user.id)) ||
       (user?.name && p.investorName?.toLowerCase() === user.name.toLowerCase()) ||
       (user?.email && p.investorName?.toLowerCase() === user.email.toLowerCase())
@@ -105,7 +105,7 @@ export const Payments = () => {
   // Filter to include ONLY the single next upcoming payment for each investor
   const upcomingPayments = React.useMemo(() => {
     const map = new Map<number | string, Payment>();
-    
+
     // Sort payments by payment date ascending
     const sorted = [...relevantPayments].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
 
@@ -296,32 +296,36 @@ export const Payments = () => {
           </div>
         </div>
 
-        {/* Card 3: Acknowledge Sent */}
+        {/* Card 3: Acknowledge Sent (Admin) / Sent by Investee (Investor) */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Acknowledge Sent
+              {isAdmin ? "Acknowledge Sent" : "Sent by Investee"}
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{sentTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
-            <p className="text-xs text-slate-400 font-semibold">{sentCount} payments sent</p>
+            <p className="text-xs text-slate-400 font-semibold">
+              {sentCount} {isAdmin ? "payments sent" : "sent by investee"}
+            </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
             <Send className="w-6 h-6" />
           </div>
         </div>
 
-        {/* Card 4: Acknowledge Received */}
+        {/* Card 4: Acknowledge Received (Admin) / Received (Investor) */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Acknowledge Received
+              {isAdmin ? "Acknowledge Received" : "Received"}
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{doneTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
-            <p className="text-xs text-slate-400 font-semibold">{doneCount} payments confirmed</p>
+            <p className="text-xs text-slate-400 font-semibold">
+              {doneCount} {isAdmin ? "payments confirmed" : "payments received"}
+            </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <CheckCircle2 className="w-6 h-6" />
@@ -331,7 +335,7 @@ export const Payments = () => {
 
       {/* Filter Controls Bar */}
       <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-4">
-        
+
         {/* Pay ID Search Filter */}
         <div className="space-y-1 text-left w-full md:w-44">
           <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Search Pay ID</label>
@@ -375,8 +379,8 @@ export const Payments = () => {
           >
             <option value="all">All Statuses</option>
             <option value="pending">Acknowledge Pending</option>
-            <option value="sent">Acknowledge Sent</option>
-            <option value="received">Acknowledge Recieved</option>
+            <option value="sent">{isAdmin ? "Acknowledge Sent" : "Sent by Investee"}</option>
+            <option value="received">{isAdmin ? "Acknowledge Received" : "Received"}</option>
           </select>
         </div>
 
@@ -490,16 +494,19 @@ export const Payments = () => {
                             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-300 shadow-xs cursor-pointer active:scale-95 transition-all group"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform" />
-                            Acknowledge Sent
+                            Recieved? Acknowledge!
                           </button>
                         ) : (
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide ${
-                            p.isReceived ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                            p.isSent ? "bg-blue-50 text-blue-700 border border-blue-200" :
-                            "bg-amber-50 text-amber-700 border border-amber-200"
-                          }`}>
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide ${p.isReceived ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                              p.isSent ? "bg-blue-50 text-blue-700 border border-blue-200" :
+                                "bg-amber-50 text-amber-700 border border-amber-200"
+                            }`}>
                             {p.isReceived && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                            {p.isReceived ? "Acknowledge Recieved" : p.isSent ? "Acknowledge Sent" : "Acknowledge Pending"}
+                            {p.isReceived 
+                              ? (isAdmin ? "Acknowledge Received" : "Received") 
+                              : p.isSent 
+                                ? (isAdmin ? "Acknowledge Sent" : "Sent by Investee") 
+                                : "Acknowledge Pending"}
                           </span>
                         )}
                       </td>
@@ -548,8 +555,8 @@ export const Payments = () => {
                     onClick={() => setCurrentPage(pageNum)}
                     className={cn(
                       "w-9 h-9 flex items-center justify-center rounded-xl font-bold transition-all",
-                      currentPage === pageNum 
-                        ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" 
+                      currentPage === pageNum
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-500/10"
                         : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800"
                     )}
                   >
@@ -614,12 +621,15 @@ export const Payments = () => {
 
             <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Payment Status</span>
-              <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${
-                selectedPayment.isReceived ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" :
-                selectedPayment.isSent ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" :
-                "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-              }`}>
-                {selectedPayment.isReceived ? "✓ Acknowledged" : selectedPayment.isSent ? "→ Send Acknowledge" : "⏳ Pending"}
+              <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${selectedPayment.isReceived ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" :
+                  selectedPayment.isSent ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" :
+                    "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                }`}>
+                {selectedPayment.isReceived 
+                  ? (isAdmin ? "✓ Acknowledged" : "✓ Received") 
+                  : selectedPayment.isSent 
+                    ? (isAdmin ? "→ Send Acknowledge" : "→ Sent by Investee") 
+                    : "⏳ Pending"}
               </span>
             </div>
 

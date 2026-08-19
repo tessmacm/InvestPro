@@ -114,7 +114,12 @@ export const AgreementDocument: React.FC<AgreementDocumentProps> = ({
   isSigned = false,
   fullPageLayout = false,
 }) => {
-  const investorName    = investorData?.name || "Investor";
+  const isCorporate     = String(investorData?.type || '').toLowerCase().includes("corporate") || 
+                          String(investorData?.type || '').toLowerCase().includes("business") || 
+                          (investorData as any)?.type === 2;
+  const investorName    = isCorporate && isRealValue(investorData?.organization)
+    ? investorData!.organization!
+    : (investorData?.name || (isRealValue(investorData?.organization) ? investorData!.organization! : "Investor"));
   const investorAddress = isRealValue(investorData?.address)
     ? investorData!.address!
     : (isRealValue((investorData as any)?.Address) ? (investorData as any).Address : "Registered Address on File");
@@ -129,9 +134,9 @@ export const AgreementDocument: React.FC<AgreementDocumentProps> = ({
   const witnessName    = isRealValue(investorData?.witness) ? investorData!.witness! : (isRealValue((investorData as any)?.Witness) ? (investorData as any).Witness : "Accredited Witness");
 
   const minRoiVal = Number(investorData?.min_roi_id || investorData?.min_RoiRangeId || 1);
-  const maxRoiVal = Number(investorData?.max_roi_id || investorData?.max_RoiRangeId || 5);
-  const minRoi    = Math.round(amountNumber * ((minRoiVal > 0 && minRoiVal <= 20 ? minRoiVal : 1) / 100));
-  const maxRoi    = Math.round(amountNumber * ((maxRoiVal > 0 && maxRoiVal <= 20 ? maxRoiVal : 5) / 100));
+  const maxRoiVal = Number(investorData?.max_roi_id || investorData?.max_RoiRangeId || (minRoiVal >= 3 ? minRoiVal : 5));
+  const minRoi    = Math.round(amountNumber * ((minRoiVal > 0 && minRoiVal <= 50 ? minRoiVal : 1) / 100));
+  const maxRoi    = Math.round(amountNumber * ((maxRoiVal > 0 && maxRoiVal <= 50 ? maxRoiVal : 5) / 100));
 
   // ── Section blocks ────────────────────────────────────────────────────────
 

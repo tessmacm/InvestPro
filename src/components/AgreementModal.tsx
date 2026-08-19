@@ -38,27 +38,46 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
   const [error, setError]               = useState<string | null>(null);
   const [investorData, setInvestorData] = useState<Investor | null>(null);
 
-  // ── Fetch the real investor record from the API ─────────────────────────────
+  // ── Fetch the real investor record from the API (direct contract lookup) ────
   useEffect(() => {
     if (!isOpen) return;
-    fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() })
-      .then(res => res.ok ? res.json() : [])
-      .then((data: any[]) => {
-        const matched = data.find(i =>
-          (investorId    && String(i.id) === String(investorId)) ||
-          (investorEmail && i.email?.toLowerCase() === investorEmail.toLowerCase()) ||
-          (investorName  && i.name?.toLowerCase()  === investorName.toLowerCase())
-        );
-        if (matched) {
-          setInvestorData(matched);
-        } else {
-          // Fallback stub so the document renders with login-time info
+
+    if (investorId) {
+      fetch(`${API_BASE_URL}/api/admin/investors/${investorId}`, { headers: authHeaders() })
+        .then(res => res.ok ? res.json() : null)
+        .then((data: any) => {
+          if (data && (data.id || data.InvestorId)) {
+            setInvestorData(data);
+            return;
+          }
+          // Fallback to searching all investors
+          fetchAllInvestorsFallback();
+        })
+        .catch(() => fetchAllInvestorsFallback());
+    } else {
+      fetchAllInvestorsFallback();
+    }
+
+    function fetchAllInvestorsFallback() {
+      fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() })
+        .then(res => res.ok ? res.json() : [])
+        .then((data: any[]) => {
+          const matched = data.find(i =>
+            (investorId    && (String(i.id) === String(investorId) || String(i.InvestorId) === String(investorId))) ||
+            (investorEmail && i.email?.toLowerCase() === investorEmail.toLowerCase()) ||
+            (investorName  && (i.name?.toLowerCase() === investorName.toLowerCase() || i.organization?.toLowerCase() === investorName.toLowerCase()))
+          );
+          if (matched) {
+            setInvestorData(matched);
+          } else {
+            // Fallback stub so the document renders with login-time info
+            setInvestorData({ name: investorName, email: investorEmail, amount: Number(amount) } as Investor);
+          }
+        })
+        .catch(() => {
           setInvestorData({ name: investorName, email: investorEmail, amount: Number(amount) } as Investor);
-        }
-      })
-      .catch(() => {
-        setInvestorData({ name: investorName, email: investorEmail, amount: Number(amount) } as Investor);
-      });
+        });
+    }
   }, [isOpen, investorId, investorEmail, investorName, amount]);
 
   // ── Signature canvas ────────────────────────────────────────────────────────

@@ -32,24 +32,41 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
     const docInvEmail = (document as any).investor_email || (document as any).investorEmail;
     const docInvName = (document as any).investor_name || (document as any).investorName;
 
-    fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() })
-      .then(res => res.ok ? res.json() : [])
-      .then((data: any[]) => {
-        if (!Array.isArray(data)) return;
-        const matched = data.find(i => 
-          (docInvId && (String(i.id) === String(docInvId) || String(i.InvestorId) === String(docInvId))) ||
-          (docInvEmail && i.email?.toLowerCase() === docInvEmail.toLowerCase()) ||
-          (docInvName && i.name?.toLowerCase() === docInvName.toLowerCase())
-        );
-        if (matched) {
-          setResolvedInvestor(matched);
-        } else if (initialInvestorData) {
-          setResolvedInvestor(initialInvestorData);
-        }
-      })
-      .catch(() => {
-        if (initialInvestorData) setResolvedInvestor(initialInvestorData);
-      });
+    if (docInvId) {
+      fetch(`${API_BASE_URL}/api/admin/investors/${docInvId}`, { headers: authHeaders() })
+        .then(res => res.ok ? res.json() : null)
+        .then((data: any) => {
+          if (data && (data.id || data.InvestorId)) {
+            setResolvedInvestor(data);
+            return;
+          }
+          fetchAllInvestorsFallback();
+        })
+        .catch(() => fetchAllInvestorsFallback());
+    } else {
+      fetchAllInvestorsFallback();
+    }
+
+    function fetchAllInvestorsFallback() {
+      fetch(`${API_BASE_URL}/api/admin/investors`, { headers: authHeaders() })
+        .then(res => res.ok ? res.json() : [])
+        .then((data: any[]) => {
+          if (!Array.isArray(data)) return;
+          const matched = data.find(i => 
+            (docInvId && (String(i.id) === String(docInvId) || String(i.InvestorId) === String(docInvId))) ||
+            (docInvEmail && i.email?.toLowerCase() === docInvEmail.toLowerCase()) ||
+            (docInvName && (i.name?.toLowerCase() === docInvName.toLowerCase() || i.organization?.toLowerCase() === docInvName.toLowerCase()))
+          );
+          if (matched) {
+            setResolvedInvestor(matched);
+          } else if (initialInvestorData) {
+            setResolvedInvestor(initialInvestorData);
+          }
+        })
+        .catch(() => {
+          if (initialInvestorData) setResolvedInvestor(initialInvestorData);
+        });
+    }
   }, [isOpen, document, initialInvestorData]);
 
   if (!isOpen || !document) return null;

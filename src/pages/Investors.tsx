@@ -202,7 +202,7 @@ export const Investors = () => {
             min_roi_id: Math.min(Math.max(parseInt(minRoi) || 1, 1), 4),
             max_roi_id: Math.min(Math.max(parseInt(maxRoi) || 4, 1), 4),
             roiTypeId: (payoutCategory || '').toLowerCase() === 'variant'
-              ? ((payoutCycle || '').toLowerCase() === 'weekly' ? 2 : (payoutCycle || '').toLowerCase() === 'quarterly' ? 4 : (payoutCycle || '').toLowerCase() === 'yearly' ? 5 : 3)
+              ? ((payoutCycle || '').toLowerCase() === 'weekly' ? 2 : (payoutCycle || '').toLowerCase() === 'quarterly' ? 4 : (payoutCycle || '').toLowerCase() === 'half-yearly' || (payoutCycle || '').toLowerCase() === 'halfyearly' ? 6 : (payoutCycle || '').toLowerCase() === 'yearly' ? 5 : 3)
               : 1,
             bank: (bankName || '').trim(),
             acNumber: (bankAccountNo || '').trim(),
@@ -691,7 +691,7 @@ export const Investors = () => {
       min_RoiRangeId: minRoiVal,
       max_RoiRangeId: maxRoiVal,
       payoutType: formData.payoutCategory,
-      roiTypeId: formData.payoutCategory === "Fixed" ? 1 : (formData.payoutCycle === "Weekly" ? 2 : formData.payoutCycle === "Monthly" ? 3 : formData.payoutCycle === "Quarterly" ? 4 : 5),
+      roiTypeId: formData.payoutCategory === "Fixed" ? 1 : (formData.payoutCycle === "Weekly" ? 2 : formData.payoutCycle === "Monthly" ? 3 : formData.payoutCycle === "Quarterly" ? 4 : formData.payoutCycle === "Half-Yearly" ? 6 : 5),
       bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
       acNumber: formData.acNumber || "",
       sortCode: formData.sortCode || "",
@@ -716,7 +716,7 @@ export const Investors = () => {
       min_roi_id: minRoiVal,
       max_roi_id: maxRoiVal,
       payoutType: formData.payoutCategory,
-      roiTypeId: formData.payoutCategory === "Fixed" ? 1 : (formData.payoutCycle === "Weekly" ? 2 : formData.payoutCycle === "Monthly" ? 3 : formData.payoutCycle === "Quarterly" ? 4 : 5),
+      roiTypeId: formData.payoutCategory === "Fixed" ? 1 : (formData.payoutCycle === "Weekly" ? 2 : formData.payoutCycle === "Monthly" ? 3 : formData.payoutCycle === "Quarterly" ? 4 : formData.payoutCycle === "Half-Yearly" ? 6 : 5),
       bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
       acNumber: formData.acNumber || "",
       sortCode: formData.sortCode || "",
@@ -1741,6 +1741,7 @@ export const Investors = () => {
                             <option value="Weekly">Weekly</option>
                             <option value="Monthly">Monthly</option>
                             <option value="Quarterly">Quarterly</option>
+                            <option value="Half-Yearly">Half-Yearly</option>
                             <option value="Yearly">Yearly</option>
                           </select>
                         )}
