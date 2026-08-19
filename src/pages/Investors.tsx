@@ -96,8 +96,8 @@ export const Investors = () => {
 
   const handleDownloadCsvTemplate = () => {
     const templateHeader = "Name,Email,Mobile,InvestorType,Organization,CompanyRegistrationNo,CapitalAmount,DateOfOnboarding,Duration,AssignedProject,MinRoi,MaxRoi,PayoutCategory,PayoutCycle,BankName,BankAccountNo,SortCode,Address,Witness,Notes\n";
-    const sampleRow = "John Doe,john.doe@example.com,+44 7700 900077,Individual,—,—,50000,2026-06-28,12 Months,Current Operations,1,4,Fixed,Constant,Barclays,12345678,20-00-00,123 Main St London,Jane Doe,Initial bulk import investment\n";
-    const sampleRow2 = 'Apex Capital Ltd,contact@apexcap.com,+447987654321,Business,"Apex Capital Ltd","CRN-884920",100000,2026-07-26,"24 Months","Current Operations",1,4,"Variant","Monthly","HSBC","87654321","40-20-60","45 Commercial Rd, Manchester","Robert Brown","Partner client"\n';
+    const sampleRow = "Bulk1,contact@apexcap.com,+44 7700 900077,Individual,—,—,50000,2026-06-28,12 Months,Current Operations,3,5,Fixed,Constant,Barclays,12345678,20-00-00,123 Main St London,Jane Doe,Bulk Fixed ROI tranche\n";
+    const sampleRow2 = 'Bulk2,contact@apexcap.com,+447987654321,Business,"Apex Capital Ltd","CRN-884920",100000,2026-07-26,"24 Months","Current Operations",3,5,"Variant","Monthly","HSBC","87654321","40-20-60","45 Commercial Rd, Manchester","Robert Brown","Bulk Variant ROI tranche"\n';
     
     const blob = new Blob(["\uFEFF" + templateHeader + sampleRow + sampleRow2], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
