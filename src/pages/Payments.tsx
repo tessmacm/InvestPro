@@ -120,23 +120,72 @@ export const Payments = () => {
     );
   }, [payments, isAdmin, user]);
 
+  // Calculate visible payments based on user requirement:
+  // 1. In case of variant cycles (Monthly, Weekly, Quarterly, etc.):
+  //    Show payments from onboarding date up to the single next payment date after current date.
+  //    Do not show further future installments.
+  // 2. In case of fixed (Constant):
+  //    Single fixed payment is shown irrespective of date.
+  const visiblePayments = React.useMemo(() => {
+    const now = new Date();
+    const result: Payment[] = [];
+
+    // Group relevant payments by investor / contract
+    const investorGroupMap = new Map<number | string, Payment[]>();
+    for (const p of relevantPayments) {
+      const key = p.investorId || p.investorName;
+      if (!investorGroupMap.has(key)) {
+        investorGroupMap.set(key, []);
+      }
+      investorGroupMap.get(key)!.push(p);
+    }
+
+    for (const [, pList] of investorGroupMap.entries()) {
+      // Sort this investor's payments chronologically ascending
+      const ascList = [...pList].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
+      
+      let nextFutureIncluded = false;
+      for (const p of ascList) {
+        const isFixed = (p.paymentCycle || "").toLowerCase() === "constant" || (p.paymentCycle || "").toLowerCase() === "fixed";
+        
+        if (isFixed) {
+          // Fixed payout: single payment shown irrespective of dates
+          result.push(p);
+        } else {
+          // Variant cycle:
+          // Include all past/due payments (paymentDate <= now or already sent/received)
+          const pDate = new Date(p.paymentDate);
+          if (pDate <= now || p.isSent || p.isReceived || p.status === "Received" || p.status === "Sent") {
+            result.push(p);
+          } else if (!nextFutureIncluded) {
+            // Include exactly the single next future payment date after current date
+            result.push(p);
+            nextFutureIncluded = true;
+          }
+        }
+      }
+    }
+
+    return result;
+  }, [relevantPayments]);
+
   // Card Calculations:
-  // Pending Payouts (Unsent & unreceived payments till date)
-  const pendingPaymentsList = relevantPayments.filter(p => !p.isSent && !p.isReceived && p.status !== "Received");
+  // Pending Payouts (Unsent & unreceived payments visible till date)
+  const pendingPaymentsList = visiblePayments.filter(p => !p.isSent && !p.isReceived && p.status !== "Received");
   const pendingCount = pendingPaymentsList.length;
   const pendingTotal = pendingPaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
   // Send Acknowledge (Sent by Admin, awaiting investor acknowledgment)
-  const sentPaymentsList = relevantPayments.filter(p => p.isSent && !p.isReceived && p.status !== "Received");
+  const sentPaymentsList = visiblePayments.filter(p => p.isSent && !p.isReceived && p.status !== "Received");
   const sentCount = sentPaymentsList.length;
   const sentTotal = sentPaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
   // Acknowledged (Acknowledged by investor till date)
-  const donePaymentsList = relevantPayments.filter(p => p.isReceived || p.status === "Received");
+  const donePaymentsList = visiblePayments.filter(p => p.isReceived || p.status === "Received");
   const doneCount = donePaymentsList.length;
   const doneTotal = donePaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-  // Total Payouts (Sum of pending + sent + acknowledged)
+  // Total Payouts (Sum of pending + sent + acknowledged for visible payments)
   const totalAllCount = pendingCount + sentCount + doneCount;
   const totalAllAmount = pendingTotal + sentTotal + doneTotal;
 
@@ -155,10 +204,10 @@ export const Payments = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(5);
 
-  // Sort payments by date descending (latest payment date first)
+  // Sort visible payments by next payment due date (chronological nearest due date first)
   const sortedPayments = React.useMemo(() => {
-    return [...relevantPayments].sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
-  }, [relevantPayments]);
+    return [...visiblePayments].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
+  }, [visiblePayments]);
 
   const filteredPayments = sortedPayments.filter(p => {
     // 1. Pay ID Search Filter
