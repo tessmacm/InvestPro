@@ -2061,7 +2061,14 @@ export const Investors = () => {
         description="Download the template, fill investor records, and upload to create multiple accounts."
         className="max-w-xl"
       >
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 relative">
+          {isBulkSubmitting && (
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-xs z-20 flex flex-col items-center justify-center gap-3 rounded-2xl">
+              <span className="w-10 h-10 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin"></span>
+              <p className="text-sm font-bold text-slate-800">Creating investments & generating agreements...</p>
+              <p className="text-xs text-slate-500 font-medium">Please wait while the schedules and contracts are registered.</p>
+            </div>
+          )}
           {/* Step 1: Template Download Banner */}
           <div className="p-5 bg-gradient-to-r from-emerald-50/90 to-teal-50/70 border border-emerald-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
             <div className="flex items-start gap-3.5">
@@ -2153,8 +2160,9 @@ export const Investors = () => {
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"
+              disabled={isBulkSubmitting}
               onClick={() => setIsBulkModalOpen(false)}
-              className="px-5 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-800 border border-slate-200 hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+              className="px-5 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-800 border border-slate-200 hover:bg-slate-50 rounded-xl transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
@@ -2164,7 +2172,14 @@ export const Investors = () => {
               disabled={isBulkSubmitting || bulkValidationErrors.length > 0 || bulkParsedData.length === 0}
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-md cursor-pointer transition-all disabled:cursor-not-allowed"
             >
-              {isBulkSubmitting ? "Importing Investors..." : `Import ${bulkParsedData.length} Investors`}
+              {isBulkSubmitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Importing {bulkParsedData.length} Investors & Generating Agreements...</span>
+                </>
+              ) : (
+                `Import ${bulkParsedData.length} Investors`
+              )}
             </button>
           </div>
         </div>

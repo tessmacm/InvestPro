@@ -110,13 +110,7 @@ export const Dashboard = () => {
   const [rawInvestors, setRawInvestors] = useState<any[]>([]);
   const [myDocuments, setMyDocuments] = useState<any[]>([]);
   const [paymentBarData, setPaymentBarData] = useState<any[]>([]);
-
-  const [chartData, setChartData] = useState<any[]>([
-    { name: "Month 1", value: 50000, payout: 2500, avgPayout: 2500 },
-    { name: "Month 2", value: 100000, payout: 5000, avgPayout: 2500 },
-    { name: "Month 3", value: 150000, payout: 7500, avgPayout: 2500 },
-    { name: "Current", value: 200000, payout: 10000, avgPayout: 2500 },
-  ]);
+  const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
     fetchStats();
@@ -456,7 +450,12 @@ export const Dashboard = () => {
             </div>
             
             <div className="h-72 w-full flex items-center justify-center">
-              {chartData.length === 0 ? (
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <span className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Loading Chart Data...</p>
+                </div>
+              ) : chartData.length === 0 ? (
                 <div className="text-center py-12 text-slate-400">
                   <TrendingUp className="w-10 h-10 mx-auto mb-2 text-slate-300" />
                   <p className="text-sm font-semibold text-slate-600">No chart data available</p>
@@ -615,26 +614,33 @@ export const Dashboard = () => {
               </div>
             </div>
 
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={paymentBarData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v/1000}k` : v}`} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: "#0f172a", borderRadius: "16px", color: "#fff", border: "none", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)" }}
-                    formatter={(val: any, name: any) => [`£${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name === "total" ? "Total Scheduled" : "Completed Till Date"]}
-                  />
-                  <Legend 
-                    verticalAlign="top" 
-                    align="right"
-                    iconType="circle"
-                    formatter={(value) => <span className="text-xs font-bold text-slate-600 ml-1">{value === "total" ? "Total Payments" : "Completed"}</span>}
-                  />
-                  <Bar dataKey="total" fill="#3b82f6" radius={[8, 8, 0, 0]} name="total" barSize={36} />
-                  <Bar dataKey="completed" fill="#10b981" radius={[8, 8, 0, 0]} name="completed" barSize={36} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="h-64 w-full flex items-center justify-center">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <span className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Loading Disbursements...</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={paymentBarData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v/1000}k` : v}`} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: "#0f172a", borderRadius: "16px", color: "#fff", border: "none", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)" }}
+                      formatter={(val: any, name: any) => [`£${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name === "total" ? "Total Scheduled" : "Completed Till Date"]}
+                    />
+                    <Legend 
+                      verticalAlign="top" 
+                      align="right"
+                      iconType="circle"
+                      formatter={(value) => <span className="text-xs font-bold text-slate-600 ml-1">{value === "total" ? "Total Payments" : "Completed"}</span>}
+                    />
+                    <Bar dataKey="total" fill="#3b82f6" radius={[8, 8, 0, 0]} name="total" barSize={36} />
+                    <Bar dataKey="completed" fill="#10b981" radius={[8, 8, 0, 0]} name="completed" barSize={36} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100 mt-4">
