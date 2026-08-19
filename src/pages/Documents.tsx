@@ -66,7 +66,33 @@ export const Documents = () => {
   const [isAllInvestors, setIsAllInvestors] = useState(true);
   const [selectedInvestorIds, setSelectedInvestorIds] = useState<string[]>([]);
 
-  const activeInvestors = investors.filter(i => !i.status || i.status.toLowerCase() === "active");
+  const activeInvestors = useMemo(() => {
+    return investors.filter(i => !i.status || i.status.toLowerCase() === "active");
+  }, [investors]);
+
+  // Unique individual investors for filters (single entry per unique investor even if multiple investments)
+  const uniqueFilterInvestors = useMemo(() => {
+    const map = new Map<string, { id: number | string; name: string; email?: string }>();
+    activeInvestors.forEach(i => {
+      const key = (i.email || i.name).toLowerCase().trim();
+      if (!map.has(key)) {
+        map.set(key, { id: i.id, name: i.name, email: i.email });
+      }
+    });
+    // Also include any investors from documents who might not be in activeInvestors
+    documents.forEach(d => {
+      const name = d.investor_name || d.uploaded_by;
+      const email = d.investor_email;
+      if (name) {
+        const key = (email || name).toLowerCase().trim();
+        if (!map.has(key)) {
+          const invId = d.investor_id || (d as any).investorId || d.id;
+          map.set(key, { id: invId, name: name, email: email });
+        }
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [activeInvestors, documents]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -316,14 +342,17 @@ export const Documents = () => {
 
       // 2. Filter by Investor
       if (selectedInvestorFilter !== "all") {
-        const invIdNum = parseInt(selectedInvestorFilter);
-        if (d.investor_id && d.investor_id > 0) {
-          if (d.investor_id !== invIdNum) return false;
-        } else {
-          const selInv = activeInvestors.find(i => String(i.id) === selectedInvestorFilter);
-          if (selInv && d.investor_name && !d.investor_name.toLowerCase().includes(selInv.name.toLowerCase())) {
-            return false;
-          }
+        const filterNameLower = selectedInvestorFilter.toLowerCase().trim();
+        const docNameLower = (d.investor_name || d.uploaded_by || "").toLowerCase().trim();
+        const docEmailLower = (d.investor_email || "").toLowerCase().trim();
+        const matchesName = docNameLower.includes(filterNameLower) || filterNameLower.includes(docNameLower);
+        
+        const matchedInv = uniqueFilterInvestors.find(i => i.name.toLowerCase().trim() === filterNameLower);
+        const matchesEmail = matchedInv && matchedInv.email && docEmailLower === matchedInv.email.toLowerCase().trim();
+        const matchesId = matchedInv && String(d.investor_id) === String(matchedInv.id);
+
+        if (!matchesName && !matchesEmail && !matchesId) {
+          return false;
         }
       }
 
@@ -510,8 +539,8 @@ export const Documents = () => {
                     className="w-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
                   >
                     <option value="all">All Investors</option>
-                    {activeInvestors.map(i => (
-                      <option key={i.id} value={i.id}>{i.name}</option>
+                    {uniqueFilterInvestors.map(i => (
+                      <option key={i.id} value={i.name}>{i.name}</option>
                     ))}
                   </select>
                 </div>

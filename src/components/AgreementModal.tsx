@@ -198,16 +198,6 @@ export const AgreementModal: React.FC<AgreementModalProps> = ({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {onSignLater && (
-                <button
-                  type="button"
-                  onClick={onSignLater}
-                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border border-white/20 active:scale-95"
-                  title="Sign later and return to login page"
-                >
-                  <ArrowLeft className="w-4 h-4" /><span>Back to Login</span>
-                </button>
-              )}
               <div className="hidden sm:flex items-center gap-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300">
                 <Lock className="w-3.5 h-3.5 text-emerald-400" /><span>256-Bit Encrypted Lock</span>
               </div>

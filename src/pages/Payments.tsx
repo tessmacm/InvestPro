@@ -29,6 +29,7 @@ export const Payments = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === "admin" || user?.role === "manager" || user?.role === "superadmin";
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [investors, setInvestors] = useState<{ id: number | string; name: string; email?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [payIdSearchTerm, setPayIdSearchTerm] = useState("");
   const [startDateFilter, setStartDateFilter] = useState("");
@@ -57,6 +58,20 @@ export const Payments = () => {
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInvestors = async () => {
+    try {
+      const response = await cachedFetch(`${API_BASE_URL}/api/admin/investors`, {
+        headers: authHeaders()
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setInvestors(data);
+      }
+    } catch (err) {
+      console.warn("Could not load investors list in Payments", err);
     }
   };
 
@@ -90,7 +105,10 @@ export const Payments = () => {
 
   useEffect(() => {
     fetchPayments();
-  }, []);
+    if (isAdmin) {
+      fetchInvestors();
+    }
+  }, [isAdmin]);
 
   // Filter payments for current user role
   const relevantPayments = React.useMemo(() => {
@@ -102,36 +120,9 @@ export const Payments = () => {
     );
   }, [payments, isAdmin, user]);
 
-  // Filter to include ONLY the single next upcoming payment for each investor
-  const upcomingPayments = React.useMemo(() => {
-    const map = new Map<number | string, Payment>();
-
-    // Sort payments by payment date ascending
-    const sorted = [...relevantPayments].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
-
-    for (const p of sorted) {
-      const key = p.investorId || p.investorName;
-      if (!map.has(key)) {
-        if (!p.isReceived && p.status !== "Received") {
-          map.set(key, p);
-        }
-      }
-    }
-
-    // Fallback: if an investor has no unreceived payment, keep their single latest entry
-    for (const p of sorted) {
-      const key = p.investorId || p.investorName;
-      if (!map.has(key)) {
-        map.set(key, p);
-      }
-    }
-
-    return Array.from(map.values());
-  }, [relevantPayments]);
-
   // Card Calculations:
-  // Pending Payouts (Scope to single next upcoming payment per investor)
-  const pendingPaymentsList = upcomingPayments.filter(p => !p.isSent && !p.isReceived && p.status !== "Received");
+  // Pending Payouts (Unsent & unreceived payments till date)
+  const pendingPaymentsList = relevantPayments.filter(p => !p.isSent && !p.isReceived && p.status !== "Received");
   const pendingCount = pendingPaymentsList.length;
   const pendingTotal = pendingPaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
@@ -145,23 +136,29 @@ export const Payments = () => {
   const doneCount = donePaymentsList.length;
   const doneTotal = donePaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-  // Total Payouts (Sum of pending upcoming + sent + acknowledged)
+  // Total Payouts (Sum of pending + sent + acknowledged)
   const totalAllCount = pendingCount + sentCount + doneCount;
   const totalAllAmount = pendingTotal + sentTotal + doneTotal;
 
-  // Include ALL investors across historical & upcoming records
+  // Include single unique investors across all registered investors and payment records
   const uniqueInvestors = React.useMemo(() => {
-    const names = relevantPayments.map(p => p.investorName).filter(Boolean);
-    return Array.from(new Set(names)).sort();
-  }, [relevantPayments]);
+    const namesSet = new Set<string>();
+    investors.forEach(i => {
+      if (i.name && i.name.trim()) namesSet.add(i.name.trim());
+    });
+    relevantPayments.forEach(p => {
+      if (p.investorName && p.investorName.trim()) namesSet.add(p.investorName.trim());
+    });
+    return Array.from(namesSet).sort();
+  }, [investors, relevantPayments]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(5);
 
-  // Sort upcoming payments by date descending (latest payment date first)
+  // Sort payments by date descending (latest payment date first)
   const sortedPayments = React.useMemo(() => {
-    return [...upcomingPayments].sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
-  }, [upcomingPayments]);
+    return [...relevantPayments].sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
+  }, [relevantPayments]);
 
   const filteredPayments = sortedPayments.filter(p => {
     // 1. Pay ID Search Filter

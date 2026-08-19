@@ -197,10 +197,10 @@ export const Investors = () => {
             amount: capAmtNum,
             date_of_onboarding: (date_of_onboarding || '').trim() || new Date().toISOString().split("T")[0],
             duration: (duration || '').trim() || "12 Months",
-            min_RoiRangeId: Math.min(Math.max(parseInt(minRoi) || 1, 1), 4),
-            max_RoiRangeId: Math.min(Math.max(parseInt(maxRoi) || 4, 1), 4),
-            min_roi_id: Math.min(Math.max(parseInt(minRoi) || 1, 1), 4),
-            max_roi_id: Math.min(Math.max(parseInt(maxRoi) || 4, 1), 4),
+            min_RoiRangeId: parseInt(minRoi) || 1,
+            max_RoiRangeId: parseInt(maxRoi) || 4,
+            min_roi_id: parseInt(minRoi) || 1,
+            max_roi_id: parseInt(maxRoi) || 4,
             roiTypeId: (payoutCategory || '').toLowerCase() === 'variant'
               ? ((payoutCycle || '').toLowerCase() === 'weekly' ? 2 : (payoutCycle || '').toLowerCase() === 'quarterly' ? 4 : (payoutCycle || '').toLowerCase() === 'half-yearly' || (payoutCycle || '').toLowerCase() === 'halfyearly' ? 6 : (payoutCycle || '').toLowerCase() === 'yearly' ? 5 : 3)
               : 1,

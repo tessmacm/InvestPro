@@ -279,13 +279,6 @@ export const Layout = () => {
               {isSidebarOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5 text-slate-600" />}
             </button>
             <div className="hidden sm:flex items-center gap-2">
-              <button
-                onClick={() => navigate(-1)}
-                title="Go Back"
-                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
               <h2 className="text-base sm:text-lg md:text-xl font-display font-bold text-slate-900 truncate">
                 {menuItems.find(m => m.path === location.pathname)?.name || "Dashboard"}
               </h2>

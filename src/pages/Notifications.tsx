@@ -95,7 +95,7 @@ export const Notifications = () => {
 
   const fetchInvestors = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/investors`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/investors`, {
         headers: authHeaders()
       });
       if (response.ok) {
@@ -276,10 +276,16 @@ export const Notifications = () => {
     setPage(0);
   }, [searchTerm, investorFilter]);
 
-  const uniqueInvestors = useMemo(
-    () => Array.from(new Set(notifications.filter(n => n.investorName).map(n => n.investorName))),
-    [notifications]
-  );
+  const uniqueInvestors = useMemo(() => {
+    const namesSet = new Set<string>();
+    investors.forEach(i => {
+      if (i.name && i.name.trim()) namesSet.add(i.name.trim());
+    });
+    notifications.forEach(n => {
+      if (n.investorName && n.investorName.trim()) namesSet.add(n.investorName.trim());
+    });
+    return Array.from(namesSet).sort();
+  }, [investors, notifications]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
