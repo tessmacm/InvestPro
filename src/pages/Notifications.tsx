@@ -11,6 +11,7 @@ import {
   Mail, MailOpen, ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { formatUKDate, formatUKDateTime } from "../utils/formatters";
 
 const PAGE_SIZE = 10;
 const EVENT_TYPES = ["ROICredited", "Investment Approved", "Document Uploaded", "Account Created", "Payment Received"];
@@ -25,7 +26,7 @@ const timeAgo = (dateStr: string) => {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+  return formatUKDate(dateStr);
 };
 
 type ToastData = { show: boolean; title: string; message: string; type: "success" | "error" | "info" };
@@ -829,11 +830,9 @@ export const Notifications = () => {
                 </div>
                 <div className="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Sent On</span>
-                  <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                  <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5 font-mono">
                     <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
-                    {new Date(selectedNotification.createdAt).toLocaleDateString(undefined, {
-                      day: "2-digit", month: "short", year: "numeric"
-                    })}
+                    {formatUKDateTime(selectedNotification.createdAt)}
                   </span>
                 </div>
                 <div className="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">

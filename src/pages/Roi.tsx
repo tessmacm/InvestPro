@@ -5,8 +5,8 @@ import { RoiContract } from "../types";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { cachedFetch } from "../utils/apiCache";
-import { TableSkeleton } from "../components/TableSkeleton";
 import { Search, Eye, TrendingUp, Calendar, Landmark, Percent } from "lucide-react";
+import { formatUKDate } from "../utils/formatters";
 import { motion, AnimatePresence } from "motion/react";
 
 const container = {
@@ -128,12 +128,8 @@ export const Roi = () => {
                       <td className="px-6 py-4 font-semibold text-slate-900">{c.projectTitle}</td>
                       <td className="px-6 py-4 font-bold text-slate-800">{c.roiAgreed}%</td>
                       <td className="px-6 py-4 font-bold text-emerald-600">£{c.monthlyPayment.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-slate-500">
-                        {new Date(c.nextPaymentDate).toLocaleDateString(undefined, {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric"
-                        })}
+                      <td className="px-6 py-4 text-slate-500 font-mono text-xs">
+                        {formatUKDate(c.nextPaymentDate)}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
@@ -148,10 +144,9 @@ export const Roi = () => {
                             setSelectedContract(c);
                             setIsDetailsOpen(true);
                           }}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all cursor-pointer"
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                          View
+                          <Eye className="w-4 h-4" />
                         </button>
                       </td>
                     </motion.tr>
@@ -163,30 +158,38 @@ export const Roi = () => {
         </div>
       )}
 
-      {/* Details Modal */}
-      <BaseModal isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)} title="ROI Schedule Details">
+      {/* Contract Details Modal */}
+      <BaseModal
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+        title="Contract ROI Details"
+        description="Verify agreed contract payout rate, schedule, and disbursement status."
+        className="max-w-md"
+      >
         {selectedContract && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-                <TrendingUp className="w-6 h-6" />
-              </div>
+          <div className="p-6 space-y-6">
+            <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
               <div>
-                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Agreed ROI Yield</span>
-                <h4 className="text-xl font-display font-extrabold text-slate-900">{selectedContract.roiAgreed}% Yield</h4>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Contract Status</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {selectedContract.status}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Agreed Rate</span>
+                <h4 className="text-xl font-display font-extrabold text-blue-600">{selectedContract.roiAgreed}%</h4>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Monthly Yield</span>
-                <span className="text-sm font-bold text-emerald-600">£{selectedContract.monthlyPayment.toLocaleString()}</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Monthly Yield</span>
+                <span className="text-sm font-bold text-slate-700">£{selectedContract.monthlyPayment.toLocaleString()}</span>
               </div>
               <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Next Payout Date</span>
-                <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-slate-400" />
-                  {new Date(selectedContract.nextPaymentDate).toLocaleDateString()}
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Next Payment</span>
+                <span className="text-sm font-bold text-slate-700 font-mono">
+                  {formatUKDate(selectedContract.nextPaymentDate)}
                 </span>
               </div>
             </div>

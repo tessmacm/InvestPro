@@ -38,6 +38,7 @@ import { API_BASE_URL, authHeaders } from "../config/api";
 import { cachedFetch } from "../utils/apiCache";
 import { cn } from "../lib/utils";
 import { StatCardSkeleton } from "../components/TableSkeleton";
+import { formatUKDate, formatUKDateDisplay } from "../utils/formatters";
 
 const container = {
   hidden: { opacity: 0 },
@@ -525,8 +526,8 @@ export const Dashboard = () => {
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-slate-900 truncate max-w-[220px] sm:max-w-xs">{doc.title || "Document"}</p>
-                            <p className="text-xs text-slate-500 font-medium">
-                              {doc.type || "PDF"} • {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : "Recent"}
+                            <p className="text-xs text-slate-500 font-medium font-mono">
+                              {doc.type || "PDF"} • {formatUKDate(doc.created_at, "Recent")}
                             </p>
                           </div>
                         </div>
@@ -584,7 +585,7 @@ export const Dashboard = () => {
                             </div>
                             <div>
                               <p className="text-sm font-bold text-slate-900">{invName}</p>
-                              <p className="text-xs text-slate-500">{invEmail || "—"} • {invDate ? new Date(invDate).toLocaleDateString() : "Active"}</p>
+                              <p className="text-xs text-slate-500 font-mono">{invEmail || "—"} • {formatUKDate(invDate, "Active")}</p>
                             </div>
                           </div>
                           <div className="text-right">

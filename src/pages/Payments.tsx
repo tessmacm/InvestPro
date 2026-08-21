@@ -7,7 +7,8 @@ import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { cachedFetch } from "../utils/apiCache";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Filter, Eye, DollarSign, Calendar, Landmark, Clock, Send, CheckCircle2, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { Landmark, ArrowUpDown, Download, Search, CheckCircle, Clock, AlertCircle, X, ChevronLeft, ChevronRight, Eye, Calendar, DollarSign, Send, CheckCheck, RefreshCw, Filter, SlidersHorizontal } from "lucide-react";
+import { formatUKDate } from "../utils/formatters";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 
@@ -268,7 +269,7 @@ export const Payments = () => {
       `"${(p.mobile || p.investorEmail || "—").replace(/"/g, '""')}"`,
       p.amount.toFixed(2),
       p.paymentCycle || "Monthly",
-      p.dueDate || new Date(p.paymentDate).toLocaleDateString(),
+      formatUKDate(p.dueDate || p.paymentDate),
       p.status,
       p.isSent ? "Yes" : "No",
       p.isReceived ? "Yes" : "No"
@@ -514,11 +515,7 @@ export const Payments = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-slate-600 font-medium">
-                        {p.dueDate || new Date(p.paymentDate).toLocaleDateString(undefined, {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric"
-                        })}
+                        {formatUKDate(p.dueDate || p.paymentDate)}
                       </td>
                       {/* Status Column with Actionable Badges */}
                       <td className="px-6 py-4">
@@ -643,9 +640,9 @@ export const Payments = () => {
               </div>
               <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Due Date</span>
-                <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5 font-mono">
                   <Calendar className="w-4 h-4 text-slate-400" />
-                  {selectedPayment.dueDate || new Date(selectedPayment.paymentDate).toLocaleDateString()}
+                  {formatUKDate(selectedPayment.dueDate || selectedPayment.paymentDate)}
                 </span>
               </div>
             </div>

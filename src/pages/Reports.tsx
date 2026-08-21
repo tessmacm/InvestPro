@@ -4,8 +4,8 @@ import { RootState } from "../store";
 import { Investor, Payment, Project } from "../types";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { cachedFetch } from "../utils/apiCache";
-import { TableSkeleton } from "../components/TableSkeleton";
 import { Search, Download, Calendar, Filter, FileSpreadsheet, Users, Folder, Landmark, RefreshCw, CheckCircle2, TrendingUp, DollarSign } from "lucide-react";
+import { formatUKDate } from "../utils/formatters";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
 
@@ -145,7 +145,7 @@ export const Reports = () => {
         "Bank Name": i.bank || "N/A",
         "Account Number": i.acNumber || "N/A",
         "Sort Code": i.sortCode || "N/A",
-        "Onboarding Date": i.date_of_onboarding ? new Date(i.date_of_onboarding).toLocaleDateString() : "N/A",
+        "Onboarding Date": formatUKDate(i.date_of_onboarding, "N/A"),
         "Status": i.status
       }));
     } else if (activeTab === "investments") {
@@ -155,8 +155,8 @@ export const Reports = () => {
         "Description": p.description,
         "Target Funding (£)": p.budget,
         "Duration": p.duration,
-        "Start Date": new Date(p.start_date).toLocaleDateString(),
-        "End Date": new Date(p.end_date).toLocaleDateString(),
+        "Start Date": formatUKDate(p.start_date),
+        "End Date": formatUKDate(p.end_date),
         "Status": p.status
       }));
     } else if (activeTab === "payments") {
@@ -165,7 +165,7 @@ export const Reports = () => {
         "Investor Name": p.investorName,
         "Amount (£)": p.amount,
         "Cycle": p.paymentCycle || "Monthly",
-        "Payment Date": new Date(p.paymentDate).toLocaleDateString(),
+        "Payment Date": formatUKDate(p.paymentDate),
         "Status": p.status,
         "Is Sent": p.isSent ? "Yes" : "No",
         "Is Received": p.isReceived ? "Yes" : "No"
@@ -385,8 +385,8 @@ export const Reports = () => {
                         </td>
                         <td className="px-6 py-4 font-medium text-slate-600 align-middle">{i.organization || "—"}</td>
                         <td className="px-6 py-4 font-bold text-emerald-600 text-right align-middle">£{Number(i.amount).toLocaleString()}</td>
-                        <td className="px-6 py-4 text-slate-500 text-center align-middle">
-                          {i.date_of_onboarding ? new Date(i.date_of_onboarding).toLocaleDateString() : "N/A"}
+                        <td className="px-6 py-4 text-slate-500 text-center align-middle font-mono">
+                          {formatUKDate(i.date_of_onboarding, "N/A")}
                         </td>
                         <td className="px-6 py-4 text-right align-middle">
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -432,8 +432,8 @@ export const Reports = () => {
                         <td className="px-6 py-4 font-bold text-slate-900 align-middle">{p.title}</td>
                         <td className="px-6 py-4 font-bold text-emerald-600 text-right align-middle">£{Number(p.budget).toLocaleString()}</td>
                         <td className="px-6 py-4 font-medium text-slate-600 text-center align-middle">{p.duration}</td>
-                        <td className="px-6 py-4 text-slate-500 text-center align-middle">{new Date(p.start_date).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 text-slate-500 text-center align-middle">{new Date(p.end_date).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 text-slate-500 text-center align-middle font-mono">{formatUKDate(p.start_date)}</td>
+                        <td className="px-6 py-4 text-slate-500 text-center align-middle font-mono">{formatUKDate(p.end_date)}</td>
                         <td className="px-6 py-4 text-right align-middle">
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
                             {p.status}
@@ -457,29 +457,33 @@ export const Reports = () => {
                   <p className="text-sm text-slate-500 mt-1 font-medium max-w-sm">
                     {searchTerm || datePreset !== "all"
                       ? "Try adjusting your search or date filter criteria."
-                      : "No payment records are available for reporting."}
+                      : "No payment records match your parameters."}
                   </p>
                 </div>
               ) : (
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                      <th className="px-6 py-4">Payment ID</th>
-                      <th className="px-6 py-4">Investor</th>
-                      <th className="px-6 py-4 text-right">Amount</th>
+                      <th className="px-6 py-4">Transaction Ref</th>
+                      <th className="px-6 py-4">Investor Profile</th>
+                      <th className="px-6 py-4 text-right">Disbursement Amount</th>
                       <th className="px-6 py-4 text-center">Payment Cycle</th>
-                      <th className="px-6 py-4 text-center">Payment Date</th>
-                      <th className="px-6 py-4 text-right">Status</th>
+                      <th className="px-6 py-4 text-center">Payment Due Date</th>
+                      <th className="px-6 py-4 text-right">Disbursement Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
                     {filteredPayments.map(p => (
                       <tr key={p.paymentId} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 font-mono font-bold text-slate-500 align-middle">PayId#{p.paymentId}</td>
+                        <td className="px-6 py-4 font-mono font-bold text-slate-900 align-middle">PayId#{p.paymentId}</td>
                         <td className="px-6 py-4 font-bold text-slate-900 align-middle">{p.investorName}</td>
-                        <td className="px-6 py-4 font-bold text-emerald-600 text-right align-middle">£{Number(p.amount).toLocaleString()}</td>
-                        <td className="px-6 py-4 font-medium text-slate-600 text-center align-middle">{p.paymentCycle || "Monthly"}</td>
-                        <td className="px-6 py-4 text-slate-500 text-center align-middle">{new Date(p.paymentDate).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 font-bold text-emerald-600 text-right align-middle">£{Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td className="px-6 py-4 text-center align-middle">
+                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-blue-50 text-blue-700 border border-blue-100">
+                            {p.paymentCycle || "Monthly"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-slate-500 text-center align-middle font-mono">{formatUKDate(p.paymentDate)}</td>
                         <td className="px-6 py-4 text-right align-middle">
                           <span className={cn(
                             "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border",

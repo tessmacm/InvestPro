@@ -27,6 +27,7 @@ import { cachedFetch } from "../utils/apiCache";
 import { TableSkeleton, StatCardSkeleton } from "../components/TableSkeleton";
 import { cn } from "../lib/utils";
 import { AgreementViewerModal } from "../components/AgreementViewerModal";
+import { formatUKDate } from "../utils/formatters";
 
 const container = {
   hidden: { opacity: 0 },
@@ -301,9 +302,9 @@ export const Documents = () => {
     {
       header: "Date",
       render: (d: Document) => (
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium font-mono">
           <Calendar className="w-3.5 h-3.5" />
-          {new Date(d.created_at).toLocaleDateString()}
+          {formatUKDate(d.created_at)}
         </div>
       )
     },
