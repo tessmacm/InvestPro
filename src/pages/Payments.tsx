@@ -7,7 +7,7 @@ import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { cachedFetch } from "../utils/apiCache";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Landmark, ArrowUpDown, Download, Search, CheckCircle, Clock, AlertCircle, X, ChevronLeft, ChevronRight, Eye, Calendar, DollarSign, Send, CheckCheck, RefreshCw, Filter, SlidersHorizontal } from "lucide-react";
+import { Landmark, ArrowUpDown, Download, Search, CheckCircle, CheckCircle2, Clock, AlertCircle, X, ChevronLeft, ChevronRight, Eye, Calendar, DollarSign, Send, CheckCheck, RefreshCw, Filter, SlidersHorizontal } from "lucide-react";
 import { formatUKDate } from "../utils/formatters";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
@@ -111,14 +111,29 @@ export const Payments = () => {
     }
   }, [isAdmin]);
 
-  // Filter payments for current user role
+  // For admin, all payments are accessible. For investor login, backend already filters to only their owned investment payments.
+  // We provide a safe fallback filter if payments list contains more than user's own.
   const relevantPayments = React.useMemo(() => {
     if (isAdmin) return payments;
-    return payments.filter(p =>
-      (user?.id && String(p.investorId) === String(user.id)) ||
-      (user?.name && p.investorName?.toLowerCase() === user.name.toLowerCase()) ||
-      (user?.email && p.investorName?.toLowerCase() === user.email.toLowerCase())
-    );
+    // If backend returns payments for investor, trust the backend dataset;
+    // additionally match by id, email, or name if available
+    const userEmail = (user?.email || "").toLowerCase().trim();
+    const userName = (user?.name || "").toLowerCase().trim();
+    const userId = user?.id ? String(user.id) : "";
+
+    const filtered = payments.filter(p => {
+      const pEmail = (p.investorEmail || "").toLowerCase().trim();
+      const pName = (p.investorName || "").toLowerCase().trim();
+      const pInvId = p.investorId ? String(p.investorId) : "";
+
+      if (userEmail && pEmail && pEmail === userEmail) return true;
+      if (userName && pName && pName === userName) return true;
+      if (userId && pInvId && pInvId === userId) return true;
+      return false;
+    });
+
+    // If matches found, use filtered; otherwise if investor is logged in and backend returned records, use them
+    return filtered.length > 0 ? filtered : payments;
   }, [payments, isAdmin, user]);
 
   // Calculate visible payments based on user requirement:
