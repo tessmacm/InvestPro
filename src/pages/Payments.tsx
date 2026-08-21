@@ -137,19 +137,20 @@ export const Payments = () => {
   }, [payments, isAdmin, user]);
 
   // Calculate visible payments based on user requirement:
-  // 1. In case of variant cycles (Monthly, Weekly, Quarterly, etc.):
+  // 1. Group by each distinct investment contract (p.investorId)
+  // 2. In case of variant cycles (Monthly, Weekly, Quarterly, etc.):
   //    Show payments from onboarding date up to the single next payment date after current date.
   //    Do not show further future installments.
-  // 2. In case of fixed (Constant):
+  // 3. In case of fixed (Constant):
   //    Single fixed payment is shown irrespective of date.
   const visiblePayments = React.useMemo(() => {
     const now = new Date();
     const result: Payment[] = [];
 
-    // Group relevant payments by investor / contract
+    // Group relevant payments strictly by distinct investment contract profile (investorId)
     const investorGroupMap = new Map<number | string, Payment[]>();
     for (const p of relevantPayments) {
-      const key = p.investorId || p.investorName;
+      const key = p.investorId ? String(p.investorId) : (p.investorName || "default");
       if (!investorGroupMap.has(key)) {
         investorGroupMap.set(key, []);
       }
@@ -157,7 +158,7 @@ export const Payments = () => {
     }
 
     for (const [, pList] of investorGroupMap.entries()) {
-      // Sort this investor's payments chronologically ascending
+      // Sort this contract's payments chronologically ascending
       const ascList = [...pList].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
       
       let nextFutureIncluded = false;
@@ -218,7 +219,7 @@ export const Payments = () => {
   }, [investors, relevantPayments]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(5);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
 
   // Sort visible payments by next payment due date (chronological nearest due date first)
   const sortedPayments = React.useMemo(() => {
