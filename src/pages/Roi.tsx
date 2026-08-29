@@ -5,6 +5,7 @@ import { RoiContract } from "../types";
 import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { cachedFetch } from "../utils/apiCache";
+import { TableSkeleton } from "../components/TableSkeleton";
 import { Search, Eye, TrendingUp, Calendar, Landmark, Percent } from "lucide-react";
 import { formatUKDate } from "../utils/formatters";
 import { motion, AnimatePresence } from "motion/react";

@@ -4,6 +4,7 @@ import { RootState } from "../store";
 import { Investor, Payment, Project } from "../types";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { cachedFetch } from "../utils/apiCache";
+import { TableSkeleton } from "../components/TableSkeleton";
 import { Search, Download, Calendar, Filter, FileSpreadsheet, Users, Folder, Landmark, RefreshCw, CheckCircle2, TrendingUp, DollarSign } from "lucide-react";
 import { formatUKDate } from "../utils/formatters";
 import { motion } from "motion/react";

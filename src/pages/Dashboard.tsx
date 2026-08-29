@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
-import { 
-  Users, 
+import {
+  Users,
   FileText,
   DollarSign,
-  PoundSterling, 
-  TrendingUp, 
+  PoundSterling,
+  TrendingUp,
   Plus,
   ArrowRight,
   ArrowUpRight,
@@ -21,15 +21,15 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { motion } from "motion/react";
-import { 
-  AreaChart, 
-  Area, 
+import {
+  AreaChart,
+  Area,
   BarChart,
   Bar,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Legend
 } from "recharts";
@@ -57,7 +57,7 @@ const item = {
 
 const StatCard = ({ title, value, icon: Icon, color, link }: any) => {
   const CardContent = (
-    <motion.div 
+    <motion.div
       variants={item}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
       className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm shadow-slate-100 flex flex-col justify-between group transition-all duration-300 relative overflow-hidden cursor-pointer hover:border-blue-200 hover:shadow-md h-full"
@@ -296,8 +296,8 @@ export const Dashboard = () => {
             const invCap = getInvestorAmount(inv);
             const invId = getInvestorId(inv);
             const invName = getInvestorName(inv);
-            const invPayments = allPayments.filter(p => 
-              (invName && (p.investorName === invName || p.InvestorName === invName)) || 
+            const invPayments = allPayments.filter(p =>
+              (invName && (p.investorName === invName || p.InvestorName === invName)) ||
               (invId && (p.investorId === invId || p.InvestorId === invId))
             );
             const invPaid = invPayments.filter(p => getPaymentIsSent(p) || getPaymentIsReceived(p)).reduce((sum, p) => sum + getPaymentAmount(p), 0);
@@ -340,7 +340,7 @@ export const Dashboard = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       variants={container}
       initial="hidden"
       animate="show"
@@ -367,63 +367,63 @@ export const Dashboard = () => {
           <>
             {user?.role === "investor" ? (
               <>
-                <StatCard 
-                  title="My Investment" 
-                  value={`£${stats.investment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                  icon={Landmark} 
-                  color="bg-blue-50 text-blue-600" 
+                <StatCard
+                  title="My Investment"
+                  value={`£${stats.investment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  icon={Landmark}
+                  color="bg-blue-50 text-blue-600"
                   link="/investors"
                 />
-                <StatCard 
-                  title="Payouts Till Date" 
-                  value={`£${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                  icon={PoundSterling} 
-                  color="bg-emerald-50 text-emerald-600" 
+                <StatCard
+                  title="Total Payouts Recieved"
+                  value={`£${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  icon={PoundSterling}
+                  color="bg-emerald-50 text-emerald-600"
                   link="/payments"
                 />
-                <StatCard 
-                  title="Average Payouts Till Date" 
-                  value={`£${stats.avgPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                  icon={PoundSterling} 
-                  color="bg-violet-50 text-violet-600" 
+                <StatCard
+                  title="Average Payouts"
+                  value={`£${stats.avgPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  icon={PoundSterling}
+                  color="bg-violet-50 text-violet-600"
                   link="/payments"
                 />
-                <StatCard 
-                  title="My Documents" 
-                  value={stats.documents.toString()} 
-                  icon={FileText} 
-                  color="bg-amber-50 text-amber-600" 
+                <StatCard
+                  title="My Documents"
+                  value={stats.documents.toString()}
+                  icon={FileText}
+                  color="bg-amber-50 text-amber-600"
                   link="/documents"
                 />
               </>
             ) : (
               <>
-                <StatCard 
-                  title="Total Investment" 
-                  value={`£${stats.investment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                  icon={Landmark} 
-                  color="bg-blue-50 text-blue-600" 
+                <StatCard
+                  title="Total Investment"
+                  value={`£${stats.investment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  icon={Landmark}
+                  color="bg-blue-50 text-blue-600"
                   link="/investors"
                 />
-                <StatCard 
-                  title="Payouts Till Date" 
-                  value={`£${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                  icon={PoundSterling} 
-                  color="bg-emerald-50 text-emerald-600" 
+                <StatCard
+                  title="Total Payouts Sent"
+                  value={`£${stats.totalRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  icon={PoundSterling}
+                  color="bg-emerald-50 text-emerald-600"
                   link="/payments"
                 />
-                <StatCard 
-                  title="Average Payouts Till Date" 
-                  value={`£${stats.avgPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                  icon={PoundSterling} 
-                  color="bg-violet-50 text-violet-600" 
+                <StatCard
+                  title="Average Payouts"
+                  value={`£${stats.avgPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  icon={PoundSterling}
+                  color="bg-violet-50 text-violet-600"
                   link="/payments"
                 />
-                <StatCard 
-                  title="Total Investors" 
-                  value={stats.investors.toString()} 
-                  icon={Users} 
-                  color="bg-amber-50 text-amber-600" 
+                <StatCard
+                  title="Total Investors"
+                  value={stats.investors.toString()}
+                  icon={Users}
+                  color="bg-amber-50 text-amber-600"
                   link="/investors"
                 />
               </>
@@ -449,7 +449,7 @@ export const Dashboard = () => {
                 </span>
               </div>
             </div>
-            
+
             <div className="h-72 w-full flex items-center justify-center">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-3">
@@ -467,22 +467,22 @@ export const Dashboard = () => {
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorPayout" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorAvgPayout" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v/1000}k` : v}`} />
-                    <Tooltip 
+                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v / 1000}k` : v}`} />
+                    <Tooltip
                       contentStyle={{ backgroundColor: "#0f172a", borderRadius: "16px", color: "#fff", border: "none", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)" }}
                       formatter={(val: any, name: any) => [`£${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name]}
                     />
@@ -506,7 +506,7 @@ export const Dashboard = () => {
                   View All <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
-              
+
               {loading ? (
                 <div className="py-8 text-center text-sm text-slate-400">Loading documents...</div>
               ) : (
@@ -534,15 +534,15 @@ export const Dashboard = () => {
                         <div className="flex items-center gap-3">
                           <span className={cn(
                             "px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wide",
-                            doc.status === "Signed" 
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+                            doc.status === "Signed"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                               : doc.status === "Pending Signature"
-                              ? "bg-amber-50 text-amber-700 border border-amber-200"
-                              : "bg-slate-100 text-slate-600 border border-slate-200"
+                                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                : "bg-slate-100 text-slate-600 border border-slate-200"
                           )}>
                             {doc.status || "Approved"}
                           </span>
-                          <Link 
+                          <Link
                             to="/documents"
                             className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
                           >
@@ -563,7 +563,7 @@ export const Dashboard = () => {
                   View All <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
-              
+
               {loading ? (
                 <div className="py-8 text-center text-sm text-slate-400">Loading activity...</div>
               ) : (
@@ -626,13 +626,13 @@ export const Dashboard = () => {
                   <BarChart data={paymentBarData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v/1000}k` : v}`} />
-                    <Tooltip 
+                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `£${v >= 1000 ? `${v / 1000}k` : v}`} />
+                    <Tooltip
                       contentStyle={{ backgroundColor: "#0f172a", borderRadius: "16px", color: "#fff", border: "none", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)" }}
                       formatter={(val: any, name: any) => [`£${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name === "total" ? "Total Scheduled" : "Completed Till Date"]}
                     />
-                    <Legend 
-                      verticalAlign="top" 
+                    <Legend
+                      verticalAlign="top"
                       align="right"
                       iconType="circle"
                       formatter={(value) => <span className="text-xs font-bold text-slate-600 ml-1">{value === "total" ? "Total Payments" : "Completed"}</span>}

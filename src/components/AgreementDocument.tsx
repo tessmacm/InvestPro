@@ -138,6 +138,10 @@ export const AgreementDocument: React.FC<AgreementDocumentProps> = ({
   const minRoi    = Math.round(amountNumber * ((minRoiVal > 0 && minRoiVal <= 50 ? minRoiVal : 1) / 100));
   const maxRoi    = Math.round(amountNumber * ((maxRoiVal > 0 && maxRoiVal <= 50 ? maxRoiVal : 5) / 100));
 
+  const rawDuration   = (investorData?.duration || (investorData as any)?.Duration || "6 Months").toString().trim();
+  const durationMatch = rawDuration.match(/\d+/);
+  const durationValue = durationMatch ? durationMatch[0] : rawDuration;
+
   // ── Section blocks ────────────────────────────────────────────────────────
 
   const S1 = (
@@ -171,7 +175,7 @@ export const AgreementDocument: React.FC<AgreementDocumentProps> = ({
       <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">3. INVESTMENT DETAILS</h3>
       <p><strong>Investment Amount:</strong> The Investor invested a total sum of <strong>&pound;{amountFormatted} GBP</strong> (Pounds Sterling).</p>
       <p><strong>Date of Investment:</strong> <strong>{investmentDate}</strong></p>
-      <p><strong>Duration of Investment:</strong> The investment shall remain active for the period of minimum 6 months, unless otherwise terminated or extended by mutual agreement in writing.</p>
+      <p><strong>Duration of Investment:</strong> The investment shall remain active for the period of minimum {durationValue} months, unless otherwise terminated or extended by mutual agreement in writing.</p>
     </div>
   );
 

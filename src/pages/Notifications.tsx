@@ -397,15 +397,13 @@ export const Notifications = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className={`transition-colors cursor-pointer ${
-                          !n.isRead && !n.isSentByMe ? "bg-blue-50/40 hover:bg-blue-50/70" : "hover:bg-slate-50/50"
-                        }`}
+                        className={`transition-colors cursor-pointer ${!n.isRead && !n.isSentByMe ? "bg-blue-50/40 hover:bg-blue-50/70" : "hover:bg-slate-50/50"
+                          }`}
                         onClick={() => openDetails(n)}
                       >
                         <td className="px-6 py-4">
-                          <span className={`inline-block w-2.5 h-2.5 rounded-full ${
-                            n.isRead ? "bg-slate-200" : (n.isSentByMe ? "bg-amber-400" : "bg-blue-500")
-                          }`} />
+                          <span className={`inline-block w-2.5 h-2.5 rounded-full ${n.isRead ? "bg-slate-200" : (n.isSentByMe ? "bg-amber-400" : "bg-blue-500")
+                            }`} />
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col max-w-sm">
@@ -501,11 +499,10 @@ export const Notifications = () => {
                   <button
                     key={i}
                     onClick={() => setPage(i)}
-                    className={`w-8 h-8 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-                      i === safePage
+                    className={`w-8 h-8 rounded-xl text-xs font-bold transition-colors cursor-pointer ${i === safePage
                         ? "bg-slate-950 text-white"
                         : "text-slate-600 hover:bg-slate-100"
-                    }`}
+                      }`}
                   >
                     {i + 1}
                   </button>
@@ -537,9 +534,8 @@ export const Notifications = () => {
               placeholder="e.g. Account update / Inquiry regarding ROI"
               value={formData.title}
               onChange={(e) => { setFormData({ ...formData, title: e.target.value }); setFormErrors(prev => ({ ...prev, title: undefined })); }}
-              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all ${
-                formErrors.title ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
-              }`}
+              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all ${formErrors.title ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
+                }`}
             />
             {formErrors.title && <p className="text-xs text-rose-500 mt-1 font-medium">{formErrors.title}</p>}
           </div>
@@ -555,54 +551,59 @@ export const Notifications = () => {
               placeholder="Type your message content here..."
               value={formData.message}
               onChange={(e) => { setFormData({ ...formData, message: e.target.value }); setFormErrors(prev => ({ ...prev, message: undefined })); }}
-              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none ${
-                formErrors.message ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
-              }`}
+              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none ${formErrors.message ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
+                }`}
             />
             {formErrors.message && <p className="text-xs text-rose-500 mt-1 font-medium">{formErrors.message}</p>}
           </div>
 
           {isAdmin ? (
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Target Recipients</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Target Recipients <span className="text-rose-400">*</span></label>
               <div className="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={!formData.investorId && !formData.targetInvestorIds}
-                    onChange={() => setFormData({ ...formData, investorId: "", targetInvestorIds: "" })}
+                    checked={formData.targetInvestorIds === "all"}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({ ...formData, investorId: "", targetInvestorIds: "all" });
+                      } else {
+                        setFormData({ ...formData, investorId: "", targetInvestorIds: "" });
+                      }
+                    }}
                     className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
                   />
                   <span>All Active Investors</span>
                 </label>
                 <div className="border-t border-slate-200 my-1"></div>
                 {investors.map(i => {
-                  const isChecked = formData.investorId === String(i.id) || formData.targetInvestorIds.split(",").includes(String(i.id));
+                  const isChecked = formData.targetInvestorIds !== "all" && (formData.investorId === String(i.id) || formData.targetInvestorIds.split(",").includes(String(i.id)));
                   return (
                     <label key={i.id} className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={(e) => {
-                          let newTargetIds = formData.targetInvestorIds.split(",").filter(Boolean);
-                          if (formData.investorId) {
-                            newTargetIds.push(formData.investorId);
+                          let currentIds = formData.targetInvestorIds === "all" ? [] : formData.targetInvestorIds.split(",").filter(Boolean);
+                          if (formData.investorId && formData.targetInvestorIds !== "all" && !currentIds.includes(formData.investorId)) {
+                            currentIds.push(formData.investorId);
                           }
-                          
+
                           if (e.target.checked) {
-                            if (!newTargetIds.includes(String(i.id))) {
-                              newTargetIds.push(String(i.id));
+                            if (!currentIds.includes(String(i.id))) {
+                              currentIds.push(String(i.id));
                             }
                           } else {
-                            newTargetIds = newTargetIds.filter(id => id !== String(i.id));
+                            currentIds = currentIds.filter(id => id !== String(i.id));
                           }
-                          
-                          if (newTargetIds.length === 0) {
+
+                          if (currentIds.length === 0) {
                             setFormData({ ...formData, investorId: "", targetInvestorIds: "" });
-                          } else if (newTargetIds.length === 1) {
-                            setFormData({ ...formData, investorId: newTargetIds[0], targetInvestorIds: "" });
+                          } else if (currentIds.length === 1) {
+                            setFormData({ ...formData, investorId: currentIds[0], targetInvestorIds: "" });
                           } else {
-                            setFormData({ ...formData, investorId: "", targetInvestorIds: "," + newTargetIds.join(",") + "," });
+                            setFormData({ ...formData, investorId: "", targetInvestorIds: "," + currentIds.join(",") + "," });
                           }
                         }}
                         className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
@@ -630,7 +631,12 @@ export const Notifications = () => {
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100"
+              disabled={
+                !formData.title.trim() ||
+                !formData.message.trim() ||
+                (isAdmin && !formData.investorId && !formData.targetInvestorIds)
+              }
+              className="flex-1 px-6 py-3 bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm hover:bg-blue-700 disabled:hover:bg-slate-300 cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100 disabled:shadow-none"
             >
               {isAdmin ? "Send Notification" : "Send Message"}
             </button>
@@ -651,9 +657,8 @@ export const Notifications = () => {
               maxLength={100}
               value={formData.title}
               onChange={(e) => { setFormData({ ...formData, title: e.target.value }); setFormErrors(prev => ({ ...prev, title: undefined })); }}
-              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all ${
-                formErrors.title ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
-              }`}
+              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all ${formErrors.title ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
+                }`}
             />
             {formErrors.title && <p className="text-xs text-rose-500 mt-1 font-medium">{formErrors.title}</p>}
           </div>
@@ -668,9 +673,8 @@ export const Notifications = () => {
               maxLength={500}
               value={formData.message}
               onChange={(e) => { setFormData({ ...formData, message: e.target.value }); setFormErrors(prev => ({ ...prev, message: undefined })); }}
-              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none ${
-                formErrors.message ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
-              }`}
+              className={`w-full px-4 py-3 bg-white hover:bg-slate-50 border focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all resize-none ${formErrors.message ? "border-rose-300 bg-rose-50/50 focus:ring-rose-100/50" : "border-slate-200 focus:border-blue-500"
+                }`}
             />
             {formErrors.message && <p className="text-xs text-rose-500 mt-1 font-medium">{formErrors.message}</p>}
           </div>
@@ -700,45 +704,51 @@ export const Notifications = () => {
             </div>
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Target Recipients</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Target Recipients <span className="text-rose-400">*</span></label>
             <div className="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
               <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={!formData.investorId && !formData.targetInvestorIds}
-                  onChange={() => setFormData({ ...formData, investorId: "", targetInvestorIds: "" })}
+                  checked={formData.targetInvestorIds === "all"}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setFormData({ ...formData, investorId: "", targetInvestorIds: "all" });
+                    } else {
+                      setFormData({ ...formData, investorId: "", targetInvestorIds: "" });
+                    }
+                  }}
                   className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
                 />
                 <span>All Active Investors</span>
               </label>
               <div className="border-t border-slate-200 my-1"></div>
               {investors.filter(i => !i.status || i.status.toLowerCase() === "active").map(i => {
-                const isChecked = formData.investorId === String(i.id) || formData.targetInvestorIds.split(",").includes(String(i.id));
+                const isChecked = formData.targetInvestorIds !== "all" && (formData.investorId === String(i.id) || formData.targetInvestorIds.split(",").includes(String(i.id)));
                 return (
                   <label key={i.id} className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isChecked}
                       onChange={(e) => {
-                        let newTargetIds = formData.targetInvestorIds.split(",").filter(Boolean);
-                        if (formData.investorId) {
-                          newTargetIds.push(formData.investorId);
+                        let currentIds = formData.targetInvestorIds === "all" ? [] : formData.targetInvestorIds.split(",").filter(Boolean);
+                        if (formData.investorId && formData.targetInvestorIds !== "all" && !currentIds.includes(formData.investorId)) {
+                          currentIds.push(formData.investorId);
                         }
-                        
+
                         if (e.target.checked) {
-                          if (!newTargetIds.includes(String(i.id))) {
-                            newTargetIds.push(String(i.id));
+                          if (!currentIds.includes(String(i.id))) {
+                            currentIds.push(String(i.id));
                           }
                         } else {
-                          newTargetIds = newTargetIds.filter(id => id !== String(i.id));
+                          currentIds = currentIds.filter(id => id !== String(i.id));
                         }
-                        
-                        if (newTargetIds.length === 0) {
+
+                        if (currentIds.length === 0) {
                           setFormData({ ...formData, investorId: "", targetInvestorIds: "" });
-                        } else if (newTargetIds.length === 1) {
-                          setFormData({ ...formData, investorId: newTargetIds[0], targetInvestorIds: "" });
+                        } else if (currentIds.length === 1) {
+                          setFormData({ ...formData, investorId: currentIds[0], targetInvestorIds: "" });
                         } else {
-                          setFormData({ ...formData, investorId: "", targetInvestorIds: "," + newTargetIds.join(",") + "," });
+                          setFormData({ ...formData, investorId: "", targetInvestorIds: "," + currentIds.join(",") + "," });
                         }
                       }}
                       className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
@@ -759,7 +769,12 @@ export const Notifications = () => {
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100"
+              disabled={
+                !formData.title.trim() ||
+                !formData.message.trim() ||
+                (!formData.investorId && !formData.targetInvestorIds)
+              }
+              className="flex-1 px-6 py-3 bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm hover:bg-blue-700 disabled:hover:bg-slate-300 cursor-pointer transition-all active:scale-95 shadow-lg shadow-blue-100 disabled:shadow-none"
             >
               Update Notification
             </button>
@@ -777,16 +792,14 @@ export const Notifications = () => {
           <div className="space-y-0">
             <div className="p-6 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
               <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-2xl shrink-0 ${
-                  selectedNotification.isRead ? "bg-slate-100 text-slate-500" : "bg-blue-100 text-blue-600"
-                }`}>
+                <div className={`p-3 rounded-2xl shrink-0 ${selectedNotification.isRead ? "bg-slate-100 text-slate-500" : "bg-blue-100 text-blue-600"
+                  }`}>
                   {selectedNotification.isRead ? <MailOpen className="w-6 h-6" /> : <Bell className="w-6 h-6" />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${
-                      selectedNotification.isRead ? "bg-slate-300" : "bg-blue-500"
-                    }`} />
+                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${selectedNotification.isRead ? "bg-slate-300" : "bg-blue-500"
+                      }`} />
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                       {selectedNotification.isRead ? "Read" : "Unread"}
                     </span>
@@ -893,11 +906,10 @@ export const Notifications = () => {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className={`fixed top-4 right-4 z-[100] flex items-start gap-3 p-4 rounded-2xl border shadow-lg max-w-sm ${
-              toast.type === "success" ? "bg-emerald-50 border-emerald-100" :
-              toast.type === "error" ? "bg-rose-50 border-rose-100" :
-              "bg-indigo-50 border-indigo-100"
-            }`}
+            className={`fixed top-4 right-4 z-[100] flex items-start gap-3 p-4 rounded-2xl border shadow-lg max-w-sm ${toast.type === "success" ? "bg-emerald-50 border-emerald-100" :
+                toast.type === "error" ? "bg-rose-50 border-rose-100" :
+                  "bg-indigo-50 border-indigo-100"
+              }`}
           >
             <div className="shrink-0 mt-0.5">
               {toast.type === "success" && <CheckCircle className="w-5 h-5 text-emerald-600" />}

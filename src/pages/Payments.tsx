@@ -160,11 +160,11 @@ export const Payments = () => {
     for (const [, pList] of investorGroupMap.entries()) {
       // Sort this contract's payments chronologically ascending
       const ascList = [...pList].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
-      
+
       let nextFutureIncluded = false;
       for (const p of ascList) {
         const isFixed = (p.paymentCycle || "").toLowerCase() === "constant" || (p.paymentCycle || "").toLowerCase() === "fixed";
-        
+
         if (isFixed) {
           // Fixed payout: single payment shown irrespective of dates
           result.push(p);
@@ -202,7 +202,7 @@ export const Payments = () => {
   const doneCount = donePaymentsList.length;
   const doneTotal = donePaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-  // Total Payouts (Sum of pending + sent + acknowledged for visible payments)
+  // Gross Payouts (Sum of pending + sent + acknowledged for visible payments)
   const totalAllCount = pendingCount + sentCount + doneCount;
   const totalAllAmount = pendingTotal + sentTotal + doneTotal;
 
@@ -327,11 +327,11 @@ export const Payments = () => {
 
       {/* Summary Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Card 1: Total Payouts */}
+        {/* Card 1: Gross Payouts */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Total Payouts
+              Gross Payouts
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{totalAllAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -343,11 +343,11 @@ export const Payments = () => {
           </div>
         </div>
 
-        {/* Card 2: Pending in a month */}
+        {/* Card 2: Upcoming Payouts */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Pending in a month
+              Upcoming Payouts
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{pendingTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -363,13 +363,13 @@ export const Payments = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              {isAdmin ? "Acknowledge Sent" : "Sent by Investee"}
+              Payments in Process
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{sentTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
             <p className="text-xs text-slate-400 font-semibold">
-              {sentCount} {isAdmin ? "payments sent" : "sent by investee"}
+              {sentCount} Payments in Process
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -381,13 +381,13 @@ export const Payments = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              {isAdmin ? "Acknowledge Received" : "Received"}
+              Payments Received
             </span>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
               £{doneTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
             <p className="text-xs text-slate-400 font-semibold">
-              {doneCount} {isAdmin ? "payments confirmed" : "payments received"}
+              Payments Received
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -441,9 +441,9 @@ export const Payments = () => {
             className="w-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
           >
             <option value="all">All Statuses</option>
-            <option value="pending">Acknowledge Pending</option>
-            <option value="sent">{isAdmin ? "Acknowledge Sent" : "Sent by Investee"}</option>
-            <option value="received">{isAdmin ? "Acknowledge Received" : "Received"}</option>
+            <option value="pending">{isAdmin ? "Initiate Payout" : "Acknowledge Payout"}</option>
+            <option value="sent">Sent</option>
+            <option value="received">Received</option>
           </select>
         </div>
 
@@ -543,29 +543,29 @@ export const Payments = () => {
                             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 shadow-xs cursor-pointer active:scale-95 transition-all group"
                           >
                             <Send className="w-3 h-3 text-amber-600 group-hover:translate-x-0.5 transition-transform" />
-                            Acknowledge Pending
+                            Initiate Payout
                           </button>
                         ) : !isAdmin && p.isSent && !p.isReceived ? (
                           <button
                             type="button"
                             onClick={() => handleAcknowledgeReceived(p.paymentId)}
-                            title="Click to Acknowledge Receipt"
+                            title="Click to Acknowledge Payout"
                             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-300 shadow-xs cursor-pointer active:scale-95 transition-all group"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform" />
-                            Recieved? Acknowledge!
+                            Acknowledge Payout
                           </button>
                         ) : (
                           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide ${p.isReceived ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                              p.isSent ? "bg-blue-50 text-blue-700 border border-blue-200" :
-                                "bg-amber-50 text-amber-700 border border-amber-200"
+                            p.isSent ? "bg-blue-50 text-blue-700 border border-blue-200" :
+                              "bg-amber-50 text-amber-700 border border-amber-200"
                             }`}>
                             {p.isReceived && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                            {p.isReceived 
-                              ? (isAdmin ? "Acknowledge Received" : "Received") 
-                              : p.isSent 
-                                ? (isAdmin ? "Acknowledge Sent" : "Sent by Investee") 
-                                : "Acknowledge Pending"}
+                            {p.isReceived
+                              ? "Received"
+                              : p.isSent
+                                ? "Sent"
+                                : "Pending"}
                           </span>
                         )}
                       </td>
@@ -681,13 +681,13 @@ export const Payments = () => {
             <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Payment Status</span>
               <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${selectedPayment.isReceived ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" :
-                  selectedPayment.isSent ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" :
-                    "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                selectedPayment.isSent ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" :
+                  "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
                 }`}>
-                {selectedPayment.isReceived 
-                  ? (isAdmin ? "✓ Acknowledged" : "✓ Received") 
-                  : selectedPayment.isSent 
-                    ? (isAdmin ? "→ Send Acknowledge" : "→ Sent by Investee") 
+                {selectedPayment.isReceived
+                  ? (isAdmin ? "✓ Acknowledged" : "✓ Received")
+                  : selectedPayment.isSent
+                    ? (isAdmin ? "→ Send Acknowledge" : "→ Sent by Investee")
                     : "⏳ Pending"}
               </span>
             </div>
