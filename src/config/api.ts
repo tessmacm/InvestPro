@@ -28,11 +28,14 @@ export const authHeaders = (extraHeaders?: Record<string, string>): Record<strin
     userId = u?.id || "";
   } catch { /* ignore */ }
 
+  const isStagingOrigin = typeof window !== "undefined" && window.location.hostname.includes("staging.tessmaims.co.uk");
+
   return {
     "Content-Type": "application/json",
     "Authorization": token ? `Bearer ${token}` : "",
     "x-user-role": role,
     "x-user-id": userId,
+    ...(isStagingOrigin ? { "X-Environment": "staging" } : {}),
     ...extraHeaders,
   };
 };

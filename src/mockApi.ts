@@ -273,6 +273,9 @@ export function initializeMockApi() {
         if (token && !headers.has("Authorization")) {
           headers.set("Authorization", `Bearer ${token}`);
         }
+        if (window.location.hostname.includes("staging.tessmaims.co.uk") && !headers.has("X-Environment")) {
+          headers.set("X-Environment", "staging");
+        }
 
         let newBody = init?.body;
 

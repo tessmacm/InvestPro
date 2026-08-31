@@ -126,7 +126,7 @@ export const Notifications = () => {
         message: formData.message,
         eventType: formData.eventType,
         investorId: formData.investorId ? parseInt(formData.investorId) : null,
-        targetInvestorIds: formData.targetInvestorIds || null,
+        targetInvestorIds: formData.targetInvestorIds === "all" ? null : (formData.targetInvestorIds || null),
         status: formData.status
       };
 
@@ -175,7 +175,7 @@ export const Notifications = () => {
         message: formData.message,
         eventType: formData.eventType,
         investorId: formData.investorId ? parseInt(formData.investorId) : null,
-        targetInvestorIds: formData.targetInvestorIds || null,
+        targetInvestorIds: formData.targetInvestorIds === "all" ? null : (formData.targetInvestorIds || null),
         status: formData.status
       };
 
