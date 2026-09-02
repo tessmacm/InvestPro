@@ -440,7 +440,8 @@ async function runE2ETests() {
   const investorHeaders = {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${investorToken}`,
-    "x-user-role": "investor"
+    "x-user-role": "investor",
+    "x-user-id": investorAuth.user?.id || ""
   };
   logSuccess(`Investor logged in successfully (${investorAuth.user?.email || "alex.wright.test@example.com"})`);
 
@@ -526,7 +527,8 @@ async function runE2ETests() {
   const adminCheckNotifs = await adminCheckNotifsRes.json();
   const receivedFromInvestor = adminCheckNotifs.find((n: any) => n.title === "Bank Details Confirmation");
   assert.ok(receivedFromInvestor, "Admin must receive the notification sent by the investor");
-  logSuccess(`Admin verified received notification from investor (Title: "${receivedFromInvestor.title}")`);
+  assert.strictEqual(receivedFromInvestor.senderName, "Alexander Wright", `Notification senderName should be 'Alexander Wright' but was '${receivedFromInvestor.senderName}'`);
+  logSuccess(`Admin verified received notification from investor (Title: "${receivedFromInvestor.title}", Sender: "${receivedFromInvestor.senderName}")`);
 
   // ──────────────────────────────────────────────────────────────────────────
   // Step 8: Teardown / Clean Test Data (Only executed when --clean flag is provided)
