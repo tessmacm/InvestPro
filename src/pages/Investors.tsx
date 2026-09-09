@@ -51,6 +51,8 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
 };
 
+export const ROI_OPTIONS = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+
 export const Investors = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isClient = user?.role === "client" || user?.role === "investor";
@@ -197,10 +199,10 @@ export const Investors = () => {
             amount: capAmtNum,
             date_of_onboarding: (date_of_onboarding || '').trim() || new Date().toISOString().split("T")[0],
             duration: (duration || '').trim() || "12 Months",
-            min_RoiRangeId: parseInt(minRoi) || 1,
-            max_RoiRangeId: parseInt(maxRoi) || 4,
-            min_roi_id: parseInt(minRoi) || 1,
-            max_roi_id: parseInt(maxRoi) || 4,
+            min_RoiRangeId: parseFloat(minRoi) || 1,
+            max_RoiRangeId: parseFloat(maxRoi) || 4,
+            min_roi_id: parseFloat(minRoi) || 1,
+            max_roi_id: parseFloat(maxRoi) || 4,
             roiTypeId: (payoutCategory || '').toLowerCase() === 'variant'
               ? ((payoutCycle || '').toLowerCase() === 'weekly' ? 2 : (payoutCycle || '').toLowerCase() === 'quarterly' ? 4 : (payoutCycle || '').toLowerCase() === 'half-yearly' || (payoutCycle || '').toLowerCase() === 'halfyearly' ? 6 : (payoutCycle || '').toLowerCase() === 'yearly' ? 5 : 3)
               : 1,
@@ -688,8 +690,8 @@ export const Investors = () => {
   const executeSaveInvestor = async () => {
     setIsSaveConfirmModalOpen(false);
 
-    const minRoiVal = parseInt(formData.minRoi) || 1;
-    const maxRoiVal = parseInt(formData.maxRoi) || 1;
+    const minRoiVal = parseFloat(formData.minRoi) || 1;
+    const maxRoiVal = parseFloat(formData.maxRoi) || 1;
 
     const isEdit = !!selectedInvestor;
     const payload = isEdit ? {
@@ -1651,7 +1653,7 @@ export const Investors = () => {
                           onChange={(e) => setFormData({ ...formData, minRoi: e.target.value })}
                           className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
                         >
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                          {ROI_OPTIONS.map((num) => (
                             <option key={num} value={String(num)}>{num}%</option>
                           ))}
                         </select>
@@ -1669,7 +1671,7 @@ export const Investors = () => {
                           onChange={(e) => setFormData({ ...formData, maxRoi: e.target.value })}
                           className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
                         >
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                          {ROI_OPTIONS.map((num) => (
                             <option key={num} value={String(num)}>{num}%</option>
                           ))}
                         </select>
@@ -1683,7 +1685,7 @@ export const Investors = () => {
                         <div className="px-4 py-3 bg-blue-50/70 border border-blue-200/80 rounded-xl text-left flex items-center justify-between h-[46px]">
                           <span className="text-xs font-bold text-blue-700">Calculated Average:</span>
                           <span className="text-sm font-extrabold text-blue-900 font-mono">
-                            {Math.round(((parseInt(formData.minRoi) || 1) + (parseInt(formData.maxRoi) || 1)) / 2)}%
+                            {(((parseFloat(formData.minRoi) || 1) + (parseFloat(formData.maxRoi) || 1)) / 2).toFixed(1).replace(/\.0$/, '')}%
                           </span>
                         </div>
                       </div>

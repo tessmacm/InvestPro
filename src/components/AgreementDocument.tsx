@@ -133,10 +133,14 @@ export const AgreementDocument: React.FC<AgreementDocumentProps> = ({
   const firstPayment   = computeReturnPeriod(dateVal);
   const witnessName    = isRealValue(investorData?.witness) ? investorData!.witness! : (isRealValue((investorData as any)?.Witness) ? (investorData as any).Witness : "Accredited Witness");
 
-  const minRoiVal = Number(investorData?.min_roi_id || investorData?.min_RoiRangeId || 1);
-  const maxRoiVal = Number(investorData?.max_roi_id || investorData?.max_RoiRangeId || (minRoiVal >= 3 ? minRoiVal : 5));
-  const minRoi    = Math.round(amountNumber * ((minRoiVal > 0 && minRoiVal <= 50 ? minRoiVal : 1) / 100));
-  const maxRoi    = Math.round(amountNumber * ((maxRoiVal > 0 && maxRoiVal <= 50 ? maxRoiVal : 5) / 100));
+  const rawMinRoi = investorData?.min_roi_id ?? investorData?.min_RoiRangeId;
+  const rawMaxRoi = investorData?.max_roi_id ?? investorData?.max_RoiRangeId;
+  const minRoiVal = rawMinRoi != null && !isNaN(Number(rawMinRoi)) && Number(rawMinRoi) > 0 ? Number(rawMinRoi) : 1;
+  const maxRoiVal = rawMaxRoi != null && !isNaN(Number(rawMaxRoi)) && Number(rawMaxRoi) > 0 ? Number(rawMaxRoi) : Math.max(minRoiVal, 5);
+  const minRoiAmt = (amountNumber * minRoiVal) / 100;
+  const maxRoiAmt = (amountNumber * maxRoiVal) / 100;
+  const minRoiStr = minRoiAmt % 1 === 0 ? minRoiAmt.toLocaleString() : minRoiAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const maxRoiStr = maxRoiAmt % 1 === 0 ? maxRoiAmt.toLocaleString() : maxRoiAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const rawDuration   = (investorData?.duration || (investorData as any)?.Duration || "6 Months").toString().trim();
   const durationMatch = rawDuration.match(/\d+/);
@@ -182,7 +186,7 @@ export const AgreementDocument: React.FC<AgreementDocumentProps> = ({
   const S4 = (
     <div className="space-y-4 text-xs text-slate-800 leading-relaxed">
       <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">4. RETURN ON INVESTMENT</h3>
-      <p><strong>Monthly Return:</strong> The Investee agrees to provide the Investor with a monthly return ranging between <strong>&pound;{minRoi.toLocaleString()} GBP</strong> and <strong>&pound;{maxRoi.toLocaleString()} GBP</strong>.</p>
+      <p><strong>Monthly Return:</strong> The Investee agrees to provide the Investor with a monthly return ranging between <strong>&pound;{minRoiStr} GBP</strong> and <strong>&pound;{maxRoiStr} GBP</strong>.</p>
       <p><strong>Date of Profit Payment:</strong> The monthly profit shall be paid to the Investor with-in 30 days of completion of the previous investment month. Any Delays will be notified in advance.</p>
       <p className="italic text-slate-600 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100">{firstPayment}</p>
     </div>

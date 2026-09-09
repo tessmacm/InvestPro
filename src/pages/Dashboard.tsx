@@ -261,7 +261,13 @@ export const Dashboard = () => {
 
       } else {
         investmentVal = allInvestors.reduce((sum, i) => sum + getInvestorAmount(i), 0);
-        investorsCountVal = allInvestors.length;
+        // Show unique investors count, not investment contracts count
+        const uniqueInvestorKeys = new Set(
+          allInvestors
+            .map(i => (getInvestorEmail(i) || getInvestorName(i) || "").toLowerCase().trim())
+            .filter(Boolean)
+        );
+        investorsCountVal = uniqueInvestorKeys.size;
         documentsCountVal = allDocuments.length;
 
         totalPayAmt = allPayments.reduce((sum, p) => sum + getPaymentAmount(p), 0);

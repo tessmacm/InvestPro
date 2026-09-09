@@ -591,7 +591,10 @@ export function initializeMockApi() {
     // 1. STATS
     if (pathname === "/api/stats") {
       const userCount = db.users.length;
-      const investorCount = db.investors.length;
+      const uniqueInvestorEmails = new Set(
+        db.investors.map((inv: any) => (inv.email || inv.name || "").toLowerCase().trim()).filter(Boolean)
+      );
+      const investorCount = uniqueInvestorEmails.size;
       const totalInvestment = db.investors.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
       const documentCount = db.documents.length;
       const projectCount = db.projects.length;
