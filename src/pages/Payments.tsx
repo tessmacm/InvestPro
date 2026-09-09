@@ -278,7 +278,7 @@ export const Payments = () => {
   }, [filteredPayments, currentPage, entriesPerPage]);
 
   const handleDownloadPayoutsReport = () => {
-    const headers = ["Payment ID", "Investor Name", "Phone / Email", "Amount (£)", "Payment Cycle", "Due Date", "Status", "Is Sent", "Is Received"];
+    const headers = ["Payment ID", "Investor Name", "Phone / Email", "Amount (£)", "Payment Cycle", "Due Date", "Payment Date", isAdmin ? "Action" : "Status"];
     const rows = filteredPayments.map(p => [
       `PayId#${p.paymentId}`,
       `"${(p.investorName || "Investor").replace(/"/g, '""')}"`,
@@ -286,9 +286,8 @@ export const Payments = () => {
       p.amount.toFixed(2),
       p.paymentCycle || "Monthly",
       formatUKDate(p.dueDate || p.paymentDate),
-      p.status,
-      p.isSent ? "Yes" : "No",
-      p.isReceived ? "Yes" : "No"
+      p.paymentMadeAt ? formatUKDate(p.paymentMadeAt) : "—",
+      isAdmin ? (p.isSent ? "Payment Made" : "Payment Made?") : (p.isSent ? "Payment Received" : "Payment Pending")
     ]);
 
     const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
@@ -441,9 +440,8 @@ export const Payments = () => {
             className="w-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all cursor-pointer"
           >
             <option value="all">All Statuses</option>
-            <option value="pending">{isAdmin ? "Initiate Payout" : "Acknowledge Payout"}</option>
-            <option value="sent">Sent</option>
-            <option value="received">Received</option>
+            <option value="pending">{isAdmin ? "Payment Pending" : "Payment Pending"}</option>
+            <option value="received">{isAdmin ? "Payment Made" : "Payment Received"}</option>
           </select>
         </div>
 
@@ -491,7 +489,8 @@ export const Payments = () => {
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Cycle</th>
                   <th className="px-6 py-4">Due Date</th>
-                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Payment Date</th>
+                  <th className="px-6 py-4">{isAdmin ? "Action" : "Status"}</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -533,40 +532,41 @@ export const Payments = () => {
                       <td className="px-6 py-4 text-slate-600 font-medium">
                         {formatUKDate(p.dueDate || p.paymentDate)}
                       </td>
-                      {/* Status Column with Actionable Badges */}
-                      <td className="px-6 py-4">
-                        {isAdmin && !p.isSent && !p.isReceived ? (
-                          <button
-                            type="button"
-                            onClick={() => handleAcknowledgeSent(p.paymentId)}
-                            title="Click to Send Acknowledge"
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 shadow-xs cursor-pointer active:scale-95 transition-all group"
-                          >
-                            <Send className="w-3 h-3 text-amber-600 group-hover:translate-x-0.5 transition-transform" />
-                            Initiate Payout
-                          </button>
-                        ) : !isAdmin && p.isSent && !p.isReceived ? (
-                          <button
-                            type="button"
-                            onClick={() => handleAcknowledgeReceived(p.paymentId)}
-                            title="Click to Acknowledge Payout"
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-300 shadow-xs cursor-pointer active:scale-95 transition-all group"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform" />
-                            Acknowledge Payout
-                          </button>
+                      {/* Payment Date Column */}
+                      <td className="px-6 py-4 text-slate-600 font-medium whitespace-nowrap">
+                        {p.paymentMadeAt ? formatUKDate(p.paymentMadeAt) : "—"}
+                      </td>
+                      {/* Admin: Action Column / Investor: Status Column */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {isAdmin ? (
+                          !p.isSent ? (
+                            <button
+                              type="button"
+                              onClick={() => handleAcknowledgeSent(p.paymentId)}
+                              title="Click to mark Payment Made"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 shadow-xs cursor-pointer active:scale-95 transition-all group"
+                            >
+                              <Send className="w-3 h-3 text-amber-600 group-hover:translate-x-0.5 transition-transform" />
+                              Payment Made?
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              Payment Made
+                            </span>
+                          )
                         ) : (
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide ${p.isReceived ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                            p.isSent ? "bg-blue-50 text-blue-700 border border-blue-200" :
-                              "bg-amber-50 text-amber-700 border border-amber-200"
-                            }`}>
-                            {p.isReceived && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                            {p.isReceived
-                              ? "Received"
-                              : p.isSent
-                                ? "Sent"
-                                : "Pending"}
-                          </span>
+                          p.isSent ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              Payment Received
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-50 text-amber-700 border border-amber-200 cursor-default">
+                              <Clock className="w-3.5 h-3.5 text-amber-600" />
+                              Payment Pending
+                            </span>
+                          )
                         )}
                       </td>
 
@@ -649,7 +649,7 @@ export const Payments = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Transaction ID</span>
                 <span className="text-sm font-mono font-bold text-slate-700">PayId#{selectedPayment.paymentId}</span>
@@ -659,6 +659,13 @@ export const Payments = () => {
                 <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5 font-mono">
                   <Calendar className="w-4 h-4 text-slate-400" />
                   {formatUKDate(selectedPayment.dueDate || selectedPayment.paymentDate)}
+                </span>
+              </div>
+              <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Payment Date</span>
+                <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5 font-mono">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  {selectedPayment.paymentMadeAt ? formatUKDate(selectedPayment.paymentMadeAt) : "—"}
                 </span>
               </div>
             </div>
@@ -679,16 +686,13 @@ export const Payments = () => {
             </div>
 
             <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Payment Status</span>
-              <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${selectedPayment.isReceived ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" :
-                selectedPayment.isSent ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" :
-                  "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-                }`}>
-                {selectedPayment.isReceived
-                  ? (isAdmin ? "✓ Acknowledged" : "✓ Received")
-                  : selectedPayment.isSent
-                    ? (isAdmin ? "→ Send Acknowledge" : "→ Sent by Investee")
-                    : "⏳ Pending"}
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">{isAdmin ? "Payment Action / Status" : "Payment Status"}</span>
+              <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${selectedPayment.isSent || selectedPayment.isReceived ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" :
+                "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+              }`}>
+                {selectedPayment.isSent || selectedPayment.isReceived
+                  ? (isAdmin ? "✓ Payment Made" : "✓ Payment Received")
+                  : "⏳ Payment Pending"}
               </span>
             </div>
 

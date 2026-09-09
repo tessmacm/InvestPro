@@ -87,6 +87,7 @@ export interface Payment {
   isSent: boolean;
   isReceived: boolean;
   paymentCycle?: string;
+  paymentMadeAt?: string;
 }
 
 export interface RoiContract {

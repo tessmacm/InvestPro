@@ -17,16 +17,24 @@ const PAGE_SIZE = 10;
 const EVENT_TYPES = ["ROICredited", "Investment Approved", "Document Uploaded", "Account Created", "Payment Received"];
 
 const timeAgo = (dateStr: string) => {
+  if (!dateStr) return "—";
+  let str = String(dateStr).trim();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(str)) {
+    str += "Z";
+  }
+  const dateObj = new Date(str);
+  if (isNaN(dateObj.getTime())) return "—";
+
   const now = Date.now();
-  const diff = now - new Date(dateStr).getTime();
+  const diff = now - dateObj.getTime();
   const mins = Math.floor(diff / 60000);
+
+  if (diff < 0) return formatUKDateTime(str);
   if (mins < 1) return "Just now";
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return formatUKDate(dateStr);
+  return formatUKDateTime(str);
 };
 
 type ToastData = { show: boolean; title: string; message: string; type: "success" | "error" | "info" };
@@ -425,10 +433,15 @@ export const Notifications = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-xs text-slate-500 flex items-center gap-1 whitespace-nowrap">
-                            <Clock className="w-3.5 h-3.5" />
-                            {timeAgo(n.createdAt)}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-700 font-mono whitespace-nowrap">
+                              {formatUKDateTime(n.createdAt)}
+                            </span>
+                            <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 whitespace-nowrap mt-0.5">
+                              <Clock className="w-3 h-3 text-slate-400" />
+                              {timeAgo(n.createdAt)}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-center">
                           {n.isRead ? (
