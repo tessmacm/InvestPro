@@ -38,6 +38,7 @@ export interface Investor {
   max_RoiRangeId?: number | string;
   roiTypeId?: number | string;
   duration?: string;
+  roiUnit?: "percent" | "fixed";
 }
 
 export interface Document {

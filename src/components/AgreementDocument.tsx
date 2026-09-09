@@ -133,12 +133,27 @@ export const AgreementDocument: React.FC<AgreementDocumentProps> = ({
   const firstPayment   = computeReturnPeriod(dateVal);
   const witnessName    = isRealValue(investorData?.witness) ? investorData!.witness! : (isRealValue((investorData as any)?.Witness) ? (investorData as any).Witness : "Accredited Witness");
 
-  const rawMinRoi = investorData?.min_roi_id ?? investorData?.min_RoiRangeId;
-  const rawMaxRoi = investorData?.max_roi_id ?? investorData?.max_RoiRangeId;
-  const minRoiVal = rawMinRoi != null && !isNaN(Number(rawMinRoi)) && Number(rawMinRoi) > 0 ? Number(rawMinRoi) : 1;
-  const maxRoiVal = rawMaxRoi != null && !isNaN(Number(rawMaxRoi)) && Number(rawMaxRoi) > 0 ? Number(rawMaxRoi) : Math.max(minRoiVal, 5);
-  const minRoiAmt = (amountNumber * minRoiVal) / 100;
-  const maxRoiAmt = (amountNumber * maxRoiVal) / 100;
+  const notesStr = (investorData?.notes || (investorData as any)?.Notes || "") as string;
+  const fixedMatch = notesStr.match(/\[ROI_MODE:FIXED,MIN:([\d.]+),MAX:([\d.]+)\]/);
+  const isFixedRoi = investorData?.roiUnit === "fixed" || !!fixedMatch;
+
+  let minRoiAmt: number;
+  let maxRoiAmt: number;
+
+  if (isFixedRoi) {
+    const fixedMin = fixedMatch ? parseFloat(fixedMatch[1]) : Number(investorData?.min_roi_id ?? investorData?.min_RoiRangeId ?? 0);
+    const fixedMax = fixedMatch ? parseFloat(fixedMatch[2]) : Number(investorData?.max_roi_id ?? investorData?.max_RoiRangeId ?? fixedMin);
+    minRoiAmt = fixedMin > 0 ? fixedMin : 0;
+    maxRoiAmt = fixedMax > 0 ? fixedMax : minRoiAmt;
+  } else {
+    const rawMinRoi = investorData?.min_roi_id ?? investorData?.min_RoiRangeId;
+    const rawMaxRoi = investorData?.max_roi_id ?? investorData?.max_RoiRangeId;
+    const minRoiVal = rawMinRoi != null && !isNaN(Number(rawMinRoi)) && Number(rawMinRoi) > 0 ? Number(rawMinRoi) : 1;
+    const maxRoiVal = rawMaxRoi != null && !isNaN(Number(rawMaxRoi)) && Number(rawMaxRoi) > 0 ? Number(rawMaxRoi) : Math.max(minRoiVal, 5);
+    minRoiAmt = (amountNumber * minRoiVal) / 100;
+    maxRoiAmt = (amountNumber * maxRoiVal) / 100;
+  }
+
   const minRoiStr = minRoiAmt % 1 === 0 ? minRoiAmt.toLocaleString() : minRoiAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const maxRoiStr = maxRoiAmt % 1 === 0 ? maxRoiAmt.toLocaleString() : maxRoiAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

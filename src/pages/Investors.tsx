@@ -302,6 +302,7 @@ export const Investors = () => {
     date_of_onboarding: "",
     amount: "",
     mobile: "",
+    roiUnit: "percent" as "percent" | "fixed",
   });
 
   const [investmentMode, setInvestmentMode] = useState<"new" | "existing">("new");
@@ -491,6 +492,7 @@ export const Investors = () => {
       date_of_onboarding: "",
       amount: "",
       mobile: "",
+      roiUnit: "percent",
     });
     setSelectedInvestor(null);
   };
@@ -510,6 +512,13 @@ export const Investors = () => {
         : investor.roiType || "Monthly")
       : "Constant";
 
+    const notesStr = investor.notes || "";
+    const fixedMatch = notesStr.match(/\[ROI_MODE:FIXED,MIN:([\d.]+),MAX:([\d.]+)\]/);
+    const isFixed = investor.roiUnit === "fixed" || !!fixedMatch;
+    const resolvedMinRoi = fixedMatch ? fixedMatch[1] : String(investor.min_roi_id || investor.min_RoiRangeId || 3);
+    const resolvedMaxRoi = fixedMatch ? fixedMatch[2] : String(investor.max_roi_id || investor.max_RoiRangeId || 5);
+    const cleanNotes = notesStr.replace(/\s*\[ROI_MODE:FIXED,MIN:[\d.]+,MAX:[\d.]+\]/, "").trim();
+
     setFormData({
       name: investor.name,
       type: String(matchedType),
@@ -517,8 +526,8 @@ export const Investors = () => {
       organization: investor.organization || "",
       reg_number: investor.reg_number || "",
       interest: String(matchedInterest),
-      minRoi: String(investor.min_roi_id || 3),
-      maxRoi: String(investor.max_roi_id || 5),
+      minRoi: resolvedMinRoi,
+      maxRoi: resolvedMaxRoi,
       payoutCategory: investor.payoutType === "Variant" ? "Variant" : "Fixed",
       payoutCycle: resolvedPayoutCycle,
       bank: matchedBank,
@@ -528,11 +537,12 @@ export const Investors = () => {
       address: investor.address || "",
       projectId: String(investor.projectId || projectsList[0]?.id || "1"),
       duration: investor.duration || "12 Months",
-      notes: investor.notes || "",
+      notes: cleanNotes,
       status: investor.status || "active",
       date_of_onboarding: investor.date_of_onboarding ? investor.date_of_onboarding.split("T")[0] : "",
       amount: String(investor.amount || ""),
       mobile: investor.mobile || "",
+      roiUnit: isFixed ? "fixed" : "percent",
     });
     setIsViewDetailsMode(false);
     setActiveView("add");
@@ -566,6 +576,7 @@ export const Investors = () => {
       date_of_onboarding: new Date().toISOString().split("T")[0],
       amount: "",
       mobile: "",
+      roiUnit: "percent",
     });
     setIsViewDetailsMode(false);
     setActiveView("add");
@@ -619,6 +630,13 @@ export const Investors = () => {
         : investor.roiType || "Monthly")
       : "Constant";
 
+    const notesStr = investor.notes || "";
+    const fixedMatch = notesStr.match(/\[ROI_MODE:FIXED,MIN:([\d.]+),MAX:([\d.]+)\]/);
+    const isFixed = investor.roiUnit === "fixed" || !!fixedMatch;
+    const resolvedMinRoi = fixedMatch ? fixedMatch[1] : String(investor.min_roi_id || investor.min_RoiRangeId || 3);
+    const resolvedMaxRoi = fixedMatch ? fixedMatch[2] : String(investor.max_roi_id || investor.max_RoiRangeId || 5);
+    const cleanNotes = notesStr.replace(/\s*\[ROI_MODE:FIXED,MIN:[\d.]+,MAX:[\d.]+\]/, "").trim();
+
     setFormData({
       name: investor.name,
       type: String(matchedType),
@@ -626,8 +644,8 @@ export const Investors = () => {
       organization: investor.organization || "",
       reg_number: investor.reg_number || "",
       interest: String(matchedInterest),
-      minRoi: String(investor.min_roi_id || investor.min_RoiRangeId || 3),
-      maxRoi: String(investor.max_roi_id || investor.max_RoiRangeId || 5),
+      minRoi: resolvedMinRoi,
+      maxRoi: resolvedMaxRoi,
       payoutCategory: investor.payoutType === "Variant" ? "Variant" : "Fixed",
       payoutCycle: resolvedPayoutCycle,
       bank: matchedBank,
@@ -637,11 +655,12 @@ export const Investors = () => {
       address: investor.address || "",
       projectId: String(investor.projectId || projectsList[0]?.id || "1"),
       duration: investor.duration || "12 Months",
-      notes: investor.notes || "",
+      notes: cleanNotes,
       status: investor.status || "active",
       date_of_onboarding: investor.date_of_onboarding ? investor.date_of_onboarding.split("T")[0] : "",
       amount: String(investor.amount || ""),
       mobile: investor.mobile || "",
+      roiUnit: isFixed ? "fixed" : "percent",
     });
     setIsViewDetailsMode(true);
     setActiveView("add");
@@ -693,6 +712,17 @@ export const Investors = () => {
     const minRoiVal = parseFloat(formData.minRoi) || 1;
     const maxRoiVal = parseFloat(formData.maxRoi) || 1;
 
+    const isFixedMode = formData.roiUnit === "fixed";
+    const cleanNotesBase = (formData.notes || "").replace(/\s*\[ROI_MODE:FIXED,MIN:[\d.]+,MAX:[\d.]+\]/, "").trim();
+    const finalNotes = isFixedMode
+      ? `${cleanNotesBase ? cleanNotesBase + " " : ""}[ROI_MODE:FIXED,MIN:${minRoiVal},MAX:${maxRoiVal}]`
+      : cleanNotesBase;
+
+    // To prevent Foreign Key violations against RoiRanges in SQL Server when fixed amounts are used (e.g. 500),
+    // clamp range IDs to 1..20 for the foreign key column, while storing the actual values in the notes tag and DTO
+    const safeRangeMinId = isFixedMode ? Math.min(Math.max(Math.round(minRoiVal), 1), 20) : minRoiVal;
+    const safeRangeMaxId = isFixedMode ? Math.min(Math.max(Math.round(maxRoiVal), 1), 20) : maxRoiVal;
+
     const isEdit = !!selectedInvestor;
     const payload = isEdit ? {
       name: formData.name,
@@ -706,8 +736,8 @@ export const Investors = () => {
       date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0],
       min_roi_id: minRoiVal,
       max_roi_id: maxRoiVal,
-      min_RoiRangeId: minRoiVal,
-      max_RoiRangeId: maxRoiVal,
+      min_RoiRangeId: safeRangeMinId,
+      max_RoiRangeId: safeRangeMaxId,
       payoutType: formData.payoutCategory,
       roiTypeId: formData.payoutCategory === "Fixed" ? 1 : (formData.payoutCycle === "Weekly" ? 2 : formData.payoutCycle === "Monthly" ? 3 : formData.payoutCycle === "Quarterly" ? 4 : formData.payoutCycle === "Half-Yearly" ? 6 : 5),
       bank: banks.find(b => String(b.value) === formData.bank)?.text || formData.bank,
@@ -718,7 +748,8 @@ export const Investors = () => {
       address: formData.address || "",
       projectId: parseInt(formData.projectId) || 1,
       duration: formData.duration || "12 Months",
-      notes: formData.notes || ""
+      notes: finalNotes,
+      roiUnit: formData.roiUnit
     } : {
       name: formData.name,
       type: parseInt(formData.type) || 1,
@@ -729,8 +760,8 @@ export const Investors = () => {
       reg_number: formData.reg_number || "—",
       status: formData.status,
       date_of_onboarding: formData.date_of_onboarding || new Date().toISOString().split("T")[0],
-      min_RoiRangeId: minRoiVal,
-      max_RoiRangeId: maxRoiVal,
+      min_RoiRangeId: safeRangeMinId,
+      max_RoiRangeId: safeRangeMaxId,
       min_roi_id: minRoiVal,
       max_roi_id: maxRoiVal,
       payoutType: formData.payoutCategory,
@@ -743,7 +774,8 @@ export const Investors = () => {
       address: formData.address || "",
       projectId: parseInt(formData.projectId) || 1,
       duration: formData.duration || "12 Months",
-      notes: formData.notes || ""
+      notes: finalNotes,
+      roiUnit: formData.roiUnit
     };
 
     const url = isEdit
@@ -965,7 +997,7 @@ export const Investors = () => {
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-[0.98] transition-transform"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Investment(s)
+                    Add Investment
                   </motion.button>
                 </div>
               )}
@@ -1116,7 +1148,7 @@ export const Investors = () => {
                         className="mt-4 inline-flex items-center gap-2 bg-slate-950 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors cursor-pointer"
                       >
                         <Plus className="w-4 h-4" />
-                        Add Investment(s)
+                        Add Investment
                       </button>
                     )}
                   </div>
@@ -1294,10 +1326,10 @@ export const Investors = () => {
               </button>
               <div>
                 <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
-                  {isViewDetailsMode ? "Investments > View Details" : selectedInvestor ? "Investments > Edit Details" : "Investments > Add Investment(s)"}
+                  {isViewDetailsMode ? "Investments > View Details" : selectedInvestor ? "Investments > Edit Details" : "Investments > Add Investment"}
                 </span>
                 <h1 className="text-2xl font-display font-bold text-slate-900 mt-0.5">
-                  {isViewDetailsMode ? "View Investment Details" : selectedInvestor ? "Edit Investment Details" : "Add Investment(s)"}
+                  {isViewDetailsMode ? "View Investment Details" : selectedInvestor ? "Edit Investment Details" : "Add Investment"}
                 </h1>
               </div>
             </div>
@@ -1641,40 +1673,125 @@ export const Investors = () => {
                         />
                       </div>
 
+                      {/* ROI Unit Selector Toggle */}
+                      <div className="space-y-1.5 text-left md:col-span-3">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          ROI Type / Mode <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                          <button
+                            type="button"
+                            disabled={isViewDetailsMode}
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                roiUnit: "percent",
+                                minRoi: prev.roiUnit === "percent" ? prev.minRoi : "3",
+                                maxRoi: prev.roiUnit === "percent" ? prev.maxRoi : "5"
+                              }));
+                            }}
+                            className={cn(
+                              "px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5",
+                              formData.roiUnit === "percent"
+                                ? "bg-white text-blue-600 shadow-xs"
+                                : "text-slate-600 hover:text-slate-900"
+                            )}
+                          >
+                            <span>%</span>
+                            <span>Percentage (%)</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isViewDetailsMode}
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                roiUnit: "fixed",
+                                minRoi: prev.roiUnit === "fixed" ? prev.minRoi : "500",
+                                maxRoi: prev.roiUnit === "fixed" ? prev.maxRoi : "600"
+                              }));
+                            }}
+                            className={cn(
+                              "px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5",
+                              formData.roiUnit === "fixed"
+                                ? "bg-white text-blue-600 shadow-xs"
+                                : "text-slate-600 hover:text-slate-900"
+                            )}
+                          >
+                            <span>£</span>
+                            <span>Fixed Amount (£)</span>
+                          </button>
+                        </div>
+                      </div>
+
                       {/* Min ROI */}
                       <div className="space-y-1.5 text-left">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          Min ROI (%) <span className="text-rose-500">*</span>
+                          {formData.roiUnit === "fixed" ? "Min ROI (£)" : "Min ROI (%)"} <span className="text-rose-500">*</span>
                         </label>
-                        <select
-                          required
-                          disabled={isViewDetailsMode}
-                          value={formData.minRoi}
-                          onChange={(e) => setFormData({ ...formData, minRoi: e.target.value })}
-                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                        >
-                          {ROI_OPTIONS.map((num) => (
-                            <option key={num} value={String(num)}>{num}%</option>
-                          ))}
-                        </select>
+                        {formData.roiUnit === "fixed" ? (
+                          <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">£</span>
+                            <input
+                              required
+                              disabled={isViewDetailsMode}
+                              type="number"
+                              step="any"
+                              min="0"
+                              placeholder="e.g. 500"
+                              value={formData.minRoi}
+                              onChange={(e) => setFormData({ ...formData, minRoi: e.target.value })}
+                              className="w-full pl-8 pr-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                            />
+                          </div>
+                        ) : (
+                          <select
+                            required
+                            disabled={isViewDetailsMode}
+                            value={formData.minRoi}
+                            onChange={(e) => setFormData({ ...formData, minRoi: e.target.value })}
+                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                          >
+                            {ROI_OPTIONS.map((num) => (
+                              <option key={num} value={String(num)}>{num}%</option>
+                            ))}
+                          </select>
+                        )}
                       </div>
 
                       {/* Max ROI */}
                       <div className="space-y-1.5 text-left">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          Max ROI (%) <span className="text-rose-500">*</span>
+                          {formData.roiUnit === "fixed" ? "Max ROI (£)" : "Max ROI (%)"} <span className="text-rose-500">*</span>
                         </label>
-                        <select
-                          required
-                          disabled={isViewDetailsMode}
-                          value={formData.maxRoi}
-                          onChange={(e) => setFormData({ ...formData, maxRoi: e.target.value })}
-                          className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
-                        >
-                          {ROI_OPTIONS.map((num) => (
-                            <option key={num} value={String(num)}>{num}%</option>
-                          ))}
-                        </select>
+                        {formData.roiUnit === "fixed" ? (
+                          <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">£</span>
+                            <input
+                              required
+                              disabled={isViewDetailsMode}
+                              type="number"
+                              step="any"
+                              min="0"
+                              placeholder="e.g. 600"
+                              value={formData.maxRoi}
+                              onChange={(e) => setFormData({ ...formData, maxRoi: e.target.value })}
+                              className="w-full pl-8 pr-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all"
+                            />
+                          </div>
+                        ) : (
+                          <select
+                            required
+                            disabled={isViewDetailsMode}
+                            value={formData.maxRoi}
+                            onChange={(e) => setFormData({ ...formData, maxRoi: e.target.value })}
+                            className="w-full px-4 py-3 bg-white disabled:bg-slate-100/50 disabled:cursor-not-allowed border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100/50 text-sm font-semibold transition-all cursor-pointer"
+                          >
+                            {ROI_OPTIONS.map((num) => (
+                              <option key={num} value={String(num)}>{num}%</option>
+                            ))}
+                          </select>
+                        )}
                       </div>
 
                       {/* Calculated Payout Average Display */}
@@ -1685,7 +1802,9 @@ export const Investors = () => {
                         <div className="px-4 py-3 bg-blue-50/70 border border-blue-200/80 rounded-xl text-left flex items-center justify-between h-[46px]">
                           <span className="text-xs font-bold text-blue-700">Calculated Average:</span>
                           <span className="text-sm font-extrabold text-blue-900 font-mono">
-                            {(((parseFloat(formData.minRoi) || 1) + (parseFloat(formData.maxRoi) || 1)) / 2).toFixed(1).replace(/\.0$/, '')}%
+                            {formData.roiUnit === "fixed"
+                              ? `£${(((parseFloat(formData.minRoi) || 0) + (parseFloat(formData.maxRoi) || 0)) / 2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mo`
+                              : `${(((parseFloat(formData.minRoi) || 1) + (parseFloat(formData.maxRoi) || 1)) / 2).toFixed(1).replace(/\.0$/, '')}%`}
                           </span>
                         </div>
                       </div>
