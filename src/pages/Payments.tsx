@@ -7,7 +7,7 @@ import { BaseModal } from "../components/BaseModal";
 import { API_BASE_URL, authHeaders } from "../config/api";
 import { cachedFetch } from "../utils/apiCache";
 import { TableSkeleton } from "../components/TableSkeleton";
-import { Landmark, ArrowUpDown, Download, Search, CheckCircle, CheckCircle2, Clock, AlertCircle, X, ChevronLeft, ChevronRight, Eye, Calendar, DollarSign, Send, CheckCheck, RefreshCw, Filter, SlidersHorizontal } from "lucide-react";
+import { Landmark, ArrowUpDown, Download, Search, CheckCircle, CheckCircle2, Clock, AlertCircle, X, ChevronLeft, ChevronRight, Eye, Calendar, DollarSign, Send, CheckCheck, RefreshCw, Filter, SlidersHorizontal, TrendingUp, Receipt } from "lucide-react";
 import { formatUKDate } from "../utils/formatters";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
@@ -37,7 +37,17 @@ export const Payments = () => {
   const [endDateFilter, setEndDateFilter] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
   const [investorFilter, setInvestorFilter] = useState("all");
-  const [activeCardFilter, setActiveCardFilter] = useState<"none" | "current_all" | "current_made" | "current_pending" | "next_schedule">("none");
+  const [activeCardFilter, setActiveCardFilter] = useState<
+    | "none"
+    | "current_all"
+    | "current_made"
+    | "current_pending"
+    | "next_schedule"
+    | "investor_received"
+    | "investor_next"
+    | "investor_profit"
+    | "investor_received_count"
+  >("none");
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
@@ -107,9 +117,7 @@ export const Payments = () => {
 
   useEffect(() => {
     fetchPayments();
-    if (isAdmin) {
-      fetchInvestors();
-    }
+    fetchInvestors();
   }, [isAdmin]);
 
   // For admin, all payments are accessible. For investor login, backend already filters to only their owned investment payments.
@@ -263,6 +271,120 @@ export const Payments = () => {
     };
   }, [relevantPayments]);
 
+  // Investor-specific Card Calculations:
+  // Card 1: Payments Received till date from joining date
+  // Card 2: Next Payments across all his investments
+  // Card 3: Profit Percentage per Annum
+  // Card 4: No of Payments Received
+  const {
+    investorReceivedPayments,
+    investorReceivedCount,
+    investorReceivedTotal,
+    investorNextPayments,
+    investorNextCount,
+    investorNextTotal,
+    investorProfitPercentage,
+    investorTotalScheduledCount
+  } = React.useMemo(() => {
+    const now = new Date();
+
+    // 1. All received payments till date from onboarding/joining
+    const received = relevantPayments.filter(p => p.isReceived || p.status === "Received");
+    const recCount = received.length;
+    const recTotal = received.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+    // 2. Next payment of all his investments (single earliest future unpaid payment per contract)
+    const investorGroupMap = new Map<number | string, Payment[]>();
+    for (const p of relevantPayments) {
+      const key = p.investorId ? String(p.investorId) : (p.investorName || "default");
+      if (!investorGroupMap.has(key)) {
+        investorGroupMap.set(key, []);
+      }
+      investorGroupMap.get(key)!.push(p);
+    }
+
+    const nextPaymentsList: Payment[] = [];
+    for (const [, pList] of investorGroupMap.entries()) {
+      const ascList = [...pList].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
+      for (const p of ascList) {
+        const isPaid = p.isSent || p.isReceived || p.status === "Received" || p.status === "Sent" || p.status === "Payment Made";
+        const pDate = new Date(p.paymentDate);
+        if (!isPaid && !isNaN(pDate.getTime()) && pDate >= now) {
+          nextPaymentsList.push(p);
+          break; // Found the earliest next payment for this contract
+        }
+      }
+    }
+
+    const nxtCount = nextPaymentsList.length;
+    const nxtTotal = nextPaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+    // 3. Profit Percentage per Annum:
+    // Calculate total annual return against invested amount.
+    const userEmail = (user?.email || "").toLowerCase().trim();
+    const userName = (user?.name || "").toLowerCase().trim();
+    const userId = user?.id ? String(user.id) : "";
+
+    const matchingInvestors = investors.filter(inv => {
+      const invEmail = ((inv as any).email || "").toLowerCase().trim();
+      const invName = (inv.name || "").toLowerCase().trim();
+      const invId = String(inv.id || "");
+      if (userEmail && invEmail && invEmail === userEmail) return true;
+      if (userName && invName && invName === userName) return true;
+      if (userId && invId && invId === userId) return true;
+      return false;
+    });
+
+    const relevantInvestorContracts = matchingInvestors.length > 0 ? matchingInvestors : investors;
+    let totalInvestedAmount = 0;
+    let totalAnnualReturn = 0;
+
+    for (const inv of relevantInvestorContracts) {
+      const cap = Number((inv as any).amount ?? (inv as any).CapitalAmount ?? (inv as any).capitalAmount ?? 0);
+      if (cap <= 0) continue;
+      totalInvestedAmount += cap;
+
+      const notesStr = ((inv as any).notes || "") as string;
+      const fixedMatch = notesStr.match(/\[ROI_MODE:FIXED,MIN:([\d.]+),MAX:([\d.]+)\]/);
+      const isFixedRoi = (inv as any).roiUnit === "fixed" || !!fixedMatch;
+
+      let monthlyProfit = 0;
+      if (isFixedRoi) {
+        const fixedMin = fixedMatch ? parseFloat(fixedMatch[1]) : Number((inv as any).min_roi_id ?? (inv as any).min_RoiRangeId ?? 0);
+        const fixedMax = fixedMatch ? parseFloat(fixedMatch[2]) : Number((inv as any).max_roi_id ?? (inv as any).max_RoiRangeId ?? fixedMin);
+        monthlyProfit = fixedMax > 0 ? fixedMax : fixedMin;
+      } else {
+        const rawMinRoi = (inv as any).min_roi_id ?? (inv as any).min_RoiRangeId;
+        const rawMaxRoi = (inv as any).max_roi_id ?? (inv as any).max_RoiRangeId;
+        const minRoiVal = rawMinRoi != null && !isNaN(Number(rawMinRoi)) && Number(rawMinRoi) > 0 ? Number(rawMinRoi) : 1;
+        const maxRoiVal = rawMaxRoi != null && !isNaN(Number(rawMaxRoi)) && Number(rawMaxRoi) > 0 ? Number(rawMaxRoi) : Math.max(minRoiVal, 5);
+        monthlyProfit = (cap * maxRoiVal) / 100;
+      }
+
+      totalAnnualReturn += monthlyProfit * 12;
+    }
+
+    let profitPercentPerAnnum = 0;
+    if (totalInvestedAmount > 0) {
+      profitPercentPerAnnum = (totalAnnualReturn / totalInvestedAmount) * 100;
+    } else if (relevantPayments.length > 0) {
+      // Fallback if invested amount is not available: compute from monthly scheduled payment amount * 12
+      const firstPaymentAmt = Number(relevantPayments[0].amount) || 0;
+      profitPercentPerAnnum = firstPaymentAmt > 0 ? 12 : 0;
+    }
+
+    return {
+      investorReceivedPayments: received,
+      investorReceivedCount: recCount,
+      investorReceivedTotal: recTotal,
+      investorNextPayments: nextPaymentsList,
+      investorNextCount: nxtCount,
+      investorNextTotal: nxtTotal,
+      investorProfitPercentage: profitPercentPerAnnum,
+      investorTotalScheduledCount: relevantPayments.length
+    };
+  }, [relevantPayments, investors, user]);
+
   // Include single unique investors across all registered investors and payment records
   const uniqueInvestors = React.useMemo(() => {
     const namesSet = new Set<string>();
@@ -279,7 +401,7 @@ export const Payments = () => {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
 
   // Sort candidate payments by next payment due date (chronological nearest due date first)
-  // When next_schedule card is clicked, we draw from relevantPayments to ensure all next month scheduled payments are available
+  // When next_schedule or investor_next cards are clicked, draw from respective datasets
   const basePaymentsForTable = React.useMemo(() => {
     if (activeCardFilter === "next_schedule") {
       const now = new Date();
@@ -292,8 +414,22 @@ export const Payments = () => {
         return !isNaN(pDate.getTime()) && pDate.getFullYear() === nextYear && pDate.getMonth() === nextMonth;
       });
     }
+
+    if (activeCardFilter === "investor_received" || activeCardFilter === "investor_received_count") {
+      return relevantPayments.filter(p => p.isReceived || p.status === "Received");
+    }
+
+    if (activeCardFilter === "investor_next") {
+      const nextIds = new Set(investorNextPayments.map(p => p.paymentId));
+      return relevantPayments.filter(p => nextIds.has(p.paymentId));
+    }
+
+    if (activeCardFilter === "investor_profit") {
+      return relevantPayments;
+    }
+
     return visiblePayments;
-  }, [activeCardFilter, visiblePayments, relevantPayments]);
+  }, [activeCardFilter, visiblePayments, relevantPayments, investorNextPayments]);
 
   const sortedPayments = React.useMemo(() => {
     return [...basePaymentsForTable].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
@@ -319,6 +455,13 @@ export const Payments = () => {
         const nextDate = new Date(curYear, curMonth + 1, 1);
         const isNextMonth = !isNaN(pDate.getTime()) && pDate.getFullYear() === nextDate.getFullYear() && pDate.getMonth() === nextDate.getMonth();
         if (!isNextMonth) return false;
+      } else if (activeCardFilter === "investor_received" || activeCardFilter === "investor_received_count") {
+        if (!p.isReceived && p.status !== "Received") return false;
+      } else if (activeCardFilter === "investor_next") {
+        const isNext = investorNextPayments.some(np => np.paymentId === p.paymentId);
+        if (!isNext) return false;
+      } else if (activeCardFilter === "investor_profit") {
+        // Keeps all investment payments for investor
       }
     }
 
@@ -420,147 +563,296 @@ export const Payments = () => {
       </div>
 
       {/* Summary Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Card 1: [Current Month Name] Payments */}
-        <div
-          onClick={() => {
-            setActiveCardFilter(prev => prev === "current_all" ? "none" : "current_all");
-            setCurrentPage(1);
-          }}
-          className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "current_all"
-              ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/20"
-              : "border-slate-100 hover:border-indigo-200"
-            }`}
-          title="Click to filter table by Current Month Payments"
-        >
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                {currentMonthName} Payments
-              </span>
-              {activeCardFilter === "current_all" && (
-                <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">
-                  Active
+      {isAdmin ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Admin Card 1: [Current Month Name] Payments */}
+          <div
+            onClick={() => {
+              setActiveCardFilter(prev => prev === "current_all" ? "none" : "current_all");
+              setCurrentPage(1);
+            }}
+            className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "current_all"
+                ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/20"
+                : "border-slate-100 hover:border-indigo-200"
+              }`}
+            title="Click to filter table by Current Month Payments"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  {currentMonthName} Payments
                 </span>
-              )}
+                {activeCardFilter === "current_all" && (
+                  <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">
+                    Active
+                  </span>
+                )}
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+                £{curMonthPaymentsTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold">{curMonthPaymentsCount} {curMonthPaymentsCount === 1 ? "payment" : "payments"}</p>
             </div>
-            <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
-              £{curMonthPaymentsTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
-            <p className="text-xs text-slate-400 font-semibold">{curMonthPaymentsCount} {curMonthPaymentsCount === 1 ? "payment" : "payments"}</p>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "current_all" ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600"
+              }`}>
+              <Landmark className="w-6 h-6" />
+            </div>
           </div>
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "current_all" ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600"
-            }`}>
-            <Landmark className="w-6 h-6" />
-          </div>
-        </div>
 
-        {/* Card 2: [Current Month Name] Payments Made */}
-        <div
-          onClick={() => {
-            setActiveCardFilter(prev => prev === "current_made" ? "none" : "current_made");
-            setCurrentPage(1);
-          }}
-          className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "current_made"
-              ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20"
-              : "border-slate-100 hover:border-emerald-200"
-            }`}
-          title="Click to filter table by Current Month Payments Made"
-        >
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                {currentMonthName} Payments Made
-              </span>
-              {activeCardFilter === "current_made" && (
-                <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full">
-                  Active
+          {/* Admin Card 2: [Current Month Name] Payments Made */}
+          <div
+            onClick={() => {
+              setActiveCardFilter(prev => prev === "current_made" ? "none" : "current_made");
+              setCurrentPage(1);
+            }}
+            className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "current_made"
+                ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20"
+                : "border-slate-100 hover:border-emerald-200"
+              }`}
+            title="Click to filter table by Current Month Payments Made"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  {currentMonthName} Payments Made
                 </span>
-              )}
+                {activeCardFilter === "current_made" && (
+                  <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full">
+                    Active
+                  </span>
+                )}
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+                £{curMonthMadeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold">{curMonthMadeCount} {curMonthMadeCount === 1 ? "payment made" : "payments made"}</p>
             </div>
-            <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
-              £{curMonthMadeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
-            <p className="text-xs text-slate-400 font-semibold">{curMonthMadeCount} {curMonthMadeCount === 1 ? "payment made" : "payments made"}</p>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "current_made" ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-600"
+              }`}>
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
           </div>
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "current_made" ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-600"
-            }`}>
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
-        </div>
 
-        {/* Card 3: Pending Payments [Current Month Name] */}
-        <div
-          onClick={() => {
-            setActiveCardFilter(prev => prev === "current_pending" ? "none" : "current_pending");
-            setCurrentPage(1);
-          }}
-          className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "current_pending"
-              ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/20"
-              : "border-slate-100 hover:border-amber-200"
-            }`}
-          title="Click to filter table by Pending Payments"
-        >
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                Pending Payments {currentMonthName}
-              </span>
-              {activeCardFilter === "current_pending" && (
-                <span className="text-[10px] font-bold bg-amber-600 text-white px-1.5 py-0.5 rounded-full">
-                  Active
+          {/* Admin Card 3: Pending Payments [Current Month Name] */}
+          <div
+            onClick={() => {
+              setActiveCardFilter(prev => prev === "current_pending" ? "none" : "current_pending");
+              setCurrentPage(1);
+            }}
+            className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "current_pending"
+                ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/20"
+                : "border-slate-100 hover:border-amber-200"
+              }`}
+            title="Click to filter table by Pending Payments"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  Pending Payments {currentMonthName}
                 </span>
-              )}
+                {activeCardFilter === "current_pending" && (
+                  <span className="text-[10px] font-bold bg-amber-600 text-white px-1.5 py-0.5 rounded-full">
+                    Active
+                  </span>
+                )}
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+                £{curMonthPendingTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold">
+                {curMonthPendingCount} {curMonthPendingCount === 1 ? "pending payment" : "pending payments"}
+              </p>
             </div>
-            <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
-              £{curMonthPendingTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
-            <p className="text-xs text-slate-400 font-semibold">
-              {curMonthPendingCount} {curMonthPendingCount === 1 ? "pending payment" : "pending payments"}
-            </p>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "current_pending" ? "bg-amber-600 text-white" : "bg-amber-50 text-amber-600"
+              }`}>
+              <Clock className="w-6 h-6" />
+            </div>
           </div>
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "current_pending" ? "bg-amber-600 text-white" : "bg-amber-50 text-amber-600"
-            }`}>
-            <Clock className="w-6 h-6" />
-          </div>
-        </div>
 
-        {/* Card 4: [Next Month Name] Payment Schedule */}
-        <div
-          onClick={() => {
-            setActiveCardFilter(prev => prev === "next_schedule" ? "none" : "next_schedule");
-            setCurrentPage(1);
-          }}
-          className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "next_schedule"
-              ? "border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20"
-              : "border-slate-100 hover:border-blue-200"
-            }`}
-          title="Click to filter table by Next Month Payment Schedule"
-        >
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                {nextMonthName} Payment Schedule
-              </span>
-              {activeCardFilter === "next_schedule" && (
-                <span className="text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">
-                  Active
+          {/* Admin Card 4: [Next Month Name] Payment Schedule */}
+          <div
+            onClick={() => {
+              setActiveCardFilter(prev => prev === "next_schedule" ? "none" : "next_schedule");
+              setCurrentPage(1);
+            }}
+            className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "next_schedule"
+                ? "border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20"
+                : "border-slate-100 hover:border-blue-200"
+              }`}
+            title="Click to filter table by Next Month Payment Schedule"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  {nextMonthName} Payment Schedule
                 </span>
-              )}
+                {activeCardFilter === "next_schedule" && (
+                  <span className="text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">
+                    Active
+                  </span>
+                )}
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+                £{nextMonthScheduleTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold">
+                {nextMonthScheduleCount} scheduled {nextMonthScheduleCount === 1 ? "payment" : "payments"}
+              </p>
             </div>
-            <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
-              £{nextMonthScheduleTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
-            <p className="text-xs text-slate-400 font-semibold">
-              {nextMonthScheduleCount} scheduled {nextMonthScheduleCount === 1 ? "payment" : "payments"}
-            </p>
-          </div>
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "next_schedule" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600"
-            }`}>
-            <Calendar className="w-6 h-6" />
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "next_schedule" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600"
+              }`}>
+              <Calendar className="w-6 h-6" />
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* Investor Login Cards Grid (Card 1: Payments Received, Card 2: Next Payments, Card 3: Profit Percentage per Annum, Card 4: No of Payments Received) */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Investor Card 1: Payments Received */}
+          <div
+            onClick={() => {
+              setActiveCardFilter(prev => prev === "investor_received" ? "none" : "investor_received");
+              setCurrentPage(1);
+            }}
+            className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "investor_received"
+                ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20"
+                : "border-slate-100 hover:border-emerald-200"
+              }`}
+            title="Click to filter table by Received Payments till date"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  Payments Received
+                </span>
+                {activeCardFilter === "investor_received" && (
+                  <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full">
+                    Active
+                  </span>
+                )}
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+                £{investorReceivedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold">
+                {investorReceivedCount} {investorReceivedCount === 1 ? "received payment" : "received payments"} till date
+              </p>
+            </div>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "investor_received" ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-600"
+              }`}>
+              <CheckCheck className="w-6 h-6" />
+            </div>
+          </div>
+
+          {/* Investor Card 2: Next Payments */}
+          <div
+            onClick={() => {
+              setActiveCardFilter(prev => prev === "investor_next" ? "none" : "investor_next");
+              setCurrentPage(1);
+            }}
+            className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "investor_next"
+                ? "border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20"
+                : "border-slate-100 hover:border-blue-200"
+              }`}
+            title="Click to filter table by Next Payments across all investments"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  Next Payments
+                </span>
+                {activeCardFilter === "investor_next" && (
+                  <span className="text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">
+                    Active
+                  </span>
+                )}
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+                £{investorNextTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold">
+                {investorNextCount} upcoming {investorNextCount === 1 ? "payment" : "payments"}
+              </p>
+            </div>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "investor_next" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600"
+              }`}>
+              <Calendar className="w-6 h-6" />
+            </div>
+          </div>
+
+          {/* Investor Card 3: Profit Percentage per Annum */}
+          <div
+            onClick={() => {
+              setActiveCardFilter(prev => prev === "investor_profit" ? "none" : "investor_profit");
+              setCurrentPage(1);
+            }}
+            className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "investor_profit"
+                ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/20"
+                : "border-slate-100 hover:border-indigo-200"
+              }`}
+            title="Click to view all payments for investments"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  Profit % per Annum
+                </span>
+                {activeCardFilter === "investor_profit" && (
+                  <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">
+                    Active
+                  </span>
+                )}
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+                {investorProfitPercentage.toFixed(1)}% <span className="text-sm font-semibold text-slate-400">p.a.</span>
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold">
+                {investorReceivedCount} {investorReceivedCount === 1 ? "payment received" : "payments received"}
+              </p>
+            </div>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "investor_profit" ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600"
+              }`}>
+              <TrendingUp className="w-6 h-6" />
+            </div>
+          </div>
+
+          {/* Investor Card 4: No of Payments Received */}
+          <div
+            onClick={() => {
+              setActiveCardFilter(prev => prev === "investor_received_count" ? "none" : "investor_received_count");
+              setCurrentPage(1);
+            }}
+            className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "investor_received_count"
+                ? "border-purple-500 ring-2 ring-purple-500/20 bg-purple-50/20"
+                : "border-slate-100 hover:border-purple-200"
+              }`}
+            title="Click to filter table by Received Payments"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  No of Payments Received
+                </span>
+                {activeCardFilter === "investor_received_count" && (
+                  <span className="text-[10px] font-bold bg-purple-600 text-white px-1.5 py-0.5 rounded-full">
+                    Active
+                  </span>
+                )}
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+                {investorReceivedCount} <span className="text-sm font-semibold text-slate-400">/ {investorTotalScheduledCount}</span>
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold">
+                £{investorReceivedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} collected
+              </p>
+            </div>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "investor_received_count" ? "bg-purple-600 text-white" : "bg-purple-50 text-purple-600"
+              }`}>
+              <Receipt className="w-6 h-6" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filter Controls Bar */}
       <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-4">
