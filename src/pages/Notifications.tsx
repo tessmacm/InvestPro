@@ -267,12 +267,30 @@ export const Notifications = () => {
   };
 
   const filteredNotifications = useMemo(() => {
+    const term = (searchTerm || "").trim().toLowerCase();
     return notifications.filter(n => {
-      const matchesSearch = n.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        n.eventType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        n.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        `Not#${n.id}`.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesInvestor = investorFilter === "all" || n.investorName === investorFilter;
+      if (!n) return false;
+      const title = (n.title || "").toLowerCase();
+      const message = (n.message || "").toLowerCase();
+      const eventType = (n.eventType || "").toLowerCase();
+      const idStr = String(n.id || "").toLowerCase();
+      const notId = `not#${n.id}`.toLowerCase();
+      const sender = (n.senderName || "").toLowerCase();
+      const recipient = (n.recipientName || n.investorName || "").toLowerCase();
+
+      const matchesSearch = !term ||
+        title.includes(term) ||
+        message.includes(term) ||
+        eventType.includes(term) ||
+        idStr.includes(term.replace(/^not#?|^#/, "")) ||
+        notId.includes(term) ||
+        sender.includes(term) ||
+        recipient.includes(term);
+
+      const matchesInvestor = investorFilter === "all" ||
+        (n.investorName || "").trim() === investorFilter ||
+        (n.recipientName || "").trim() === investorFilter;
+
       return matchesSearch && matchesInvestor;
     });
   }, [notifications, searchTerm, investorFilter]);

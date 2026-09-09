@@ -37,6 +37,7 @@ export const Payments = () => {
   const [endDateFilter, setEndDateFilter] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
   const [investorFilter, setInvestorFilter] = useState("all");
+  const [activeCardFilter, setActiveCardFilter] = useState<"none" | "current_all" | "current_made" | "current_pending" | "next_schedule">("none");
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
@@ -186,25 +187,81 @@ export const Payments = () => {
     return result;
   }, [relevantPayments]);
 
-  // Card Calculations:
-  // Pending Payouts (Unsent & unreceived payments visible till date)
-  const pendingPaymentsList = visiblePayments.filter(p => !p.isSent && !p.isReceived && p.status !== "Received");
-  const pendingCount = pendingPaymentsList.length;
-  const pendingTotal = pendingPaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  // Month-based Card Calculations (Current Month & Next Month)
+  const {
+    currentMonthName,
+    nextMonthName,
+    curMonthPaymentsCount,
+    curMonthPaymentsTotal,
+    curMonthMadeCount,
+    curMonthMadeTotal,
+    curMonthPendingCount,
+    curMonthPendingTotal,
+    nextMonthScheduleCount,
+    nextMonthScheduleTotal
+  } = React.useMemo(() => {
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth();
 
-  // Send Acknowledge (Sent by Admin, awaiting investor acknowledgment)
-  const sentPaymentsList = visiblePayments.filter(p => p.isSent && !p.isReceived && p.status !== "Received");
-  const sentCount = sentPaymentsList.length;
-  const sentTotal = sentPaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const nextDate = new Date(curYear, curMonth + 1, 1);
+    const nextYear = nextDate.getFullYear();
+    const nextMonth = nextDate.getMonth();
 
-  // Acknowledged (Acknowledged by investor till date)
-  const donePaymentsList = visiblePayments.filter(p => p.isReceived || p.status === "Received");
-  const doneCount = donePaymentsList.length;
-  const doneTotal = donePaymentsList.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const curMonthName = now.toLocaleString("en-GB", { month: "long" });
+    const nxtMonthName = nextDate.toLocaleString("en-GB", { month: "long" });
 
-  // Gross Payouts (Sum of pending + sent + acknowledged for visible payments)
-  const totalAllCount = pendingCount + sentCount + doneCount;
-  const totalAllAmount = pendingTotal + sentTotal + doneTotal;
+    let curCount = 0;
+    let curTotal = 0;
+    let madeCount = 0;
+    let madeTotal = 0;
+    let pendingCount = 0;
+    let pendingTotal = 0;
+    let nxtCount = 0;
+    let nxtTotal = 0;
+
+    for (const p of relevantPayments) {
+      const pDate = new Date(p.paymentDate);
+      if (isNaN(pDate.getTime())) continue;
+
+      const amt = Number(p.amount) || 0;
+      const yr = pDate.getFullYear();
+      const mo = pDate.getMonth();
+
+      // Check current month
+      if (yr === curYear && mo === curMonth) {
+        curCount++;
+        curTotal += amt;
+
+        if (p.isSent || p.isReceived || p.status === "Received" || p.status === "Sent" || p.status === "Payment Made") {
+          madeCount++;
+          madeTotal += amt;
+        } else {
+          pendingCount++;
+          pendingTotal += amt;
+        }
+      }
+
+      // Check next month schedule
+      if (yr === nextYear && mo === nextMonth) {
+        nxtCount++;
+        nxtTotal += amt;
+      }
+    }
+
+    return {
+      currentMonthName: curMonthName,
+      nextMonthName: nxtMonthName,
+      curMonthPaymentsCount: curCount,
+      curMonthPaymentsTotal: curTotal,
+      curMonthMadeCount: madeCount,
+      curMonthMadeTotal: madeTotal,
+      curMonthPendingCount: pendingCount,
+      curMonthPendingTotal: pendingTotal,
+      nextMonthScheduleCount: nxtCount,
+      nextMonthScheduleTotal: nxtTotal
+    };
+  }, [relevantPayments]);
 
   // Include single unique investors across all registered investors and payment records
   const uniqueInvestors = React.useMemo(() => {
@@ -221,12 +278,50 @@ export const Payments = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
 
-  // Sort visible payments by next payment due date (chronological nearest due date first)
+  // Sort candidate payments by next payment due date (chronological nearest due date first)
+  // When next_schedule card is clicked, we draw from relevantPayments to ensure all next month scheduled payments are available
+  const basePaymentsForTable = React.useMemo(() => {
+    if (activeCardFilter === "next_schedule") {
+      const now = new Date();
+      const nextDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const nextYear = nextDate.getFullYear();
+      const nextMonth = nextDate.getMonth();
+
+      return relevantPayments.filter(p => {
+        const pDate = new Date(p.paymentDate);
+        return !isNaN(pDate.getTime()) && pDate.getFullYear() === nextYear && pDate.getMonth() === nextMonth;
+      });
+    }
+    return visiblePayments;
+  }, [activeCardFilter, visiblePayments, relevantPayments]);
+
   const sortedPayments = React.useMemo(() => {
-    return [...visiblePayments].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
-  }, [visiblePayments]);
+    return [...basePaymentsForTable].sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
+  }, [basePaymentsForTable]);
 
   const filteredPayments = sortedPayments.filter(p => {
+    // 0. Active Card Filter
+    if (activeCardFilter !== "none") {
+      const now = new Date();
+      const curYear = now.getFullYear();
+      const curMonth = now.getMonth();
+      const pDate = new Date(p.paymentDate);
+      const isCurMonth = !isNaN(pDate.getTime()) && pDate.getFullYear() === curYear && pDate.getMonth() === curMonth;
+      const isPaid = p.isSent || p.isReceived || p.status === "Received" || p.status === "Sent" || p.status === "Payment Made";
+
+      if (activeCardFilter === "current_all") {
+        if (!isCurMonth) return false;
+      } else if (activeCardFilter === "current_made") {
+        if (!isCurMonth || !isPaid) return false;
+      } else if (activeCardFilter === "current_pending") {
+        if (!isCurMonth || isPaid) return false;
+      } else if (activeCardFilter === "next_schedule") {
+        const nextDate = new Date(curYear, curMonth + 1, 1);
+        const isNextMonth = !isNaN(pDate.getTime()) && pDate.getFullYear() === nextDate.getFullYear() && pDate.getMonth() === nextDate.getMonth();
+        if (!isNextMonth) return false;
+      }
+    }
+
     // 1. Pay ID Search Filter
     let matchesPayId = true;
     if (payIdSearchTerm.trim()) {
@@ -280,7 +375,7 @@ export const Payments = () => {
   const handleDownloadPayoutsReport = () => {
     const headers = ["Payment ID", "Investor Name", "Phone / Email", "Amount (£)", "Payment Cycle", "Due Date", "Payment Date", isAdmin ? "Action" : "Status"];
     const rows = filteredPayments.map(p => [
-      `PayId#${p.paymentId}`,
+      String(p.paymentId),
       `"${(p.investorName || "Investor").replace(/"/g, '""')}"`,
       `"${(p.mobile || p.investorEmail || "—").replace(/"/g, '""')}"`,
       p.amount.toFixed(2),
@@ -326,71 +421,143 @@ export const Payments = () => {
 
       {/* Summary Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Card 1: Gross Payouts */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+        {/* Card 1: [Current Month Name] Payments */}
+        <div
+          onClick={() => {
+            setActiveCardFilter(prev => prev === "current_all" ? "none" : "current_all");
+            setCurrentPage(1);
+          }}
+          className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "current_all"
+              ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/20"
+              : "border-slate-100 hover:border-indigo-200"
+            }`}
+          title="Click to filter table by Current Month Payments"
+        >
           <div className="space-y-1">
-            <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Gross Payouts
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                {currentMonthName} Payments
+              </span>
+              {activeCardFilter === "current_all" && (
+                <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">
+                  Active
+                </span>
+              )}
+            </div>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
-              £{totalAllAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              £{curMonthPaymentsTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
-            <p className="text-xs text-slate-400 font-semibold">{totalAllCount} total payments</p>
+            <p className="text-xs text-slate-400 font-semibold">{curMonthPaymentsCount} {curMonthPaymentsCount === 1 ? "payment" : "payments"}</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "current_all" ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600"
+            }`}>
             <Landmark className="w-6 h-6" />
           </div>
         </div>
 
-        {/* Card 2: Upcoming Payouts */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+        {/* Card 2: [Current Month Name] Payments Made */}
+        <div
+          onClick={() => {
+            setActiveCardFilter(prev => prev === "current_made" ? "none" : "current_made");
+            setCurrentPage(1);
+          }}
+          className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "current_made"
+              ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20"
+              : "border-slate-100 hover:border-emerald-200"
+            }`}
+          title="Click to filter table by Current Month Payments Made"
+        >
           <div className="space-y-1">
-            <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Upcoming Payouts
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                {currentMonthName} Payments Made
+              </span>
+              {activeCardFilter === "current_made" && (
+                <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full">
+                  Active
+                </span>
+              )}
+            </div>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
-              £{pendingTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              £{curMonthMadeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
-            <p className="text-xs text-slate-400 font-semibold">{pendingCount} upcoming pending</p>
+            <p className="text-xs text-slate-400 font-semibold">{curMonthMadeCount} {curMonthMadeCount === 1 ? "payment made" : "payments made"}</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "current_made" ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-600"
+            }`}>
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Card 3: Pending Payments [Current Month Name] */}
+        <div
+          onClick={() => {
+            setActiveCardFilter(prev => prev === "current_pending" ? "none" : "current_pending");
+            setCurrentPage(1);
+          }}
+          className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "current_pending"
+              ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/20"
+              : "border-slate-100 hover:border-amber-200"
+            }`}
+          title="Click to filter table by Pending Payments"
+        >
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                Pending Payments {currentMonthName}
+              </span>
+              {activeCardFilter === "current_pending" && (
+                <span className="text-[10px] font-bold bg-amber-600 text-white px-1.5 py-0.5 rounded-full">
+                  Active
+                </span>
+              )}
+            </div>
+            <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
+              £{curMonthPendingTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </h3>
+            <p className="text-xs text-slate-400 font-semibold">
+              {curMonthPendingCount} {curMonthPendingCount === 1 ? "pending payment" : "pending payments"}
+            </p>
+          </div>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "current_pending" ? "bg-amber-600 text-white" : "bg-amber-50 text-amber-600"
+            }`}>
             <Clock className="w-6 h-6" />
           </div>
         </div>
 
-        {/* Card 3: Acknowledge Sent (Admin) / Sent by Investee (Investor) */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+        {/* Card 4: [Next Month Name] Payment Schedule */}
+        <div
+          onClick={() => {
+            setActiveCardFilter(prev => prev === "next_schedule" ? "none" : "next_schedule");
+            setCurrentPage(1);
+          }}
+          className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between select-none ${activeCardFilter === "next_schedule"
+              ? "border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20"
+              : "border-slate-100 hover:border-blue-200"
+            }`}
+          title="Click to filter table by Next Month Payment Schedule"
+        >
           <div className="space-y-1">
-            <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Payments in Process
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                {nextMonthName} Payment Schedule
+              </span>
+              {activeCardFilter === "next_schedule" && (
+                <span className="text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">
+                  Active
+                </span>
+              )}
+            </div>
             <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
-              £{sentTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              £{nextMonthScheduleTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h3>
             <p className="text-xs text-slate-400 font-semibold">
-              {sentCount} Payments in Process
+              {nextMonthScheduleCount} scheduled {nextMonthScheduleCount === 1 ? "payment" : "payments"}
             </p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Send className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Card 4: Acknowledge Received (Admin) / Received (Investor) */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              Payments Received
-            </span>
-            <h3 className="text-2xl font-extrabold text-slate-900 pt-2">
-              £{doneTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
-            <p className="text-xs text-slate-400 font-semibold">
-              Payments Received
-            </p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6" />
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeCardFilter === "next_schedule" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600"
+            }`}>
+            <Calendar className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -403,7 +570,7 @@ export const Payments = () => {
           <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Search Pay ID</label>
           <input
             type="text"
-            placeholder="e.g. 1 or PayId#1"
+            placeholder="e.g. 123"
             value={payIdSearchTerm}
             onChange={(e) => { setPayIdSearchTerm(e.target.value); setCurrentPage(1); }}
             className="w-full px-3 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
@@ -461,6 +628,29 @@ export const Payments = () => {
             </select>
           </div>
         )}
+
+        {/* Clear Filters Button if any active filter */}
+        {(activeCardFilter !== "none" || payIdSearchTerm || startDateFilter || endDateFilter || selectedStatusFilter !== "all" || investorFilter !== "all") && (
+          <div className="flex items-end self-end pt-4 md:pt-0">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveCardFilter("none");
+                setPayIdSearchTerm("");
+                setStartDateFilter("");
+                setEndDateFilter("");
+                setSelectedStatusFilter("all");
+                setInvestorFilter("all");
+                setCurrentPage(1);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+              title="Reset all filters"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Payments Table */}
@@ -473,10 +663,28 @@ export const Payments = () => {
           </div>
           <h3 className="text-lg font-display font-bold text-slate-900">No payments found</h3>
           <p className="text-sm text-slate-500 mt-1 font-medium max-w-sm">
-            {startDateFilter || endDateFilter || selectedStatusFilter !== "all" || investorFilter !== "all"
-              ? "Try adjusting your date range or filter criteria."
+            {activeCardFilter !== "none" || startDateFilter || endDateFilter || selectedStatusFilter !== "all" || investorFilter !== "all" || payIdSearchTerm
+              ? "No payments match your current card or filter criteria."
               : "No upcoming investor payment payouts have been scheduled yet."}
           </p>
+          {(activeCardFilter !== "none" || startDateFilter || endDateFilter || selectedStatusFilter !== "all" || investorFilter !== "all" || payIdSearchTerm) && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveCardFilter("none");
+                setPayIdSearchTerm("");
+                setStartDateFilter("");
+                setEndDateFilter("");
+                setSelectedStatusFilter("all");
+                setInvestorFilter("all");
+                setCurrentPage(1);
+              }}
+              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Clear All Filters</span>
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -484,14 +692,13 @@ export const Payments = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Pay ID</th>
+                  <th className="px-6 py-4">Payment ID</th>
                   <th className="px-6 py-4">Investor &amp; Contact</th>
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Cycle</th>
                   <th className="px-6 py-4">Due Date</th>
                   <th className="px-6 py-4">Payment Date</th>
-                  <th className="px-6 py-4">{isAdmin ? "Action" : "Status"}</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4 text-center">{isAdmin ? "Action" : "Status"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 text-sm">
@@ -505,8 +712,18 @@ export const Payments = () => {
                       exit={{ opacity: 0 }}
                       className="hover:bg-slate-50/50 transition-colors"
                     >
-                      <td className="px-6 py-4 font-mono font-bold text-slate-700 text-xs">
-                        PayId#{p.paymentId}
+                      <td className="px-6 py-4 font-mono font-bold text-xs">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPayment(p);
+                            setIsDetailsOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 hover:underline font-bold transition-colors cursor-pointer outline-none inline-flex items-center gap-1"
+                          title="Click to view Payment Transaction Details"
+                        >
+                          {p.paymentId}
+                        </button>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col text-left">
@@ -537,7 +754,7 @@ export const Payments = () => {
                         {p.paymentMadeAt ? formatUKDate(p.paymentMadeAt) : "—"}
                       </td>
                       {/* Admin: Action Column / Investor: Status Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
                         {isAdmin ? (
                           !p.isSent ? (
                             <button
@@ -568,20 +785,6 @@ export const Payments = () => {
                             </span>
                           )
                         )}
-                      </td>
-
-                      {/* Actions Column */}
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedPayment(p);
-                            setIsDetailsOpen(true);
-                          }}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          View
-                        </button>
                       </td>
                     </motion.tr>
                   ))}
@@ -651,8 +854,8 @@ export const Payments = () => {
 
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Transaction ID</span>
-                <span className="text-sm font-mono font-bold text-slate-700">PayId#{selectedPayment.paymentId}</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Payment ID</span>
+                <span className="text-sm font-mono font-bold text-slate-700">{selectedPayment.paymentId}</span>
               </div>
               <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Due Date</span>
@@ -689,7 +892,7 @@ export const Payments = () => {
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">{isAdmin ? "Payment Action / Status" : "Payment Status"}</span>
               <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${selectedPayment.isSent || selectedPayment.isReceived ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" :
                 "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-              }`}>
+                }`}>
                 {selectedPayment.isSent || selectedPayment.isReceived
                   ? (isAdmin ? "✓ Payment Made" : "✓ Payment Received")
                   : "⏳ Payment Pending"}
