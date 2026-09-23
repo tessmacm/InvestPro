@@ -129,6 +129,66 @@ export const Reports = () => {
     return { count: filteredPayments.length, label: "Payout Volume", amount: totalAmount };
   }, [activeTab, filteredInvestors, filteredProjects, filteredPayments]);
 
+  // Average Profit Map per Investor
+  // Profit Amount = (Sum of Completed Payments + Sum of Pending Payments)
+  // Percentage = ((Sum of Completed Payments + Sum of Pending Payments) / Total Investment Amount) * 100
+  const investorProfitMap = useMemo(() => {
+    const map = new Map<string, { profitAmount: number; percentage: number; display: string }>();
+
+    // Group all payments by investor identifier
+    const paymentsByInvestor = new Map<string, { completed: number; pending: number }>();
+    payments.forEach(p => {
+      const invKey = p.investorId ? String(p.investorId) : (p.investorName || "").toLowerCase().trim();
+      if (!paymentsByInvestor.has(invKey)) {
+        paymentsByInvestor.set(invKey, { completed: 0, pending: 0 });
+      }
+      const entry = paymentsByInvestor.get(invKey)!;
+      const amt = Number(p.amount) || 0;
+      const isCompleted = p.isSent || p.isReceived || p.status === "Received" || p.status === "Sent" || p.status === "Payment Made";
+      if (isCompleted) {
+        entry.completed += amt;
+      } else {
+        entry.pending += amt;
+      }
+    });
+
+    paymentsByInvestor.forEach((totals, invKey) => {
+      const profitAmount = totals.completed + totals.pending;
+      // Match investor to obtain Total Investment Amount
+      const inv = investors.find(i => String(i.id) === invKey) ||
+        investors.find(i => (i.name || "").toLowerCase().trim() === invKey);
+      const totalInvestmentAmount = Number(inv?.amount) || 0;
+      const percentage = totalInvestmentAmount > 0 ? (profitAmount / totalInvestmentAmount) * 100 : 0;
+      const formattedProfit = `£${profitAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const formattedPercentage = `${percentage.toFixed(2)}%`;
+      map.set(invKey, {
+        profitAmount,
+        percentage,
+        display: `${formattedProfit} - ${formattedPercentage}`
+      });
+    });
+
+    return map;
+  }, [payments, investors]);
+
+  const getPaymentAverageProfit = (p: Payment) => {
+    const invKey = p.investorId ? String(p.investorId) : (p.investorName || "").toLowerCase().trim();
+    if (investorProfitMap.has(invKey)) {
+      return investorProfitMap.get(invKey)!;
+    }
+    // Fallback if not found in map
+    const inv = investors.find(i => String(i.id) === String(p.investorId)) ||
+      investors.find(i => (i.name || "").toLowerCase().trim() === (p.investorName || "").toLowerCase().trim());
+    const totalInvestmentAmount = Number(inv?.amount) || 0;
+    const amt = Number(p.amount) || 0;
+    const pct = totalInvestmentAmount > 0 ? (amt / totalInvestmentAmount) * 100 : 0;
+    return {
+      profitAmount: amt,
+      percentage: pct,
+      display: `£${amt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} - ${pct.toFixed(2)}%`
+    };
+  };
+
   // Excel / CSV Export Utility
   const handleExportExcel = () => {
     let exportRows: any[] = [];
@@ -165,6 +225,7 @@ export const Reports = () => {
         "Payment ID": `PayId#${p.paymentId}`,
         "Investor Name": p.investorName,
         "Amount (£)": p.amount,
+        "Average Profit": getPaymentAverageProfit(p).display,
         "Cycle": p.paymentCycle || "Monthly",
         "Payment Date": formatUKDate(p.paymentDate),
         "Status": p.status,
@@ -468,6 +529,7 @@ export const Reports = () => {
                       <th className="px-6 py-4">Transaction Ref</th>
                       <th className="px-6 py-4">Investor Profile</th>
                       <th className="px-6 py-4 text-right">Disbursement Amount</th>
+                      <th className="px-6 py-4 text-right">Average Profit</th>
                       <th className="px-6 py-4 text-center">Payment Cycle</th>
                       <th className="px-6 py-4 text-center">Payment Due Date</th>
                       <th className="px-6 py-4 text-right">Disbursement Status</th>
@@ -479,6 +541,9 @@ export const Reports = () => {
                         <td className="px-6 py-4 font-mono font-bold text-slate-900 align-middle">PayId#{p.paymentId}</td>
                         <td className="px-6 py-4 font-bold text-slate-900 align-middle">{p.investorName}</td>
                         <td className="px-6 py-4 font-bold text-emerald-600 text-right align-middle">£{Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td className="px-6 py-4 font-bold text-slate-900 text-right align-middle font-mono whitespace-nowrap">
+                          {getPaymentAverageProfit(p).display}
+                        </td>
                         <td className="px-6 py-4 text-center align-middle">
                           <span className="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-blue-50 text-blue-700 border border-blue-100">
                             {p.paymentCycle || "Monthly"}

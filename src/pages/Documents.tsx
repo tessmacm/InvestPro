@@ -153,9 +153,7 @@ export const Documents = () => {
 
   useEffect(() => {
     fetchDocuments();
-    if (!isReadOnly) {
-      fetchInvestors();
-    }
+    fetchInvestors();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -263,6 +261,31 @@ export const Documents = () => {
             ) : (
               <span className="text-xs text-slate-400 font-medium">—</span>
             )}
+          </div>
+        );
+      }
+    },
+    {
+      header: "Investment Details",
+      render: (d: Document) => {
+        const docInvId = (d as any).investorId || (d as any).investor_id;
+        const inv = investors.find(i => String(i.id) === String(docInvId)) ||
+          investors.find(i => i.email && d.investor_email && i.email.toLowerCase() === d.investor_email.toLowerCase()) ||
+          investors.find(i => i.name && d.investor_name && i.name.toLowerCase() === d.investor_name.toLowerCase());
+
+        const amountStr = inv && inv.amount !== undefined && inv.amount !== null
+          ? `£${Number(inv.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : "—";
+        const onboardingDateStr = inv?.date_of_onboarding
+          ? formatUKDate(inv.date_of_onboarding, "—")
+          : "—";
+
+        return (
+          <div className="flex flex-col text-left py-1">
+            <span className="font-extrabold text-emerald-600 text-xs font-mono">{amountStr}</span>
+            <span className="text-[11px] text-slate-400 font-medium font-mono mt-0.5">
+              Onboarded: {onboardingDateStr}
+            </span>
           </div>
         );
       }
