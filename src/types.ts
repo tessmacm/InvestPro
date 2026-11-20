@@ -89,6 +89,8 @@ export interface Payment {
   isReceived: boolean;
   paymentCycle?: string;
   paymentMadeAt?: string;
+  isInvestorActiveSigned?: boolean;
+  investorStatus?: "active_signed" | "active_unsigned" | "inactive" | string;
 }
 
 export interface RoiContract {
