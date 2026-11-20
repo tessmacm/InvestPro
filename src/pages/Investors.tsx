@@ -96,10 +96,28 @@ export const Investors = () => {
   const [bulkFileName, setBulkFileName] = useState("");
   const [isSaveConfirmModalOpen, setIsSaveConfirmModalOpen] = useState(false);
 
+  const formatMobileNumber = (val: string): string => {
+    if (!val) return "";
+    let clean = val.replace(/^[\t\s="'`]+|[\t\s="'`]+$/g, '').trim();
+    // If exponential notation like 9.392595905E+09 or 9.392595905e9
+    if (/^[+-]?\d+(?:\.\d+)?[eE][+-]?\d+$/.test(clean)) {
+      try {
+        const num = Number(clean);
+        if (!isNaN(num) && isFinite(num)) {
+          clean = BigInt(Math.round(num)).toString();
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return clean;
+  };
+
   const handleDownloadCsvTemplate = () => {
     const templateHeader = "Name,Email,Mobile,InvestorType,Organization,CompanyRegistrationNo,CapitalAmount,DateOfOnboarding,Duration,AssignedProject,MinRoi,MaxRoi,PayoutCategory,PayoutCycle,BankName,BankAccountNo,SortCode,Address,Witness,Notes\n";
-    const sampleRow = "Bulk1,contact@apexcap.com,+44 7700 900077,Individual,—,—,50000,2026-06-28,12 Months,Current Operations,3,5,Fixed,Constant,Barclays,12345678,20-00-00,123 Main St London,Jane Doe,Bulk Fixed ROI tranche\n";
-    const sampleRow2 = 'Bulk2,contact@apexcap.com,+447987654321,Business,"Apex Capital Ltd","CRN-884920",100000,2026-07-26,"24 Months","Current Operations",3,5,"Variant","Monthly","HSBC","87654321","40-20-60","45 Commercial Rd, Manchester","Robert Brown","Bulk Variant ROI tranche"\n';
+    // Using ="..." notation ensures Excel and spreadsheets treat Mobile (and Account/Sort code) strictly as text, preventing exponential form (E+09)
+    const sampleRow = 'Bulk1,contact@apexcap.com,="+44 7700 900077",Individual,—,—,50000,2026-06-28,12 Months,Current Operations,3,5,Fixed,Constant,Barclays,="12345678",="20-00-00",123 Main St London,Jane Doe,Bulk Fixed ROI tranche\n';
+    const sampleRow2 = 'Bulk2,contact@apexcap.com,="+447987654321",Business,"Apex Capital Ltd","CRN-884920",100000,2026-07-26,"24 Months","Current Operations",3,5,"Variant","Monthly","HSBC",="87654321",="40-20-60","45 Commercial Rd, Manchester","Robert Brown","Bulk Variant ROI tranche"\n';
     
     const blob = new Blob(["\uFEFF" + templateHeader + sampleRow + sampleRow2], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -183,6 +201,8 @@ export const Investors = () => {
           rowErrors.push(`Row ${lineNum}, Column 7 (Capital Amount): '${capitalAmount || "blank"}' must be a positive number greater than 0.`);
         }
 
+        const parsedMobile = formatMobileNumber(mobile);
+
         if (rowErrors.length > 0) {
           errors.push(...rowErrors);
         } else {
@@ -192,7 +212,7 @@ export const Investors = () => {
           parsedDtos.push({
             name: (name || '').trim(),
             email: (email || '').trim(),
-            mobile: (mobile || '').trim(),
+            mobile: parsedMobile,
             type: typeId,
             organization: (organization || '').trim() || (isBusiness ? (name || '').trim() : "—"),
             reg_number: (reg_number || '').trim() || "—",
@@ -207,9 +227,9 @@ export const Investors = () => {
               ? ((payoutCycle || '').toLowerCase() === 'weekly' ? 2 : (payoutCycle || '').toLowerCase() === 'quarterly' ? 4 : (payoutCycle || '').toLowerCase() === 'half-yearly' || (payoutCycle || '').toLowerCase() === 'halfyearly' ? 6 : (payoutCycle || '').toLowerCase() === 'yearly' ? 5 : 3)
               : 1,
             bank: (bankName || '').trim(),
-            acNumber: (bankAccountNo || '').trim(),
-            soreCode: (sortCode || '').trim(),
-            sortCode: (sortCode || '').trim(),
+            acNumber: (bankAccountNo || '').trim().replace(/^[\t\s="'`]+|[\t\s="'`]+$/g, ''),
+            soreCode: (sortCode || '').trim().replace(/^[\t\s="'`]+|[\t\s="'`]+$/g, ''),
+            sortCode: (sortCode || '').trim().replace(/^[\t\s="'`]+|[\t\s="'`]+$/g, ''),
             witness: (witness || '').trim(),
             address: (address || '').trim(),
             notes: (notes || '').trim() || "Bulk imported investment",
@@ -724,6 +744,8 @@ export const Investors = () => {
     const safeRangeMaxId = isFixedMode ? Math.min(Math.max(Math.round(maxRoiVal), 1), 20) : maxRoiVal;
 
     const isEdit = !!selectedInvestor;
+    const isExistingMode = !isEdit && investmentMode === "existing";
+
     const payload = isEdit ? {
       name: formData.name,
       type: parseInt(formData.type) || 1,
@@ -751,6 +773,7 @@ export const Investors = () => {
       notes: finalNotes,
       roiUnit: formData.roiUnit
     } : {
+      allowExistingUser: isExistingMode,
       name: formData.name,
       type: parseInt(formData.type) || 1,
       email: formData.email,
